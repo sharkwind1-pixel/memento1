@@ -6,6 +6,7 @@
  *  - 본문/이미지 전문 복제 X → 제목 + API description 스니펫(짧은 요약) + 원문 링크만.
  * 톤 안전:
  *  - 사망·폭력·성범죄·자살·마약 등 자극/그래픽 뉴스는 키워드 denylist로 제외.
+ *  - 화제뉴스 + 사건사고(화재·적발·검거·리콜 등 비그래픽)를 라운드로빈으로 섞어 노출.
  *  - "조회수 랭킹" API는 없으므로(공식 API 미제공) 화제성 키워드 + 최신순으로 근사.
  *
  * 환경변수: NAVER_CLIENT_ID / NAVER_CLIENT_SECRET (naver-location.ts와 동일)
@@ -22,6 +23,13 @@ export interface NewsItem {
 // 화제/바이럴 헤드라인에 자주 등장하는 검색어 (popular 근사). 자극어는 의도적으로 배제.
 const QUERY_POOL = [
     "화제", "이슈", "근황", "공개", "포착", "눈길", "역대급", "깜짝", "누리꾼", "트렌드",
+];
+
+// 사건사고/사회 이슈 검색어. 사망·폭력·성범죄 등 그래픽은 아래 SENSITIVE에서 계속 차단되므로
+// 여기서 검색해도 화재·적발·검거·리콜·논란 같은 '비그래픽 사건사고'만 살아남는다.
+// (사용자 요청: 화제뉴스만 말고 사건사고도 노출 + 자극필터 유지)
+const INCIDENT_POOL = [
+    "사건사고", "화재", "논란", "적발", "검거", "단속", "리콜", "주의보",
 ];
 
 // 자극/그래픽 제외 (반려동물 추모·힐링 커뮤니티 톤 보호). 제목/요약 어느 쪽에 걸려도 제외.
@@ -110,33 +118,54 @@ async function searchNews(query: string, display = 20): Promise<NaverNewsRaw[]> 
  * @param limit 최대 후보 수
  */
 export async function fetchPopularNews(dayN: number, limit = 12): Promise<NewsItem[]> {
-    // 날짜 기반으로 키워드 3개 선택 (매일 다른 조합)
-    const picks = [0, 1, 2].map((i) => QUERY_POOL[((dayN % QUERY_POOL.length) + i) % QUERY_POOL.length]);
+    // 날짜 기반 키워드 선택: 화제 2개 + 사건사고 1개 (매일 다른 조합).
+    // 소스 순서를 [화제, 사건사고, 화제]로 두고 아래에서 라운드로빈 인터리브 → 사건사고가 상위에 섞여
+    // 하루 게시분(상위 1~2건)에 '화제 + 사건사고'가 함께 노출됨.
+    const viral0 = QUERY_POOL[dayN % QUERY_POOL.length];
+    const viral1 = QUERY_POOL[(dayN + 1) % QUERY_POOL.length];
+    const incident = INCIDENT_POOL[dayN % INCIDENT_POOL.length];
+    const picks = [viral0, incident, viral1];
     const batches = await Promise.all(picks.map((q) => searchNews(q, 20)));
 
-    const seen = new Set<string>();
-    const out: NewsItem[] = [];
-    for (const batch of batches) {
+    // 각 배치를 자극/정치 필터 + 정제 (배치 순서 유지)
+    const cleaned: NewsItem[][] = batches.map((batch) => {
+        const list: NewsItem[] = [];
         for (const raw of batch) {
             const title = decodeEntities(raw.title || "");
             const summary = decodeEntities(raw.description || "");
             const link = (raw.originallink || raw.link || "").trim();
             if (!title || !link) continue;
             if (title.length < 8) continue; // 너무 짧은(잘린) 제목 제외
-            if (isSensitive(title) || isSensitive(summary)) continue;
+            if (isSensitive(title) || isSensitive(summary)) continue; // 사망/폭력/성범죄 등 그래픽 제외
             if (isPolitical(title) || isPolitical(summary)) continue; // 정치/선거 제외
-            if (seen.has(link)) continue;
-            seen.add(link);
-            out.push({
+            list.push({
                 title,
                 summary,
                 link,
                 source: hostFromUrl(link),
                 pubDate: raw.pubDate || "",
             });
+        }
+        return list;
+    });
+
+    // 라운드로빈 인터리브(화제↔사건사고 번갈아) + 링크 중복 제거
+    const seen = new Set<string>();
+    const out: NewsItem[] = [];
+    let idx = 0;
+    let advanced = true;
+    while (out.length < limit && advanced) {
+        advanced = false;
+        for (const list of cleaned) {
+            if (idx >= list.length) continue;
+            advanced = true;
+            const item = list[idx];
+            if (seen.has(item.link)) continue;
+            seen.add(item.link);
+            out.push(item);
             if (out.length >= limit) break;
         }
-        if (out.length >= limit) break;
+        idx++;
     }
     return out;
 }
