@@ -139,19 +139,34 @@ export default function PostDetailView({
 
         const prevLiked = isLiked;
         const prevCount = likeCount;
-        await runToggle<{ liked: boolean; likes: number }>("post-like", {
+        const prevDisliked = isDisliked;
+        const prevDCount = dislikeCount;
+        await runToggle<{ liked: boolean; likes: number; disliked?: boolean; dislikes?: number }>("post-like", {
             apply: () => {
                 setIsLiking(true);
-                setIsLiked(!prevLiked);
+                const nextLiked = !prevLiked;
+                setIsLiked(nextLiked);
                 setLikeCount(prevLiked ? prevCount - 1 : prevCount + 1);
+                // 좋아요로 전환 시 기존 비추천 해제 (서버 상호 배타와 일치)
+                if (nextLiked && prevDisliked) {
+                    setIsDisliked(false);
+                    setDislikeCount(Math.max(0, prevDCount - 1));
+                }
             },
             request: async () => {
                 const response = await authFetch(API.POST_LIKE(postId), { method: "POST" });
                 if (!response.ok) throw new Error("좋아요 실패");
                 return response.json();
             },
-            reconcile: (data) => { setIsLiked(data.liked); setLikeCount(data.likes); },
-            rollback: () => { setIsLiked(prevLiked); setLikeCount(prevCount); },
+            reconcile: (data) => {
+                setIsLiked(data.liked); setLikeCount(data.likes);
+                if (typeof data.disliked === "boolean") setIsDisliked(data.disliked);
+                if (typeof data.dislikes === "number") setDislikeCount(data.dislikes);
+            },
+            rollback: () => {
+                setIsLiked(prevLiked); setLikeCount(prevCount);
+                setIsDisliked(prevDisliked); setDislikeCount(prevDCount);
+            },
             onError: () => toast.error("좋아요 처리에 실패했습니다"),
             onSettled: () => setIsLiking(false),
         });
@@ -170,19 +185,34 @@ export default function PostDetailView({
 
         const prevDisliked = isDisliked;
         const prevDCount = dislikeCount;
-        await runToggle<{ disliked: boolean; dislikes: number }>("post-dislike", {
+        const prevLiked = isLiked;
+        const prevLCount = likeCount;
+        await runToggle<{ disliked: boolean; dislikes: number; liked?: boolean; likes?: number }>("post-dislike", {
             apply: () => {
                 setIsDisliking(true);
-                setIsDisliked(!prevDisliked);
+                const nextDisliked = !prevDisliked;
+                setIsDisliked(nextDisliked);
                 setDislikeCount(prevDisliked ? prevDCount - 1 : prevDCount + 1);
+                // 비추천으로 전환 시 기존 좋아요 해제 (서버 상호 배타와 일치)
+                if (nextDisliked && prevLiked) {
+                    setIsLiked(false);
+                    setLikeCount(Math.max(0, prevLCount - 1));
+                }
             },
             request: async () => {
                 const response = await authFetch(API.POST_DISLIKE(postId), { method: "POST" });
                 if (!response.ok) throw new Error("비추천 실패");
                 return response.json();
             },
-            reconcile: (data) => { setIsDisliked(data.disliked); setDislikeCount(data.dislikes); },
-            rollback: () => { setIsDisliked(prevDisliked); setDislikeCount(prevDCount); },
+            reconcile: (data) => {
+                setIsDisliked(data.disliked); setDislikeCount(data.dislikes);
+                if (typeof data.liked === "boolean") setIsLiked(data.liked);
+                if (typeof data.likes === "number") setLikeCount(data.likes);
+            },
+            rollback: () => {
+                setIsDisliked(prevDisliked); setDislikeCount(prevDCount);
+                setIsLiked(prevLiked); setLikeCount(prevLCount);
+            },
             onError: () => toast.error("비추천 처리에 실패했습니다"),
             onSettled: () => setIsDisliking(false),
         });
@@ -470,9 +500,17 @@ export default function PostDetailView({
     const handleCommentLike = async (commentId: string) => {
         if (!user) { window.dispatchEvent(new CustomEvent("openAuthModal")); return; }
         const before = comments.find(c => c.id === commentId);
-        await runToggle<{ likes: number; liked: boolean }>(`comment-like:${commentId}`, {
+        await runToggle<{ likes: number; liked: boolean; dislikes?: number; disliked?: boolean }>(`comment-like:${commentId}`, {
             apply: () => setComments(prev => prev.map(c => c.id === commentId
-                ? { ...c, userLiked: !c.userLiked, likes: Math.max(0, (c.likes || 0) + (c.userLiked ? -1 : 1)) }
+                ? {
+                    ...c,
+                    userLiked: !c.userLiked,
+                    likes: Math.max(0, (c.likes || 0) + (c.userLiked ? -1 : 1)),
+                    // 좋아요로 전환 시 기존 비추천 해제 (서버 상호 배타와 일치)
+                    ...(!c.userLiked && c.userDisliked
+                        ? { userDisliked: false, dislikes: Math.max(0, (c.dislikes || 0) - 1) }
+                        : {}),
+                }
                 : c)),
             request: async () => {
                 const res = await authFetch(API.COMMENT_LIKE(commentId), { method: "POST" });
@@ -480,7 +518,13 @@ export default function PostDetailView({
                 return res.json();
             },
             reconcile: (d) => setComments(prev => prev.map(c => c.id === commentId
-                ? { ...c, likes: d.likes, userLiked: d.liked } : c)),
+                ? {
+                    ...c,
+                    likes: d.likes,
+                    userLiked: d.liked,
+                    ...(typeof d.disliked === "boolean" ? { userDisliked: d.disliked } : {}),
+                    ...(typeof d.dislikes === "number" ? { dislikes: d.dislikes } : {}),
+                } : c)),
             rollback: () => { if (before) setComments(prev => prev.map(c => c.id === commentId ? before : c)); },
         });
     };
@@ -489,9 +533,17 @@ export default function PostDetailView({
     const handleCommentDislike = async (commentId: string) => {
         if (!user) { window.dispatchEvent(new CustomEvent("openAuthModal")); return; }
         const before = comments.find(c => c.id === commentId);
-        await runToggle<{ dislikes: number; disliked: boolean }>(`comment-dislike:${commentId}`, {
+        await runToggle<{ dislikes: number; disliked: boolean; likes?: number; liked?: boolean }>(`comment-dislike:${commentId}`, {
             apply: () => setComments(prev => prev.map(c => c.id === commentId
-                ? { ...c, userDisliked: !c.userDisliked, dislikes: Math.max(0, (c.dislikes || 0) + (c.userDisliked ? -1 : 1)) }
+                ? {
+                    ...c,
+                    userDisliked: !c.userDisliked,
+                    dislikes: Math.max(0, (c.dislikes || 0) + (c.userDisliked ? -1 : 1)),
+                    // 비추천으로 전환 시 기존 좋아요 해제 (서버 상호 배타와 일치)
+                    ...(!c.userDisliked && c.userLiked
+                        ? { userLiked: false, likes: Math.max(0, (c.likes || 0) - 1) }
+                        : {}),
+                }
                 : c)),
             request: async () => {
                 const res = await authFetch(API.COMMENT_DISLIKE(commentId), { method: "POST" });
@@ -499,7 +551,13 @@ export default function PostDetailView({
                 return res.json();
             },
             reconcile: (d) => setComments(prev => prev.map(c => c.id === commentId
-                ? { ...c, dislikes: d.dislikes, userDisliked: d.disliked } : c)),
+                ? {
+                    ...c,
+                    dislikes: d.dislikes,
+                    userDisliked: d.disliked,
+                    ...(typeof d.liked === "boolean" ? { userLiked: d.liked } : {}),
+                    ...(typeof d.likes === "number" ? { likes: d.likes } : {}),
+                } : c)),
             rollback: () => { if (before) setComments(prev => prev.map(c => c.id === commentId ? before : c)); },
         });
     };

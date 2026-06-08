@@ -68,7 +68,7 @@ export async function POST(
             .select("id")
             .eq("post_id", postId)
             .eq("user_id", userId)
-            .single();
+            .maybeSingle();
 
         let disliked: boolean;
 
@@ -87,6 +87,13 @@ export async function POST(
                 .insert([{ post_id: postId, user_id: userId }]);
             disliked = true;
 
+            // 상호 배타: 같은 글에 기존 좋아요가 있으면 해제 (좋아요/비추천 동시 활성 방지)
+            await supabase
+                .from("post_likes")
+                .delete()
+                .eq("post_id", postId)
+                .eq("user_id", userId);
+
             // 글쓴이 포인트 차감 (-5P, 자기 글 제외는 위에서 이미 검증)
             // awardPoints 헬퍼 사용 (lib/points.ts) — POINTS.ACTIONS.receive_dislike = -5
             if (postData && postData.user_id !== userId) {
@@ -94,16 +101,17 @@ export async function POST(
             }
         }
 
-        // post_dislikes에서 실제 카운트 집계
-        const { count: dislikesCount } = await supabase
-            .from("post_dislikes")
-            .select("id", { count: "exact", head: true })
-            .eq("post_id", postId);
+        // 양쪽 카운트 재집계 + 현재 유저의 좋아요 상태 (상호 배타 후 정확한 값으로 클라이언트 보정)
+        const [{ count: dislikesCount }, { count: likesCount }, { data: likeRow }] = await Promise.all([
+            supabase.from("post_dislikes").select("id", { count: "exact", head: true }).eq("post_id", postId),
+            supabase.from("post_likes").select("id", { count: "exact", head: true }).eq("post_id", postId),
+            supabase.from("post_likes").select("id").eq("post_id", postId).eq("user_id", userId).maybeSingle(),
+        ]);
 
         const finalCount = dislikesCount || 0;
 
-        // community_posts.dislikes 동기화
-        const updateData: Record<string, unknown> = { dislikes: finalCount };
+        // community_posts.dislikes/likes 동기화 (좋아요도 같이 변할 수 있으므로 양쪽 sync)
+        const updateData: Record<string, unknown> = { dislikes: finalCount, likes: likesCount || 0 };
 
         // 비추천 임계값 이상이면 자동 숨김
         if (finalCount >= MODERATION.AUTO_HIDE_DISLIKE_THRESHOLD) {
@@ -120,6 +128,8 @@ export async function POST(
         return NextResponse.json({
             disliked,
             dislikes: finalCount,
+            liked: !!likeRow,
+            likes: likesCount || 0,
         });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });

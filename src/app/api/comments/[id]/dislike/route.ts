@@ -51,7 +51,7 @@ export async function POST(
             .select("id")
             .eq("comment_id", commentId)
             .eq("user_id", userId)
-            .single();
+            .maybeSingle();
 
         let disliked: boolean;
 
@@ -67,6 +67,13 @@ export async function POST(
                 .from("comment_dislikes")
                 .insert([{ comment_id: commentId, user_id: userId }]);
             disliked = true;
+
+            // 상호 배타: 같은 댓글에 기존 좋아요가 있으면 해제 (좋아요/비추천 동시 활성 방지)
+            await supabase
+                .from("comment_likes")
+                .delete()
+                .eq("comment_id", commentId)
+                .eq("user_id", userId);
 
             // 댓글 작성자 포인트 차감
             try {
@@ -88,19 +95,25 @@ export async function POST(
             } catch { /* 무시 */ }
         }
 
-        // 실제 카운트
-        const { count } = await supabase
-            .from("comment_dislikes")
-            .select("id", { count: "exact", head: true })
-            .eq("comment_id", commentId);
+        // 양쪽 카운트 재집계 + 현재 유저의 좋아요 상태
+        const [{ count: dislikeCount }, { count: likeCount }, { data: likeRow }] = await Promise.all([
+            supabase.from("comment_dislikes").select("id", { count: "exact", head: true }).eq("comment_id", commentId),
+            supabase.from("comment_likes").select("id", { count: "exact", head: true }).eq("comment_id", commentId),
+            supabase.from("comment_likes").select("id").eq("comment_id", commentId).eq("user_id", userId).maybeSingle(),
+        ]);
 
-        // post_comments.dislikes 동기화
+        // post_comments.dislikes/likes 동기화 (좋아요도 같이 변할 수 있으므로 양쪽 sync)
         await supabase
             .from("post_comments")
-            .update({ dislikes: count || 0 })
+            .update({ dislikes: dislikeCount || 0, likes: likeCount || 0 })
             .eq("id", commentId);
 
-        return NextResponse.json({ disliked, dislikes: count || 0 });
+        return NextResponse.json({
+            disliked,
+            dislikes: dislikeCount || 0,
+            liked: !!likeRow,
+            likes: likeCount || 0,
+        });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }

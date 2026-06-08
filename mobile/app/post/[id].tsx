@@ -274,6 +274,18 @@ export default function PostDetailScreen() {
                     isDisliked: wasDisliked,
                     dislikes: wasDisliked ? p.dislikes + (newLiked ? 1 : 0) : p.dislikes,
                 } : p);
+            } else {
+                // 서버가 양쪽(좋아요+비추천) 최신 상태/카운트를 반환 → 권위적으로 보정 (낙관적 추정 교정)
+                const data = await res.json().catch(() => null);
+                if (data && typeof data === "object") {
+                    setPost((p) => p ? {
+                        ...p,
+                        isLiked: typeof data.liked === "boolean" ? data.liked : p.isLiked,
+                        likes: typeof data.likes === "number" ? data.likes : p.likes,
+                        isDisliked: typeof data.disliked === "boolean" ? data.disliked : p.isDisliked,
+                        dislikes: typeof data.dislikes === "number" ? data.dislikes : p.dislikes,
+                    } : p);
+                }
             }
         } catch {
             setPost((p) => p ? {
@@ -320,6 +332,18 @@ export default function PostDetailScreen() {
                     isLiked: wasLiked,
                     likes: wasLiked ? p.likes + (newDisliked ? 1 : 0) : p.likes,
                 } : p);
+            } else {
+                // 서버가 양쪽 최신 상태/카운트를 반환 → 권위적으로 보정
+                const data = await res.json().catch(() => null);
+                if (data && typeof data === "object") {
+                    setPost((p) => p ? {
+                        ...p,
+                        isDisliked: typeof data.disliked === "boolean" ? data.disliked : p.isDisliked,
+                        dislikes: typeof data.dislikes === "number" ? data.dislikes : p.dislikes,
+                        isLiked: typeof data.liked === "boolean" ? data.liked : p.isLiked,
+                        likes: typeof data.likes === "number" ? data.likes : p.likes,
+                    } : p);
+                }
             }
         } catch {
             setPost((p) => p ? {
@@ -865,6 +889,17 @@ function CommentItem({
                     isDisliked: wasDisliked,
                     dislikes: comment.dislikes,
                 });
+            } else {
+                // 서버가 양쪽 최신 상태/카운트를 반환 → 권위적으로 보정
+                const data = await res.json().catch(() => null);
+                if (data && typeof data === "object") {
+                    onReactionUpdate(comment.id, {
+                        ...(typeof data.liked === "boolean" ? { isLiked: data.liked } : {}),
+                        ...(typeof data.likes === "number" ? { likes: data.likes } : {}),
+                        ...(typeof data.disliked === "boolean" ? { isDisliked: data.disliked } : {}),
+                        ...(typeof data.dislikes === "number" ? { dislikes: data.dislikes } : {}),
+                    });
+                }
             }
         } catch {
             onReactionUpdate(comment.id, {
@@ -901,6 +936,17 @@ function CommentItem({
                     isLiked: wasLiked,
                     likes: comment.likes,
                 });
+            } else {
+                // 서버가 양쪽 최신 상태/카운트를 반환 → 권위적으로 보정
+                const data = await res.json().catch(() => null);
+                if (data && typeof data === "object") {
+                    onReactionUpdate(comment.id, {
+                        ...(typeof data.disliked === "boolean" ? { isDisliked: data.disliked } : {}),
+                        ...(typeof data.dislikes === "number" ? { dislikes: data.dislikes } : {}),
+                        ...(typeof data.liked === "boolean" ? { isLiked: data.liked } : {}),
+                        ...(typeof data.likes === "number" ? { likes: data.likes } : {}),
+                    });
+                }
             }
         } catch {
             onReactionUpdate(comment.id, {
