@@ -127,6 +127,7 @@ function AdminPage() {
         withdrawals,
         userDetails,
         apiUsage,
+        visitStats,
         loadDashboardStats,
         loadChartData,
         loadUsers,
@@ -138,6 +139,7 @@ function AdminPage() {
         loadMagazineArticles,
         loadUserDetail,
         loadApiUsage,
+        loadVisitStats,
         setUsers,
         setPosts,
     } = useAdminData();
@@ -150,8 +152,9 @@ function AdminPage() {
             loadDashboardStats();
             loadChartData();
             loadApiUsage();
+            loadVisitStats();
         }
-    }, [isAdminUser, loadDashboardStats, loadChartData, loadApiUsage]);
+    }, [isAdminUser, loadDashboardStats, loadChartData, loadApiUsage, loadVisitStats]);
 
     // ========================================================================
     // 탭 변경 시 데이터 로드
@@ -292,6 +295,7 @@ function AdminPage() {
                             chartData={chartData}
                             loading={loading}
                             apiUsage={apiUsage}
+                            visitStats={visitStats}
                         />
                     )}
 

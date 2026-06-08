@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-06-08 관리자 대시보드 비로그인(게스트) 방문자 집계 신규 + 조회수 중복 수정 — L2/L3 + 9번 SHIP WITH FIXES 반영
+- **조회수 중복(`5e43f66`)**: 좋아요 2→0 수정의 `user?.id` 의존이 fetchPost 2회 호출→조회수 +2 회귀. viewCountedRef로 같은 글 첫 요청만 +1, 재요청은 `?skipView=1` → 1오픈=1조회. (고유 방문자 dedup은 사용자 요청으로 보류 = RELAY NEXT 8)
+- **게스트 방문자 집계 신규**: 기존 대시보드 "접속자"·DAU/WAU/MAU는 전부 `profiles.last_seen_at`=로그인 유저만이라 비로그인 접속이 안 보였음. 신규 구축:
+  - DB: `visit_logs`(visitor_id/user_id/path/created_at, RLS=service_role전용, 인덱스 2개) + `get_visit_stats(p_days)` RPC(KST 일별 전체/고유/게스트/회원, SECURITY DEFINER+search_path). **RPC 실측 검증**(4방문/3고유/게스트2/회원1, dedup 정확).
+  - 비콘 `/api/visit`(POST, 게스트 허용, IP 미저장=익명, rate-limit) + 관리자 `/api/admin/visits`(GET, admin gated, RPC 집계).
+  - 전역 `VisitBeacon` 컴포넌트(layout 렌더 → 모든 라우트 커버). **쿠키 동의 반영**: analytics 동의 시 영속 visitor_id(고유 방문자), 미동의 시 세션 한정 익명 id(교차세션 추적X). 세션당 1회.
+  - 대시보드 "방문자(게스트 포함)" 섹션: 오늘 방문자/비로그인/회원 카드 + 7일 추이 차트.
+- 9번 적대검증: SHIP WITH FIXES → ①IP 저장 제거+동의 게이트(PIPA/배너 일치) ②`/`만→전역 layout 커버리지 **둘 다 반영**. 인덱스·RPC·search_path는 실측으로 이미 충족 확인. retention은 저트래픽이라 보류(RELAY NEXT 9).
+- 검증: tsc+build ✓, RPC E2E ✓(L3). 실제 방문 누적·대시보드 표시는 배포 후 L4.
+
+---
+
 ## 2026-06-08 게시글 좋아요 "2→0"·새로고침 시 목록 이동(웹) — L2 + 9번 SHIP WITH FIXES 반영
 - **좋아요 2→0(웹)**: `getAuthUser()`는 Authorization Bearer 헤더만 읽는데(쿠키 X), `PostDetailView.fetchPost`가 plain `fetch()`로 상세를 불러와 토큰 미전송 → 서버 currentUser=null → post/comment userLiked 전부 false. 내가 이미 누른 좋아요가 "안 눌림"으로 보여 누르면 낙관적 +1(2)→서버 '이미 있음→삭제'→0. (모바일 앱은 loadPost가 토큰 전송해 정상=웹 전용). 이전 GET userLiked 계산 수정이 웹에선 토큰 없어 무효였던 것. 수정: fetchPost→`authFetch(..., {cache:"no-store"})` + 의존성에 `user?.id`(세션 하이드레이트 시 재요청, 토큰 레이스 보정).
 - **새로고침→목록(웹)**: 커뮤니티 탭 SPA에서 글 열 때 `pushState({},"")`로 URL 미변경 → 새로고침 시 postId 없어 목록. 수정: handleSelectPost가 URL에 `?post=` 추가, 홈 딥링크(initialPostId)도 replaceState 반영, 마운트 시 `?post=` 복원, 상세→닫힘 "전환" 시에만(prevRef로 초기/복원 레이스 방지) `?post` 제거(서브카테고리/탭 전환으로 닫아도 새로고침 시 재오픈 안 되게).

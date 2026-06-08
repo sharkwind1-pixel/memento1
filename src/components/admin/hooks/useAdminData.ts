@@ -24,6 +24,7 @@ import {
     MagazineArticleRow,
     UserDetailData,
     ApiUsageData,
+    VisitStats,
 } from "../types";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
@@ -45,6 +46,7 @@ interface UseAdminDataReturn {
     magazineArticles: MagazineArticleRow[];
     userDetails: Record<string, UserDetailData>;
     apiUsage: ApiUsageData | null;
+    visitStats: VisitStats | null;
 
     // 데이터 로드 함수
     loadDashboardStats: () => Promise<void>;
@@ -57,6 +59,7 @@ interface UseAdminDataReturn {
     loadMagazineArticles: () => Promise<void>;
     loadUserDetail: (userId: string) => Promise<void>;
     loadApiUsage: () => Promise<void>;
+    loadVisitStats: () => Promise<void>;
 
     // 상태 업데이트 함수 (외부에서 직접 수정 필요시)
     setUsers: React.Dispatch<React.SetStateAction<UserRow[]>>;
@@ -100,6 +103,7 @@ export function useAdminData(): UseAdminDataReturn {
     const [magazineArticles, setMagazineArticles] = useState<MagazineArticleRow[]>([]);
     const [userDetails, setUserDetails] = useState<Record<string, UserDetailData>>({});
     const [apiUsage, setApiUsage] = useState<ApiUsageData | null>(null);
+    const [visitStats, setVisitStats] = useState<VisitStats | null>(null);
 
     // ========================================================================
     // 대시보드 통계 로드
@@ -457,6 +461,20 @@ export function useAdminData(): UseAdminDataReturn {
     }, []);
 
     // ========================================================================
+    // 방문자 통계 조회 (게스트 포함)
+    // ========================================================================
+    const loadVisitStats = useCallback(async () => {
+        try {
+            const res = await authFetch(API.ADMIN_VISITS);
+            if (!res.ok) throw new Error("방문자 통계 조회 실패");
+            const data: VisitStats = await res.json();
+            setVisitStats(data);
+        } catch {
+            // 방문자 통계 조회 실패
+        }
+    }, []);
+
+    // ========================================================================
     // 반환
     // ========================================================================
     return {
@@ -471,6 +489,7 @@ export function useAdminData(): UseAdminDataReturn {
         magazineArticles,
         userDetails,
         apiUsage,
+        visitStats,
         loadDashboardStats,
         loadChartData,
         loadUsers,
@@ -481,6 +500,7 @@ export function useAdminData(): UseAdminDataReturn {
         loadMagazineArticles,
         loadUserDetail,
         loadApiUsage,
+        loadVisitStats,
         setUsers,
         setPosts,
         setInquiries,

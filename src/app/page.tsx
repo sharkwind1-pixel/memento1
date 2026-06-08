@@ -151,6 +151,8 @@ function HomeContent() {
         };
     }, []);
 
+    // (방문 비콘은 전역 컴포넌트 VisitBeacon으로 이동 — 모든 라우트 커버 + 쿠키 동의 반영)
+
     // 로딩 안전장치: AuthContext가 실패하더라도 5초 후 강제 표시
     const [forceShow, setForceShow] = useState(false);
     useEffect(() => {

@@ -27,6 +27,9 @@ import {
     Calendar,
     Zap,
     Video,
+    Globe,
+    UserX,
+    UserCheck,
 } from "lucide-react";
 import {
     AreaChart,
@@ -37,7 +40,7 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from "recharts";
-import { DashboardStats, ChartData, ApiUsageData } from "../types";
+import { DashboardStats, ChartData, ApiUsageData, VisitStats } from "../types";
 import PetProfileMigrationCard from "./PetProfileMigrationCard";
 import PaymentRefundCard from "./PaymentRefundCard";
 
@@ -54,6 +57,8 @@ interface AdminDashboardTabProps {
     loading: boolean;
     /** API 사용량 데이터 */
     apiUsage?: ApiUsageData | null;
+    /** 방문자 통계 (게스트 포함) */
+    visitStats?: VisitStats | null;
 }
 
 // ============================================================================
@@ -98,6 +103,7 @@ export default function AdminDashboardTab({
     chartData,
     loading,
     apiUsage,
+    visitStats,
 }: AdminDashboardTabProps) {
     if (loading) {
         return (
@@ -183,6 +189,61 @@ export default function AdminDashboardTab({
                     </div>
                 </CardContent>
             </Card>
+
+            {/* ================================================================
+                섹션 2.5: 방문자 (게스트 포함) — 비로그인 접속까지 집계
+            ================================================================ */}
+            {visitStats && (
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                            <Globe className="w-4 h-4 text-cyan-500" />
+                            방문자 <span className="text-xs font-normal text-gray-400">(게스트 포함)</span>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-3 pb-3 space-y-3">
+                        <div className="flex gap-2">
+                            <div className="flex-1 text-center py-2 px-1 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg">
+                                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">오늘 방문자</p>
+                                <p className="text-lg font-bold text-cyan-600 leading-tight">
+                                    {visitStats.today.uniqueVisitors.toLocaleString()}
+                                </p>
+                                <p className="text-[10px] text-gray-400">방문 {visitStats.today.totalVisits.toLocaleString()}회</p>
+                            </div>
+                            <div className="flex-1 text-center py-2 px-1 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 flex items-center justify-center gap-1">
+                                    <UserX className="w-3 h-3" />비로그인
+                                </p>
+                                <p className="text-lg font-bold text-orange-600 leading-tight">
+                                    {visitStats.today.guestVisitors.toLocaleString()}
+                                </p>
+                            </div>
+                            <div className="flex-1 text-center py-2 px-1 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 flex items-center justify-center gap-1">
+                                    <UserCheck className="w-3 h-3" />회원
+                                </p>
+                                <p className="text-lg font-bold text-green-600 leading-tight">
+                                    {visitStats.today.memberVisitors.toLocaleString()}
+                                </p>
+                            </div>
+                        </div>
+                        {visitStats.daily.length > 0 && (
+                            <div className="h-40">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={visitStats.daily} margin={{ left: -20, right: 5, top: 5, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                                        <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                                        <Tooltip />
+                                        <Area type="monotone" dataKey="방문자" stroke="#06b6d4" fill="#cffafe" />
+                                        <Area type="monotone" dataKey="비로그인" stroke="#f97316" fill="#ffedd5" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
 
             {/* ================================================================
                 섹션 3: 프리미엄/차단 현황

@@ -83,6 +83,9 @@ export const API = {
     // 크론
     CRON_MAGAZINE_GENERATE: "/api/cron/magazine-generate",
 
+    // 방문 비콘 (게스트 포함 접속 집계)
+    VISIT: "/api/visit",
+
     // 인증/보안
     ME_PET_TYPE: "/api/me/pet-type",
     AUTH_RECORD_IP: "/api/auth/record-ip",
@@ -114,6 +117,7 @@ export const API = {
     ADMIN_USER_DETAIL: "/api/admin/user-detail",
     ADMIN_POSTS: "/api/admin/posts",
     ADMIN_API_USAGE: "/api/admin/api-usage",
+    ADMIN_VISITS: "/api/admin/visits",
 
     // 해시태그
     HASHTAGS: "/api/hashtags",
