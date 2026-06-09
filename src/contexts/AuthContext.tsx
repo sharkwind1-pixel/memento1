@@ -21,6 +21,7 @@ import { ADMIN_EMAILS, type PetIconType, type SubscriptionTier } from "@/config/
 import type { OnboardingData, MinimiEquipState } from "@/types";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
+import { trackFunnel } from "@/lib/funnel";
 import { toast } from "sonner";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import { safeGetItem, safeSetItem, safeRemoveItem, safeSessionGetItem, safeSessionSetItem } from "@/lib/safe-storage";
@@ -681,6 +682,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         }
 
                         // === 차단 체크 통과 — 이제 로그인 상태를 설정 ===
+
+                        // 가입 전환 퍼널: 게스트가 이 세션에서 인증 완료(로그인/가입) = 전환 종착점.
+                        // (fresh SIGNED_IN 경로에서만 실행 — INITIAL_SESSION/restore 제외. trackFunnel이 세션당 1회 dedupe)
+                        trackFunnel("signup");
 
                         // 재가입 유저 온보딩 리셋 — sessionStorage 플래그로 세션당 1회만
                         // SIGNED_IN은 OAuth 콜백, 토큰 갱신 등에서 여러 번 발동 가능

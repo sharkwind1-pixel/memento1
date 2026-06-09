@@ -241,6 +241,38 @@ export default function AdminDashboardTab({
                                 </ResponsiveContainer>
                             </div>
                         )}
+
+                        {/* 가입 전환 퍼널 (최근 7일) — 방문→둘러봄→가입클릭→가입완료 drop-off */}
+                        {visitStats.funnel && visitStats.funnel.length > 0 && visitStats.funnel[0].visitors > 0 && (
+                            <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
+                                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-2">
+                                    가입 전환 퍼널 <span className="text-gray-400">(최근 7일)</span>
+                                </p>
+                                <div className="space-y-1.5">
+                                    {(() => {
+                                        const base = visitStats.funnel![0].visitors || 1;
+                                        // 표시 단조성 보장: 기록 레이스로 다음 단계가 이전보다 커도 true 퍼널(다음 ≤ 이전)로 클램프
+                                        let prev = Infinity;
+                                        return visitStats.funnel!.map((s, i) => {
+                                            const v = Math.min(s.visitors, prev);
+                                            prev = v;
+                                            const pct = Math.min(100, Math.round((v / base) * 100));
+                                            return (
+                                                <div key={i} className="flex items-center gap-2">
+                                                    <span className="w-14 text-[11px] text-gray-600 dark:text-gray-300 shrink-0">{s.step}</span>
+                                                    <div className="flex-1 h-4 bg-gray-100 dark:bg-gray-700 rounded overflow-hidden">
+                                                        <div className="h-full bg-gradient-to-r from-cyan-400 to-cyan-500" style={{ width: `${pct}%` }} />
+                                                    </div>
+                                                    <span className="w-20 text-right text-[11px] text-gray-500 dark:text-gray-400 shrink-0">
+                                                        {v.toLocaleString()} ({pct}%)
+                                                    </span>
+                                                </div>
+                                            );
+                                        });
+                                    })()}
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             )}

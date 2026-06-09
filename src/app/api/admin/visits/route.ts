@@ -46,6 +46,20 @@ export async function GET() {
 
         const rows = (data || []) as VisitStatRow[];
 
+        // 가입 전환 퍼널 (최근 7일, 단계별 고유 방문자 → drop-off)
+        const { data: funnelData } = await admin.rpc("get_funnel_stats", { p_days: 7 });
+        const funnelMap = new Map(
+            ((funnelData || []) as { event: string; visitors: number }[]).map((r) => [r.event, Number(r.visitors)]),
+        );
+        const FUNNEL_STEPS: Array<{ key: string; label: string }> = [
+            { key: "landing", label: "방문" },
+            { key: "scroll", label: "둘러봄" },
+            { key: "cta", label: "가입 클릭" },
+            // signup = 세션 내 인증 완료(신규가입 + 게스트의 재로그인 포함). 신규가입만 아님 → 정직한 라벨.
+            { key: "signup", label: "로그인·가입" },
+        ];
+        const funnel = FUNNEL_STEPS.map((s) => ({ step: s.label, visitors: funnelMap.get(s.key) ?? 0 }));
+
         // KST 기준 오늘/최근 7일 (api-usage와 동일한 +9h 트릭)
         const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
         const todayStr = kstNow.toISOString().split("T")[0];
@@ -71,6 +85,7 @@ export async function GET() {
                 memberVisitors: Number(todayRow?.member_visitors ?? 0),
             },
             daily,
+            funnel,
         });
     } catch {
         return NextResponse.json({ error: "방문자 통계 조회 실패" }, { status: 500 });
