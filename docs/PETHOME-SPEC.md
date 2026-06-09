@@ -313,3 +313,26 @@
 - [ ] 추모 "진짜 목소리 다시 듣기" 넛지(추모 모드 진입 시, 자동재생 X)
 
 > HeroSection의 `MinihompyGuideModal`("미니홈피가 뭔가요?") 본문도 펫홈/꼬미로 교체 대상(A 묶음).
+
+---
+
+## 16. 재활용/충돌 지도 (2026-06-09 코드 감사) — ★기존 기능 누락·중복·충돌 없이 업그레이드
+
+> 원칙: 이건 재구축이 아니라 **메멘토애니 업그레이드**. 남은 작업은 *반드시 기존 자산 재사용*, 새로 만드는 건 최소부분만.
+> 감사 결론: 명칭 전면교체는 **깨끗**(카탈로그 slug 기반·한글 로직키 0·연결 기능 정상). 듀얼모드(`MinihompyStage` isMemorialMode)·포인트·방명록·방문·좋아요·꼬미경제 전부 정상 연결.
+
+**재활용 체크리스트 (작업별: 재사용 / 신규최소 / 깨질위험)**
+| 작업 | 재사용(기존) | 신규 최소 | 위험 |
+|---|---|---|---|
+| ① 맥락 가입후크 | `openAuthModal` dispatch 15곳 + 리스너 `Layout.tsx:370-381` + `AuthModal.tsx`. **선례=`openAccountSettings`의 `event.detail.scrollTo` 패턴** | CustomEvent `detail.message` 추가 → 리스너가 읽어 state → AuthModal prop. 후크별 카피(§7) | 리스너가 현재 `detail` 무시 → 안 읽으면 무동작. 15곳 일괄(웹+앱) 누락 주의 |
+| ② 퍼널 측정 | `VisitBeacon.tsx`·`/api/visit`·`visit_logs`·`/api/admin/visits` | **`visit_logs.event` 컬럼(마이그) + 비콘 step 이벤트(scroll/CTA/signup)** | 비콘 "세션당 1회" 가드가 다중 step 막음 → 이벤트별 분리 필요. **현재 스키마론 측정 불가(갭)** |
+| ③ 진짜 목소리 | `PhotoViewer.tsx:129-140`(`<video>` 플레이어, 오디오 포함)·`pet_media`(원본 오디오 보존 확인)·`isMemorialMode` 분기 | 추모모드 "목소리 다시 듣기" 진입점·autoPlay 제거(수동)·본인전용 가드 | **pet-media=public 버킷 → 공개페이지 노출 금지.** autoplay 남기면 스펙 위반 |
+| ④ 게스트 펫톡 | `chat-pipeline.ts` 가드(`getClientIP`/`checkRateLimit`/`checkVPN`)·코어 모델/프롬프트·`AIChatLoginPrompt` | 인증체크(`:329`) **앞** 게스트 경량 경로·데모펫·핑거프린트/토큰상한·DB미저장·입력창 | 전 파이프라인 `user.id` 의존 → 본 경로에 끼우면 NPE/저장오류. **별도 경량 경로로** |
+| Phase1 공개펫홈 | `MinihompyStage`·`/api/minihompy/[userId]` GET(public)·`KakaoShareButton`/`kakao-share.ts`·닉네임 핸들 인프라(완료) | `src/app/u/[nickname]/page.tsx`(부재)·**nickname→userId lookup(부재)**·게스트 fetch·OG·앱 게스트차단 해제 | 모달 로직 복붙=중복 → `MinihompyStage`+공용 훅으로. 웹만/앱만=패리티 깨짐 |
+
+**발견된 orphan/충돌 Top 3**
+1. **공개펫홈 웹↔앱 비대칭**: 앱 `mobile/app/minihompy/[userId].tsx` 라우트 존재(게스트 하드차단 `:52-56`) vs 웹 모달만(`src/app/u/` 부재). + nickname→userId lookup 부재 = Phase1 실작업.
+2. **퍼널 측정 갭**: `VisitBeacon`은 세션당 1회 진입 path만 → step별 drop 측정 불가. visit_logs는 "구축✓"이나 funnel 단계추적 능력 없음(스키마 확장 필요).
+3. **`openAuthModal` 리스너 payload 무시**(`Layout.tsx:371`): detail 추가해도 안 읽으면 무동작. 15+ dispatch 일괄 수정 필요(절반만 고치면 비일관).
+
+**보안 상수 주의**: `pet-media` = public 버킷(`getPublicUrl`) → 추모 영상/오디오는 공개펫홈에 노출 금지(본인 전용 시작).
