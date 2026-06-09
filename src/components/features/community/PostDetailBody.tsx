@@ -4,7 +4,7 @@
  */
 "use client";
 
-// no React imports needed beyond what JSX provides
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import KakaoShareButton from "@/components/common/KakaoShareButton";
+import ImageLightbox from "./ImageLightbox";
 import LevelBadge from "@/components/features/points/LevelBadge";
 import type { PostData } from "./postDetailTypes";
 import { getBadgeStyle, getBadgeOptions, formatTime } from "./postDetailTypes";
@@ -83,6 +84,9 @@ export default function PostDetailBody({
     onVisitUser,
     onReport,
 }: PostDetailBodyProps) {
+    // 첨부 이미지 확대 보기 (새 탭 대신 모달)
+    const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
     return (
         <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/50 dark:border-gray-700/50 rounded-2xl overflow-hidden">
             {/* 헤더 */}
@@ -246,8 +250,8 @@ export default function PostDetailBody({
                         {post.image_urls.map((url: string, idx: number) => (
                             <div
                                 key={idx}
-                                className="relative rounded-xl overflow-hidden border dark:border-gray-600 cursor-pointer w-full max-w-sm"
-                                onClick={() => window.open(url, "_blank")}
+                                className="relative rounded-xl overflow-hidden border dark:border-gray-600 cursor-zoom-in w-full max-w-sm"
+                                onClick={() => setLightboxSrc(url)}
                             >
                                 {/* 외부 뉴스 og:image 등은 next/image remotePatterns 밖이라 plain img 사용(목록과 동일) */}
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -322,6 +326,9 @@ export default function PostDetailBody({
                     </button>
                 )}
             </div>
+
+            {/* 첨부 이미지 확대 보기 모달 (이미지/배경 클릭·터치·Esc로 닫힘) */}
+            <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
         </div>
     );
 }

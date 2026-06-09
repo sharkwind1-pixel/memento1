@@ -7,7 +7,7 @@ import {
     View, Text, ScrollView, TouchableOpacity,
     Image, TextInput, Alert, ActivityIndicator,
     KeyboardAvoidingView, Platform, Share, StyleSheet,
-    ActionSheetIOS, Linking,
+    ActionSheetIOS, Linking, Modal,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
@@ -171,6 +171,8 @@ export default function PostDetailScreen() {
     const [comments, setComments] = useState<Comment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [commentInput, setCommentInput] = useState("");
+    // 첨부 이미지 확대 보기 (새 화면/브라우저 대신 모달, 탭하면 닫힘)
+    const [lightboxImg, setLightboxImg] = useState<string | null>(null);
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
     const [isDisliking, setIsDisliking] = useState(false);
@@ -697,10 +699,28 @@ export default function PostDetailScreen() {
                     {post.images && post.images.length > 0 && (
                         <View style={{ marginBottom: 16, gap: 8 }}>
                             {post.images.map((img, i) => (
-                                <Image key={i} source={{ uri: img }} style={styles.postImg} resizeMode="cover" />
+                                <TouchableOpacity key={i} activeOpacity={0.9} onPress={() => setLightboxImg(img)}>
+                                    <Image source={{ uri: img }} style={styles.postImg} resizeMode="cover" />
+                                </TouchableOpacity>
                             ))}
                         </View>
                     )}
+
+                    {/* 첨부 이미지 확대 보기 — 이미지/배경 탭 또는 안드 백버튼으로 닫힘 (웹 ImageLightbox 패리티) */}
+                    <Modal visible={lightboxImg !== null} transparent animationType="fade" onRequestClose={() => setLightboxImg(null)}>
+                        <TouchableOpacity
+                            activeOpacity={1}
+                            onPress={() => setLightboxImg(null)}
+                            style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.92)", alignItems: "center", justifyContent: "center" }}
+                        >
+                            {lightboxImg ? (
+                                <Image source={{ uri: lightboxImg }} style={{ width: "100%", height: "85%" }} resizeMode="contain" />
+                            ) : null}
+                            <View style={{ position: "absolute", top: 44, right: 20 }}>
+                                <Ionicons name="close" size={28} color="#fff" />
+                            </View>
+                        </TouchableOpacity>
+                    </Modal>
 
                     <Text
                         style={{
