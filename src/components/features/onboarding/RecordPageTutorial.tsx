@@ -45,8 +45,8 @@ const CURRENT_STEPS: TutorialStep[] = [
     },
     {
         targetId: "minihompy-tab",
-        title: "미니홈피를 꾸며보세요",
-        description: "나만의 공간에 미니미를 배치하고, 방명록도 받을 수 있어요",
+        title: "펫홈을 꾸며보세요",
+        description: "나만의 공간에 꼬미를 배치하고, 방명록도 받을 수 있어요",
         icon: Home,
     },
 ];
@@ -68,7 +68,7 @@ const MEMORIAL_STEPS: TutorialStep[] = [
     {
         targetId: "minihompy-tab",
         title: "추억이 담긴 공간을 만들어요",
-        description: "미니홈피에서 아이와의 추억을 간직하고, 방명록으로 위로를 나눠요",
+        description: "펫홈에서 아이와의 추억을 간직하고, 방명록으로 위로를 나눠요",
         icon: Home,
     },
     {

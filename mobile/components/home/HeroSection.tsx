@@ -3,8 +3,8 @@
  *
  * 3가지 모드:
  *  1. 비로그인: 기존 히어로 (일러스트 + "특별한 매일을 함께" + CTA)
- *  2. 로그인 + 미니미 없음: 쇼케이스 이미지 + 탭 → 미니홈피 탭으로 이동
- *  3. 로그인 + 미니미 있음: 개인 미니홈피 미리보기 + 탭 → 미니홈피 탭으로 이동
+ *  2. 로그인 + 꼬미 없음: 쇼케이스 이미지 + 탭 → 미니홈피 탭으로 이동
+ *  3. 로그인 + 꼬미 있음: 개인 미니홈피 미리보기 + 탭 → 미니홈피 탭으로 이동
  */
 
 import { useEffect, useState, useCallback } from "react";
@@ -79,13 +79,13 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
         return <OriginalHero isMemorialMode={isMemorialMode} isDarkMode={isDarkMode} fontScale={fontScale} spacingScale={spacingScale} iconScale={iconScale} onCta={() => router.push("/(tabs)/ai-chat")} onSecondary={() => router.push("/(tabs)/community")} ctaText="지금 만나러 가기" />;
     }
 
-    // --- 추모 모드: 미니홈피/미니미를 히어로에 노출하지 않음 (추모 정서 보호) ---
-    // 미니미·미니홈피는 일상(꾸미기) 요소라 추모 모드에선 추모 전용 히어로만 보여준다. (웹 HeroSection과 동일)
+    // --- 추모 모드: 미니홈피/꼬미를 히어로에 노출하지 않음 (추모 정서 보호) ---
+    // 꼬미·미니홈피는 일상(꾸미기) 요소라 추모 모드에선 추모 전용 히어로만 보여준다. (웹 HeroSection과 동일)
     if (isMemorialMode) {
         return <OriginalHero isMemorialMode isDarkMode={isDarkMode} fontScale={fontScale} spacingScale={spacingScale} iconScale={iconScale} onCta={() => router.push("/(tabs)/ai-chat")} onSecondary={() => router.push("/(tabs)/community")} ctaText="지금 만나러 가기" />;
     }
 
-    // --- 로그인 + 미니미 있음: 개인 미니홈피 프리뷰 ---
+    // --- 로그인 + 꼬미 있음: 개인 미니홈피 프리뷰 ---
     if (hasMinimi && hasPlacedMinimi) {
         const bg = findBackgroundOrDefault(settings?.backgroundSlug ?? "default_sky");
         return (
@@ -114,7 +114,7 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
         );
     }
 
-    // --- 로그인 + 미니미 없음: 쇼케이스 히어로 ---
+    // --- 로그인 + 꼬미 없음: 쇼케이스 히어로 ---
     return (
         <View style={styles.section}>
             <TouchableOpacity
@@ -134,8 +134,8 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
                 >
                     <View style={styles.showcaseCtaRow}>
                         <View style={{ flex: 1 }}>
-                            <Text style={styles.showcaseTitle}>나만의 미니홈피</Text>
-                            <Text style={styles.showcaseSub}>미니미를 모으고, 내 공간을 꾸며보세요</Text>
+                            <Text style={styles.showcaseTitle}>나만의 펫홈</Text>
+                            <Text style={styles.showcaseSub}>꼬미를 모으고, 내 공간을 꾸며보세요</Text>
                         </View>
                         <View style={styles.showcaseArrow}>
                             <Ionicons name="arrow-forward" size={18} color="#fff" />
@@ -158,7 +158,7 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
 }
 
 // ============================================================================
-// 개인 미니홈피 오버레이 (배치된 미니미 표시 + 인사말)
+// 개인 미니홈피 오버레이 (배치된 꼬미 표시 + 인사말)
 // ============================================================================
 
 function PersonalOverlay({ settings, isMemorialMode, isDarkMode }: {
@@ -171,7 +171,7 @@ function PersonalOverlay({ settings, isMemorialMode, isDarkMode }: {
 
     return (
         <>
-            {/* 배치된 미니미들 */}
+            {/* 배치된 꼬미들 */}
             {placed.map((p, i) => {
                 const minimi = findMinimiOrFallback(p.slug);
                 const left = (p.x / 100) * stageW;
@@ -204,7 +204,7 @@ function PersonalOverlay({ settings, isMemorialMode, isDarkMode }: {
                 style={styles.personalBottomBar}
             >
                 <Ionicons name="home" size={14} color="rgba(255,255,255,0.9)" />
-                <Text style={styles.personalHint}>내 미니홈피</Text>
+                <Text style={styles.personalHint}>내 펫홈</Text>
                 <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.7)" />
             </LinearGradient>
         </>
@@ -218,8 +218,8 @@ function PersonalOverlay({ settings, isMemorialMode, isDarkMode }: {
 const GUIDE_STEPS = [
     {
         icon: "paw" as const,
-        title: "미니미 캐릭터",
-        desc: "강아지, 고양이, 햄스터 등 17종의 귀여운 미니미를 수집할 수 있어요.",
+        title: "꼬미 캐릭터",
+        desc: "강아지, 고양이, 햄스터 등 17종의 귀여운 꼬미를 수집할 수 있어요.",
     },
     {
         icon: "star" as const,
@@ -229,12 +229,12 @@ const GUIDE_STEPS = [
     {
         icon: "color-palette" as const,
         title: "내 공간 꾸미기",
-        desc: "배경 테마를 바꾸고, 미니미를 배치하고, 인사말을 설정해보세요.",
+        desc: "배경 테마를 바꾸고, 꼬미를 배치하고, 인사말을 설정해보세요.",
     },
     {
         icon: "people" as const,
         title: "친구 방문 & 방명록",
-        desc: "다른 유저의 미니홈피를 방문하고, 방명록도 남길 수 있어요.",
+        desc: "다른 유저의 펫홈을 방문하고, 방명록도 남길 수 있어요.",
     },
 ];
 
@@ -259,9 +259,9 @@ function MinihompyGuideModal({ visible, onClose, onStart }: {
                         bounces={false}
                     >
                         {/* 헤더 */}
-                        <Text style={guideStyles.title}>미니홈피가 뭔가요?</Text>
+                        <Text style={guideStyles.title}>펫홈이 뭔가요?</Text>
                         <Text style={guideStyles.subtitle}>
-                            포인트를 모아 미니미를 수집하고,{"\n"}나만의 공간을 꾸밀 수 있어요!
+                            포인트를 모아 꼬미를 수집하고,{"\n"}나만의 공간을 꾸밀 수 있어요!
                         </Text>
 
                         {/* 단계 카드 */}
@@ -279,10 +279,10 @@ function MinihompyGuideModal({ visible, onClose, onStart }: {
                             ))}
                         </View>
 
-                        {/* 미니미 가격 참고 */}
+                        {/* 꼬미 가격 참고 */}
                         <View style={guideStyles.priceHint}>
                             <Ionicons name="information-circle-outline" size={16} color={COLORS.gray[400]} />
-                            <Text style={guideStyles.priceHintText}>미니미 1마리 = 200P, 배경 테마 = 200P</Text>
+                            <Text style={guideStyles.priceHintText}>꼬미 1마리 = 200P, 배경 테마 = 200P</Text>
                         </View>
                     </ScrollView>
 
@@ -293,7 +293,7 @@ function MinihompyGuideModal({ visible, onClose, onStart }: {
                             start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                             style={guideStyles.ctaButton}
                         >
-                            <Text style={guideStyles.ctaText}>미니홈피 시작하기</Text>
+                            <Text style={guideStyles.ctaText}>펫홈 시작하기</Text>
                             <Ionicons name="arrow-forward" size={18} color="#fff" />
                         </LinearGradient>
                     </TouchableOpacity>

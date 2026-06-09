@@ -2,8 +2,8 @@
  * HeroSection.tsx
  * 3가지 모드:
  *  1. 비로그인: 기존 히어로 (일러스트 + "특별한 매일을 함께" + CTA)
- *  2. 로그인 + 미니미 없음: 쇼케이스 이미지 + "나만의 미니홈피" CTA → 미니홈피 탭
- *  3. 로그인 + 미니미 있음: 개인 미니홈피 프리뷰(배경+배치+인사말) → 미니홈피 탭
+ *  2. 로그인 + 꼬미 없음: 쇼케이스 이미지 + "나만의 미니홈피" CTA → 미니홈피 탭
+ *  3. 로그인 + 꼬미 있음: 개인 미니홈피 프리뷰(배경+배치+인사말) → 미니홈피 탭
  */
 
 "use client";
@@ -86,13 +86,13 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
         return <OriginalHero setSelectedTab={setSelectedTab} user={user} isMemorial={isMemorial} />;
     }
 
-    // --- 추모 모드: 미니홈피/미니미를 히어로에 노출하지 않음 (추모 정서 보호) ---
-    // 미니미·미니홈피는 일상(꾸미기) 요소라 추모 모드에선 추모 전용 히어로만 보여준다.
+    // --- 추모 모드: 미니홈피/꼬미를 히어로에 노출하지 않음 (추모 정서 보호) ---
+    // 꼬미·미니홈피는 일상(꾸미기) 요소라 추모 모드에선 추모 전용 히어로만 보여준다.
     if (isMemorial) {
         return <OriginalHero setSelectedTab={setSelectedTab} user={user} isMemorial />;
     }
 
-    // --- 로그인 + 미니미 있음: 개인 미니홈피 프리뷰 ---
+    // --- 로그인 + 꼬미 있음: 개인 미니홈피 프리뷰 ---
     if (hasMinimi && hasPlacedMinimi) {
         const bg = findBackgroundOrDefault(settings?.backgroundSlug ?? "default_sky");
         return (
@@ -107,7 +107,7 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                     ) : (
                         <div className="absolute inset-0" style={{ background: bg.cssBackground }} />
                     )}
-                    {/* 배치된 미니미들 */}
+                    {/* 배치된 꼬미들 */}
                     {(settings?.placedMinimi ?? []).map((p: PlacedMinimi, i: number) => {
                         const cat = CHARACTER_CATALOG.find(c => c.slug === p.slug);
                         if (!cat) return null;
@@ -131,7 +131,7 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                     {/* 하단 바 */}
                     <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/50 to-transparent px-5 pb-4 pt-8 rounded-b-3xl flex items-center gap-2 z-10">
                         <Home className="w-4 h-4 text-white/90" />
-                        <span className="text-sm font-semibold text-white/90 flex-1">내 미니홈피</span>
+                        <span className="text-sm font-semibold text-white/90 flex-1">내 펫홈</span>
                         <ChevronRight className="w-4 h-4 text-white/70 group-hover:translate-x-1 transition-transform" />
                     </div>
                 </button>
@@ -139,7 +139,7 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
         );
     }
 
-    // --- 로그인 + 미니미 없음: 쇼케이스 히어로 ---
+    // --- 로그인 + 꼬미 없음: 쇼케이스 히어로 ---
     return (
         <section className="px-4 pt-4 sm:pt-6" data-tutorial-id="home-hero">
             <button
@@ -159,8 +159,8 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/65 to-transparent px-5 pb-4 pt-10 rounded-b-3xl z-10">
                     <div className="flex items-center gap-3">
                         <div className="flex-1">
-                            <p className="text-[17px] font-extrabold text-white tracking-tight">나만의 미니홈피</p>
-                            <p className="text-xs text-white/80 mt-0.5">미니미를 모으고, 내 공간을 꾸며보세요</p>
+                            <p className="text-[17px] font-extrabold text-white tracking-tight">나만의 펫홈</p>
+                            <p className="text-xs text-white/80 mt-0.5">꼬미를 모으고, 내 공간을 꾸며보세요</p>
                         </div>
                         <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
                             <ArrowRight className="w-4 h-4 text-white" />
@@ -184,10 +184,10 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
 // ============================================================================
 
 const GUIDE_STEPS = [
-    { Icon: PawPrint, title: "미니미 캐릭터", desc: "강아지, 고양이, 햄스터 등 17종의 귀여운 미니미를 수집할 수 있어요." },
+    { Icon: PawPrint, title: "꼬미 캐릭터", desc: "강아지, 고양이, 햄스터 등 17종의 귀여운 꼬미를 수집할 수 있어요." },
     { Icon: Star, title: "포인트로 구매", desc: "출석(10P), 게시글(10P), 댓글(3P), AI 펫톡(1P) 등 활동하면 포인트가 쌓여요." },
-    { Icon: Palette, title: "내 공간 꾸미기", desc: "배경 테마를 바꾸고, 미니미를 배치하고, 인사말을 설정해보세요." },
-    { Icon: Users, title: "친구 방문 & 방명록", desc: "다른 유저의 미니홈피를 방문하고, 방명록도 남길 수 있어요." },
+    { Icon: Palette, title: "내 공간 꾸미기", desc: "배경 테마를 바꾸고, 꼬미를 배치하고, 인사말을 설정해보세요." },
+    { Icon: Users, title: "친구 방문 & 방명록", desc: "다른 유저의 펫홈을 방문하고, 방명록도 남길 수 있어요." },
 ] as const;
 
 function MinihompyGuideModal({ open, onClose, onStart }: {
@@ -213,10 +213,10 @@ function MinihompyGuideModal({ open, onClose, onStart }: {
                 </button>
 
                 <h2 className="text-xl font-extrabold text-gray-800 dark:text-white text-center mt-2 tracking-tight">
-                    미니홈피가 뭔가요?
+                    펫홈이 뭔가요?
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2 mb-5 leading-relaxed">
-                    포인트를 모아 미니미를 수집하고,<br/>나만의 공간을 꾸밀 수 있어요!
+                    포인트를 모아 꼬미를 수집하고,<br/>나만의 공간을 꾸밀 수 있어요!
                 </p>
 
                 <div className="space-y-3">
@@ -235,14 +235,14 @@ function MinihompyGuideModal({ open, onClose, onStart }: {
 
                 <div className="flex items-center justify-center gap-1.5 mt-4 mb-5">
                     <Info className="w-3.5 h-3.5 text-gray-400" />
-                    <span className="text-xs text-gray-400">미니미 1마리 = 200P, 배경 테마 = 200P</span>
+                    <span className="text-xs text-gray-400">꼬미 1마리 = 200P, 배경 테마 = 200P</span>
                 </div>
 
                 <button
                     onClick={onStart}
                     className="w-full bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 text-white font-bold text-[15px] py-4 rounded-2xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95 shadow-[0_4px_16px_-4px_rgba(5,178,220,0.4)]"
                 >
-                    미니홈피 시작하기
+                    펫홈 시작하기
                     <ArrowRight className="w-4 h-4" />
                 </button>
             </div>
