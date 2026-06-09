@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-06-09 게시글 첨부 이미지 클릭 → 모달 라이트박스 (웹+앱) — L2
+배경: 사용자 요청. 이미지 클릭 시 새 탭(window.open `_blank`) 대신 모달로 크게 보고, 재클릭/터치/Esc/백버튼으로 닫힘.
+- **웹**(`c0c7660`): 신규 `ImageLightbox`(controlled — src 있으면 열림, 이미지·배경·Esc로 닫힘). `PostDetailBody`가 `window.open`→`setLightboxSrc` 교체, cursor-zoom-in.
+- **앱 패리티**(`c0c7660`): `post/[id].tsx` 첨부 이미지가 `<Image>`만이라 탭 무반응이던 것 → `TouchableOpacity` 래핑 + 전체화면 `Modal`(배경 탭/onRequestClose 백버튼으로 닫힘).
+- 검증: 웹 L2(tsc+build exit0)/모바일 L2(tsc, 실기 EAS대기). UI-only→9번 비대상.
+
+---
+
 ## 2026-06-09 펫홈 Phase 0 ③ 게스트 AI펫톡 체험 (웹+앱) — L2 + 9번 2회
 배경: 비회원이 가입 전 AI펫톡을 데모펫(초코)과 3회 맛보기 → 가입 전환. 메인 인증경로와 완전 분리된 경량경로(user.id 의존 0).
 - **서버**(`fdb5602`): 신규 `/api/chat/guest` — 코어 gpt-4o-mini + `getDailySystemPrompt` + 가드만 재사용, DB저장/메모리/사진매칭 0. SSE 프로토콜 메인과 동일.
