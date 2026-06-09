@@ -7,6 +7,7 @@
 export const API = {
     // AI 채팅
     CHAT: "/api/chat",
+    CHAT_GUEST: "/api/chat/guest",
     CHAT_SUMMARY: "/api/chat/summary",
     CHAT_USAGE: "/api/chat/usage",
 

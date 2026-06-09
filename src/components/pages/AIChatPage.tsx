@@ -13,7 +13,7 @@
  *
  * 서브컴포넌트:
  * - useAIChat: 비즈니스 로직 커스텀 훅
- * - AIChatLoginPrompt: 비로그인 유도 화면
+ * - GuestChatExperience: 비로그인 AI펫톡 맛보기 체험 화면 (가입 전환)
  * - AIChatNoPets: 펫 미등록 유도 화면
  * - AIChatHeader: 상단 헤더바
  * - PetProfileSidebar: 펫 프로필 사이드바
@@ -40,7 +40,7 @@ import PetProfileSidebar from "@/components/features/chat/PetProfileSidebar";
 import ChatMessageList from "@/components/features/chat/ChatMessageList";
 import ChatInputArea from "@/components/features/chat/ChatInputArea";
 import { useAIChat } from "@/components/features/chat/useAIChat";
-import AIChatLoginPrompt from "@/components/features/chat/AIChatLoginPrompt";
+import GuestChatExperience from "@/components/features/chat/GuestChatExperience";
 import AIChatNoPets from "@/components/features/chat/AIChatNoPets";
 import AIChatHeader from "@/components/features/chat/AIChatHeader";
 import PushNotificationBanner from "@/components/features/chat/PushNotificationBanner";
@@ -160,7 +160,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     // 조건부 렌더링: 비로그인
     // ========================================================================
     if (!user) {
-        return <AIChatLoginPrompt />;
+        return <GuestChatExperience />;
     }
 
     // ========================================================================

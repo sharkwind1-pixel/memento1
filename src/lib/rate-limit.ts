@@ -60,6 +60,12 @@ const RATE_LIMITS = {
         dailyLimit: FREE_LIMITS.DAILY_CHATS, // 무료 회원 일일 제한 (10회)
         dailyLimitAuth: 1000, // 프리미엄 일일 상한 (사람은 하루 100회도 힘듦, 1000 = 봇만 걸림)
     },
+    // 게스트 AI펫톡 체험 (비로그인 — 봇/비용 방어 강화, 분당 타이트)
+    // 사람의 짧은 체험엔 충분, 봇의 대량 호출은 차단. 일일 한도는 클라 3회+전역 비용캡으로 방어.
+    guestChat: {
+        windowMs: 60 * 1000, // 1분
+        maxRequests: 4, // 분당 4회 (체험 3회 + 여유 1)
+    },
     // 인증 관련 (브루트포스 방지)
     auth: {
         windowMs: 15 * 60 * 1000, // 15분
@@ -1021,6 +1027,42 @@ export async function checkGlobalDailyLimit(): Promise<{ allowed: boolean; total
 
         return {
             allowed: totalToday < GLOBAL_DAILY_LIMIT,
+            totalToday,
+        };
+    } catch {
+        return { allowed: true, totalToday: 0 }; // DB 에러 시 통과 (서비스 중단 방지)
+    }
+}
+
+/**
+ * 게스트(비로그인) 전용 전역 일일 상한
+ * 게스트 행(identifier "guest:IP", usage_type "ai_chat")만 합산해 별도 캡 적용.
+ * 목적: 게스트 대량 트래픽이 전체 GLOBAL_DAILY_LIMIT을 소진해 결제 유저까지 503되는 것(가용성 인질)을 차단.
+ * 게스트는 이 캡 + 전역 캡 둘 다의 하위(min)로 제한된다.
+ */
+const GUEST_GLOBAL_DAILY_LIMIT = 3000; // 게스트 일일 합산 상한 (결제 유저 가용성 보호용 서브캡)
+
+export async function checkGuestGlobalDailyLimit(): Promise<{ allowed: boolean; totalToday: number }> {
+    const supabase = getRateLimitSupabase();
+    if (!supabase) return { allowed: true, totalToday: 0 }; // DB 없으면 통과
+
+    try {
+        const now = new Date();
+        const kstOffset = 9 * 60 * 60 * 1000;
+        const kstDate = new Date(now.getTime() + kstOffset).toISOString().split("T")[0];
+
+        // 오늘 게스트(guest:*) ai_chat 사용량만 합산 (identifier 선두 컬럼 prefix 스캔)
+        const { data } = await supabase
+            .from("user_daily_usage")
+            .select("request_count")
+            .eq("usage_type", "ai_chat")
+            .eq("usage_date", kstDate)
+            .like("identifier", "guest:%");
+
+        const totalToday = (data || []).reduce((sum, row) => sum + (row.request_count || 0), 0);
+
+        return {
+            allowed: totalToday < GUEST_GLOBAL_DAILY_LIMIT,
             totalToday,
         };
     } catch {

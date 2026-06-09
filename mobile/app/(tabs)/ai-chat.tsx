@@ -52,6 +52,7 @@ import ExportChatModal from "@/components/chat/ExportChatModal";
 import PawLoading from "@/components/ui/PawLoading";
 import MemorialAmbientStars from "@/components/chat/MemorialAmbientStars";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import GuestChatExperience from "@/components/chat/GuestChatExperience";
 
 interface ReminderItem {
     type: string;
@@ -798,6 +799,11 @@ export default function AiChatScreen() {
             : [COLORS.memento[50], COLORS.memento[75], "#FFFFFF"];
 
     const usedCount = Math.min(limit === Infinity ? 0 : limit, limit === Infinity ? 0 : (limit - remainingChats));
+
+    // 비로그인 게스트 → AI펫톡 맛보기 체험 (가입 전환, 웹 GuestChatExperience 패리티)
+    if (!session) {
+        return <GuestChatExperience />;
+    }
 
     if (!selectedPet) {
         return (
