@@ -1135,6 +1135,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     .update({ nickname: data.nickname })
                     .eq("id", userId);
                 if (profileError) {
+                    // 대소문자 무관 unique(lower(nickname)) 위반 → 친절 안내
+                    if ((profileError as { code?: string }).code === "23505") {
+                        return { error: new Error("이미 사용 중인 이름이에요. 다른 이름을 골라주세요.") };
+                    }
                     console.error("[Auth] profiles 닉네임 동기화 실패:", profileError.message);
                     return { error: new Error("닉네임 저장에 실패했어요. 다시 시도해주세요.") };
                 }
