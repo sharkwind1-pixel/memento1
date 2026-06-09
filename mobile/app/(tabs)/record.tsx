@@ -31,6 +31,7 @@ import PetSwitcher from "@/components/common/PetSwitcher";
 import TimelineWriteModal, { type TimelineEntryDraft, type TimelineMood } from "@/components/record/TimelineWriteModal";
 import MediaUploadModal from "@/components/record/MediaUploadModal";
 import PhotoLightbox from "@/components/record/PhotoLightbox";
+import VoiceMemorySection from "@/components/record/VoiceMemorySection";
 import AlbumDetailModal from "@/components/record/AlbumDetailModal";
 import VideoGenerateModal from "@/components/record/VideoGenerateModal";
 import RemindersSummary from "@/components/record/RemindersSummary";
@@ -217,6 +218,7 @@ export default function RecordScreen() {
                     {activeTab === "gallery" && (
                         <GalleryTab
                             petId={selectedPet.id}
+                            petName={selectedPet.name}
                             photos={selectedPet.photos}
                             isMemorialMode={isMemorialMode}
                             accentColor={accentColor}
@@ -866,8 +868,9 @@ const GALLERY_CELL = Math.floor((Dimensions.get("window").width - 24) / 3);
 // ============================================
 // 사진첩 탭
 // ============================================
-function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, onRefresh }: {
+function GalleryTab({ petId, petName, photos, isMemorialMode, accentColor, refreshing, onRefresh }: {
     petId: string;
+    petName: string;
     photos: NonNullable<ReturnType<typeof usePet>["selectedPet"]>["photos"];
     isMemorialMode: boolean;
     accentColor: string;
@@ -955,6 +958,15 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
                 ListHeaderComponent={
                     <View>
+                        {isMemorialMode && (
+                            <View style={{ marginBottom: 16 }}>
+                                <VoiceMemorySection
+                                    petName={petName}
+                                    photos={photos}
+                                    onUploadPress={() => setUploadOpen(true)}
+                                />
+                            </View>
+                        )}
                         <View style={styles.galleryHeader}>
                             {selectionMode ? (
                                 <>

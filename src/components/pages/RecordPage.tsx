@@ -38,6 +38,7 @@ import PetPhotoAlbum from "@/components/features/record/PetPhotoAlbum";
 import RemindersSection from "@/components/features/reminders/RemindersSection";
 import MemoryAlbumsSection from "@/components/features/record/MemoryAlbumsSection";
 import HealingJourneySection from "@/components/features/record/HealingJourneySection";
+import VoiceMemorySection from "@/components/features/record/VoiceMemorySection";
 import TimelineSection from "@/components/features/record/TimelineSection";
 import ProfileTab from "@/components/features/record/ProfileTab";
 import PetCardGrid from "@/components/features/record/PetCardGrid";
@@ -74,6 +75,8 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
     const [editingPet, setEditingPet] = useState<Pet | null>(null);
     const [isPhotoUploadOpen, setIsPhotoUploadOpen] = useState(false);
     const [viewingPhotoIndex, setViewingPhotoIndex] = useState<number | null>(null);
+    // 영상 뷰어 자동재생 — 앨범 클릭은 true(기존 동작), 추모 "목소리 다시 듣기"는 false(수동재생)
+    const [photoViewerAutoPlay, setPhotoViewerAutoPlay] = useState(true);
     const [petToDelete, setPetToDelete] = useState<Pet | null>(null);
 
     // 마이페이지 상태 — hydration 후 localStorage에서 복원
@@ -545,6 +548,17 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                                                         petName={selectedPet.name}
                                                     />
                                                 </div>
+                                                <div className="mt-6">
+                                                    <VoiceMemorySection
+                                                        petName={selectedPet.name}
+                                                        photos={selectedPet.photos}
+                                                        onPlayVideo={(idx) => {
+                                                            setPhotoViewerAutoPlay(false);
+                                                            setViewingPhotoIndex(idx);
+                                                        }}
+                                                        onUploadClick={() => setIsPhotoUploadOpen(true)}
+                                                    />
+                                                </div>
                                             </>
                                         )}
 
@@ -552,6 +566,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                                             selectedPet={selectedPet}
                                             onPhotoClick={(photo) => {
                                                 const idx = selectedPet.photos.findIndex(p => p.id === photo.id);
+                                                setPhotoViewerAutoPlay(true);
                                                 setViewingPhotoIndex(idx >= 0 ? idx : 0);
                                             }}
                                             onUploadClick={() => setIsPhotoUploadOpen(true)}
@@ -608,6 +623,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                     photos={selectedPet.photos}
                     currentIndex={viewingPhotoIndex}
                     petName={selectedPet.name}
+                    autoPlay={photoViewerAutoPlay}
                     onClose={() => setViewingPhotoIndex(null)}
                     onNavigate={(idx) => setViewingPhotoIndex(idx)}
                     onDelete={async () => {

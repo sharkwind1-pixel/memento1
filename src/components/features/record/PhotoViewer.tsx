@@ -16,6 +16,8 @@ interface PhotoViewerProps {
     onClose: () => void;
     onDelete: () => void;
     onNavigate: (index: number) => void;
+    /** 영상 자동재생 여부. 기본 true(후방호환). 추모 "목소리 다시 듣기"는 false로 수동재생 — 갑작스러운 재생 방지 + 소리 있는 autoplay 차단 회피. */
+    autoPlay?: boolean;
 }
 
 export default function PhotoViewer({
@@ -25,6 +27,7 @@ export default function PhotoViewer({
     onClose,
     onDelete,
     onNavigate,
+    autoPlay = true,
 }: PhotoViewerProps) {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const photo = photos[currentIndex];
@@ -131,7 +134,7 @@ export default function PhotoViewer({
                             <video
                                 src={photo.url}
                                 controls
-                                autoPlay
+                                autoPlay={autoPlay}
                                 className="w-full max-h-[70vh] object-contain"
                                 poster={photo.thumbnailUrl}
                             >
