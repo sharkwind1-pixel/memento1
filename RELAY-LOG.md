@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-06-09 펫홈 Phase 0 ① 맥락 가입후크 (웹+앱) — L2 + 후방호환 self-review
+배경: 비회원→가입 진짜 누수=동기. 좋아요/댓글/방명록 시도 시 "왜 가입하는지" 가치문구로 전환 유도. 기존 자산 재사용·새 인증 X.
+- **웹**(`8151cd7`): `openAuthModal` CustomEvent에 `detail.message` 추가(openAccountSettings의 detail.scrollTo 선례 패턴). Layout 리스너→state→AuthModal `contextMessage` prop+Sparkles 배너. **기존 15곳 dispatch는 detail 없이도 그대로 동작(깨짐 0)**. 후크 카피: 글 좋아요/비추천·댓글 좋아요/작성. **MinihompyVisitModal 펫홈 좋아요·방명록이 toast만 띄우고 가입경로 없던 누수→후크 교체.**
+- **앱 패리티**(`8151cd7`): `post/[id].tsx` 글 좋아요/비추천·댓글 작성·댓글 좋아요/비추천이 게스트 시 **무반응 silent return**이던 누수→`Alert(가치문구, [취소,로그인→login])`(MemorialSection 선례). CommentItem에 local promptLogin(useRouter).
+- 검증: 웹 L2(tsc+next build) / 모바일 L2(tsc, 실기 EAS대기). UI-only(DB·광범위 아님)→9번 비대상.
+
+---
+
 ## 2026-06-09 사업계획서 가격 동기화 + 검산오류 교정 — L2 + 9번 SHIP OK
 배경: 라이브 제품은 9,900원으로 수정됐는데(8a23701) 사업계획서 .md 2개는 7,900원으로 잔존. 모두의창업 멘토 피드백(BM 명확화) 대응 겸 동기화.
 - 가격 9,900 기준 전 파생값 재검산(`3a2f1ab`): LTV 178,200·LTV/CAC 22.3x, 구독 297만/792만, 월매출 합계 docs/business 668만·1,805만(AI영상 단건 수익원 추가)/창업중심대학 617만·1,652만, SAM 3,196억, 한도 펫10·사진1,000·AI영상 월3회.
