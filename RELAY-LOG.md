@@ -4,6 +4,20 @@
 
 ---
 
+## 2026-06-09 펫홈(싸이월드형) 전환개선 — 설계 + Phase 0 구현 (웹+앱) — L2~L4 + 9번 다회 검증
+배경: 비회원→가입 전환이 막힘(진짜 누수=동기). 해법='펫홈' 와꾸 + AI를 대표액션으로. **단일 진실 = `docs/PETHOME-SPEC.md`(§12 로드맵·§13 결정·§14 패널·§15 튜토리얼체크) + `docs/AI-ROADMAP.md`.**
+- **설계/결정**(8c61d94 5e5ab91 26d8e26 a189873 3c83fa2 a3e90d5): 명칭 펫홈/꼬미/이웃, **핸들=가입 닉네임 재사용**(`/u/{nickname}`), 게스트 AI펫톡 체험 3회 유지, 추모=톤만 전환, **voice=진짜 목소리 다시 듣기**(합성 X), 펫톡 코어 gpt-4o-mini 유지. 9인 패널 검토→"측정 먼저, 이웃/핸들풀구현/공개페이지는 Phase1+ 보류" 권고 일부 사용자 기각(핸들=닉네임으로 마찰해소, 게스트체험 유지).
+- **Phase 0 구현**(웹+앱 패리티):
+  - 비회원 히어로 카피·CTA(`4f47f91`): "우리 아이와 대화해보세요"+AI펫톡·펫홈 어우러짐+"무료로 시작하기".
+  - 명칭 전면 미니홈피→펫홈/미니미→꼬미(`4e5c761`·`0961c9e`·`407b266`): 52파일+API 사용자노출, 한글 조사 수기 보정(미니홈피를→펫홈을), 9번 SHIP WITH FIXES(API 문자열 3건) 반영.
+  - 닉네임=펫홈 주소(`bcae452`): DB `unique(lower(nickname))`+`is_nickname_taken` RPC, 모달 펫홈주소 프레이밍/URL검증/`/u/____` 미리보기/공개고지(웹+앱), checkNickname 대소문자무관+본인제외.
+  - **★가입 회귀 수정(`317909b`)**: unique 제약+`handle_new_user` bare INSERT 충돌 → 자동닉네임 충돌 시 **소셜 가입 자체가 롤백되던 것**(9번 path A) → 트리거 접미사 자동부여(test→test2)+예외 재시도. **E2E 실증(L4 prod 롤백)**.
+- **DB**: `supabase/migrations/20260609_*` 3건 기록(visit_logs / nickname_uniqueness / handle_new_user 충돌안전). MCP `apply_migration`으로 prod 적용 완료.
+- **검증**: 전부 웹 tsc+build + 모바일 tsc(L2), RPC/트리거 E2E(L3~L4), Vercel 배포 READY. 시각(L5)은 사용자 확인 대기.
+- **남은 Phase 0**(→ RELAY NEXT): 맥락 가입후크 / visit_logs 퍼널 측정 / 진짜 목소리 다시 듣기 / 게스트 체험 3회.
+
+---
+
 ## 2026-06-08 관리자 대시보드 비로그인(게스트) 방문자 집계 신규 + 조회수 중복 수정 — L2/L3 + 9번 SHIP WITH FIXES 반영
 - **조회수 중복(`5e43f66`)**: 좋아요 2→0 수정의 `user?.id` 의존이 fetchPost 2회 호출→조회수 +2 회귀. viewCountedRef로 같은 글 첫 요청만 +1, 재요청은 `?skipView=1` → 1오픈=1조회. (고유 방문자 dedup은 사용자 요청으로 보류 = RELAY NEXT 8)
 - **게스트 방문자 집계 신규**: 기존 대시보드 "접속자"·DAU/WAU/MAU는 전부 `profiles.last_seen_at`=로그인 유저만이라 비로그인 접속이 안 보였음. 신규 구축:
