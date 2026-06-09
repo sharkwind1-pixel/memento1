@@ -1,8 +1,8 @@
 /**
- * VisitorsModal — 미니홈피 방문자 목록 (본인만)
+ * VisitorsModal — 펫홈 방문자 목록 (본인만)
  *
  * GET /api/minihompy/[userId]/visitors → 최근 50명
- *  - 로그인 방문자: 닉네임 + 아바타 (탭하면 그 사람 미니홈피로 이동)
+ *  - 로그인 방문자: 닉네임 + 아바타 (탭하면 그 사람 펫홈으로 이동)
  *  - 익명 방문자: "익명 방문자"
  */
 
@@ -106,7 +106,7 @@ export default function VisitorsModal({ visible, onClose, accentColor }: Props) 
                             아직 방문자가 없어요
                         </Text>
                         <Text style={[styles.emptyHint, { color: subColor }]}>
-                            미니홈피를 공개하면 누군가 다녀갈 수 있어요
+                            펫홈을 공개하면 누군가 다녀갈 수 있어요
                         </Text>
                     </View>
                 ) : (

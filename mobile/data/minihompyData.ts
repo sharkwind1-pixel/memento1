@@ -1,5 +1,5 @@
 /**
- * 미니홈피 데이터 — 웹 src/data/minimiPixels.ts + minihompyBackgrounds.ts 이식.
+ * 펫홈 데이터 — 웹 src/data/minimiPixels.ts + minihompyBackgrounds.ts 이식.
  * 이미지 URL은 절대 URL(API_BASE_URL/icons/...)로 변환해서 사용한다 (웹 정적 파일 재사용).
  */
 
@@ -12,7 +12,7 @@ function abs(path: string): string {
 }
 
 // ============================================================================
-// 미니미 카탈로그 (6종)
+// 꼬미 카탈로그 (6종)
 // ============================================================================
 
 export const MINIMI_CATALOG: MinimiCharacter[] = [

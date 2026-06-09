@@ -1,10 +1,10 @@
 /**
- * StageEditor — 미니홈피 스테이지 자유 배치 편집기
+ * StageEditor — 펫홈 스테이지 자유 배치 편집기
  *
  * 웹 src/components/features/minihompy/MinihompyStage.tsx + MinimiPlacementPicker 이식.
- * - 편집 모드: 보유 미니미를 stage 위에 PanResponder로 드래그
+ * - 편집 모드: 보유 꼬미를 stage 위에 PanResponder로 드래그
  * - x/y는 5~95% 범위로 clamp (서버 검증식과 동일)
- * - "+" 버튼: 보유 인벤토리에서 미니미 추가 (Alert 액션 시트)
+ * - "+" 버튼: 보유 인벤토리에서 꼬미 추가 (Alert 액션 시트)
  * - 길게 누르면 삭제 옵션
  * - 저장 → PUT /api/minihompy/settings/placed-minimi
  *
@@ -31,7 +31,7 @@ import type { PlacedMinimi, BackgroundTheme, UserMinimiRow } from "@/types";
 
 // 웹 baseSize 매칭: 모바일 40px (compact 32px). 64는 너무 컸음.
 const MINIMI_SIZE = 40;
-// 편집 모드 hit area 확장 (작은 미니미 손가락으로 잡기 쉽게)
+// 편집 모드 hit area 확장 (작은 꼬미 손가락으로 잡기 쉽게)
 const HIT_PADDING = 20;
 // 배치 제한 없음 (보유한 만큼 자유 배치)
 
@@ -39,17 +39,17 @@ interface Props {
     stageHeight: number;
     background: BackgroundTheme;
     placedMinimi: PlacedMinimi[];
-    ownedSlugs: string[];          // 보유한 미니미 slug 목록
+    ownedSlugs: string[];          // 보유한 꼬미 slug 목록
     ownedFurniture?: string[];     // 보유한 가구 slug 목록 (중복 포함)
     inventory: UserMinimiRow[];    // 보유 row (slug 매핑용 — 사용처 미사용이지만 인터페이스 호환)
     accessToken: string;
     accentColor: string;
-    /** 비편집 모드에서 미니미 터치 시 메시지/액션 모드 (daily/memorial) */
+    /** 비편집 모드에서 꼬미 터치 시 메시지/액션 모드 (daily/memorial) */
     isMemorialMode?: boolean;
     onChanged: (next: PlacedMinimi[]) => void;
     /** 편집 모드 진입/종료 시 부모에 알림 → 부모 ScrollView scroll 잠금 */
     onEditingChange?: (editing: boolean) => void;
-    /** 비편집 모드에서 미니미 터치 시 부모에 알림 → 부모가 추가 효과(파티클 등) 발사 */
+    /** 비편집 모드에서 꼬미 터치 시 부모에 알림 → 부모가 추가 효과(파티클 등) 발사 */
     onTouch?: () => void;
 }
 
@@ -90,7 +90,7 @@ export default function StageEditor({
         // 부모에 알림 (파티클 등 추가 효과 트리거)
         onTouch?.();
 
-        // 연속 터치 카운트 (같은 미니미 + 2.5초 이내)
+        // 연속 터치 카운트 (같은 꼬미 + 2.5초 이내)
         const now = Date.now();
         const prev = consecutiveRef.current;
         const isSameAndRecent = prev.index === idx && now - prev.lastAt < 2500;
@@ -149,7 +149,7 @@ export default function StageEditor({
         if (ownedSlugs.length === 0 && ownedFurniture.length === 0) {
             Alert.alert(
                 "보유 아이템 없음",
-                "먼저 미니미 상점이나 가구 상점에서 아이템을 구매해주세요.",
+                "먼저 꼬미 상점이나 가구 상점에서 아이템을 구매해주세요.",
             );
             return;
         }
@@ -173,7 +173,7 @@ export default function StageEditor({
         const it = working[index];
         const itemName = it?.type === "furniture"
             ? findFurnitureOrFallback(it.slug).name
-            : (findMinimi(it?.slug)?.name ?? "미니미");
+            : (findMinimi(it?.slug)?.name ?? "꼬미");
         Alert.alert(
             "삭제",
             `${itemName}을(를) 스테이지에서 제거할까요?`,
@@ -200,7 +200,7 @@ export default function StageEditor({
 
     const stageContent = (
         <>
-            {/* 미니미들 */}
+            {/* 꼬미들 */}
             {(editMode ? working : placedMinimi).map((p, idx) => (
                 <DraggableMinimi
                     key={`${p.slug}-${idx}`}
@@ -222,7 +222,7 @@ export default function StageEditor({
             {/* 빈 stage 안내 */}
             {!editMode && placedMinimi.length === 0 && (
                 <View style={styles.emptyHint}>
-                    <Text style={styles.emptyHintText}>편집 버튼을 눌러 미니미를 배치해보세요</Text>
+                    <Text style={styles.emptyHintText}>편집 버튼을 눌러 꼬미를 배치해보세요</Text>
                 </View>
             )}
 
@@ -299,13 +299,13 @@ export default function StageEditor({
                     >
                         <Ionicons name="move" size={16} color={accentColor} />
                         <Text style={[styles.btnSecondaryText, { color: accentColor }]}>
-                            미니미 자유 배치 ({placedMinimi.length})
+                            꼬미 자유 배치 ({placedMinimi.length})
                         </Text>
                     </TouchableOpacity>
                 )}
             </View>
 
-            {/* 보관함 (인벤토리 그리드 — 미니미/가구 탭) */}
+            {/* 보관함 (인벤토리 그리드 — 꼬미/가구 탭) */}
             <InventoryPickerModal
                 visible={pickerOpen}
                 onClose={() => setPickerOpen(false)}
@@ -325,7 +325,7 @@ export default function StageEditor({
 }
 
 // ============================================================================
-// 보관함 (인벤토리 그리드) — 보유 미니미를 그리드로 표시, 탭하면 stage에 추가
+// 보관함 (인벤토리 그리드) — 보유 꼬미를 그리드로 표시, 탭하면 stage에 추가
 // ============================================================================
 
 function InventoryPickerModal({
@@ -333,7 +333,7 @@ function InventoryPickerModal({
 }: {
     visible: boolean;
     onClose: () => void;
-    ownedSlugs: string[];               // 미니미 — 중복 포함 raw 목록
+    ownedSlugs: string[];               // 꼬미 — 중복 포함 raw 목록
     ownedFurniture: string[];           // 가구 — 중복 포함 raw 목록
     placedMinimiCounts: Record<string, number>;
     placedFurnitureCounts: Record<string, number>;
@@ -355,12 +355,12 @@ function InventoryPickerModal({
     const chipBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
     const chipColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[600];
 
-    // 모달 열릴 때 미니미 탭으로 초기화
+    // 모달 열릴 때 꼬미 탭으로 초기화
     useEffect(() => {
         if (visible) setTab("minimi");
     }, [visible]);
 
-    // 중복 제거 + 수량 집계 (미니미/가구 각각)
+    // 중복 제거 + 수량 집계 (꼬미/가구 각각)
     const minimiCounts = useMemo(() => {
         const c: Record<string, number> = {};
         for (const s of ownedSlugs) c[s] = (c[s] ?? 0) + 1;
@@ -393,7 +393,7 @@ function InventoryPickerModal({
                     </View>
                 </View>
 
-                {/* 미니미 / 가구 탭 */}
+                {/* 꼬미 / 가구 탭 */}
                 <View style={[pickerStyles.tabRow, { backgroundColor: headerBg, borderBottomColor: headerBorder }]}>
                     {(["minimi", "furniture"] as const).map((t) => (
                         <TouchableOpacity
@@ -406,7 +406,7 @@ function InventoryPickerModal({
                             ]}
                         >
                             <Text style={{ fontSize: 13, fontWeight: "700", color: tab === t ? "#fff" : chipColor }}>
-                                {t === "minimi" ? "미니미" : "가구"}
+                                {t === "minimi" ? "꼬미" : "가구"}
                             </Text>
                         </TouchableOpacity>
                     ))}
@@ -422,10 +422,10 @@ function InventoryPickerModal({
                         <View style={pickerStyles.empty}>
                             <Ionicons name={isMin ? "paw-outline" : "cube-outline"} size={36} color={COLORS.gray[300]} />
                             <Text style={[pickerStyles.emptyText, { color: emptyTextColor }]}>
-                                {isMin ? "보유한 미니미가 없어요" : "보유한 가구가 없어요"}
+                                {isMin ? "보유한 꼬미가 없어요" : "보유한 가구가 없어요"}
                             </Text>
                             <Text style={[pickerStyles.emptyHint, { color: subColor }]}>
-                                {isMin ? "미니미 상점에서 캐릭터를 구매해보세요" : "가구 상점에서 아이템을 구매해보세요"}
+                                {isMin ? "꼬미 상점에서 캐릭터를 구매해보세요" : "가구 상점에서 아이템을 구매해보세요"}
                             </Text>
                         </View>
                     }
@@ -509,7 +509,7 @@ const pickerStyles = StyleSheet.create({
 });
 
 // ============================================================================
-// 드래그 가능한 단일 미니미
+// 드래그 가능한 단일 꼬미
 // ============================================================================
 
 /**
@@ -547,7 +547,7 @@ function DraggableMinimi({
 
     // **중요**: PanResponder는 mount 시 한 번만 생성. placed.x/y가 deps에 들어가면
     // 매 move마다 부모 state 변경 → useMemo 재계산 → panResponder 새 인스턴스 →
-    // 진행 중 gesture context 잃고 미니미가 제자리로 튐 (떨림 증상의 원인).
+    // 진행 중 gesture context 잃고 꼬미가 제자리로 튐 (떨림 증상의 원인).
     // 최신 값은 ref로 access.
     const placedRef = useRef(placed);
     placedRef.current = placed;
@@ -618,10 +618,10 @@ function DraggableMinimi({
     const leftPx = (placed.x / 100) * stageWidth - HIT_W / 2;
     const topPx = (placed.y / 100) * stageHeight - HIT_H / 2;
 
-    // z-index 레이어링: 가구는 항상 미니미보다 뒤(배경 가까이)에 깔린다.
+    // z-index 레이어링: 가구는 항상 꼬미보다 뒤(배경 가까이)에 깔린다.
     //  - 가구: 0~99 밴드 (배치순)
-    //  - 미니미: 100+ 밴드 (가구를 가리지 않고 항상 위에 보임)
-    //  - 터치 이펙트 중인 미니미: 최상단(999)
+    //  - 꼬미: 100+ 밴드 (가구를 가리지 않고 항상 위에 보임)
+    //  - 터치 이펙트 중인 꼬미: 최상단(999)
     const baseZ = placed.zIndex ?? index;
     const zIdx = touchAction !== null
         ? 999
@@ -638,7 +638,7 @@ function DraggableMinimi({
             ]}
             {...panResponder.panHandlers}
         >
-            {/* 말풍선 — 미니미만 (가구는 터치 반응 없음) */}
+            {/* 말풍선 — 꼬미만 (가구는 터치 반응 없음) */}
             {!isFurniture && touchMessage && (
                 <SpeechBubble key={triggerKey} message={touchMessage} />
             )}
@@ -667,7 +667,7 @@ function DraggableMinimi({
 }
 
 // ============================================================================
-// 미니미 이미지 + 액션 애니메이션 (웹 minimiJump/Spin/Wiggle/... 매핑)
+// 꼬미 이미지 + 액션 애니메이션 (웹 minimiJump/Spin/Wiggle/... 매핑)
 // ============================================================================
 
 function AnimatedMinimi({ imageUrl, action, triggerKey }: { imageUrl: string; action: MinimiAction | null; triggerKey: number }) {
@@ -853,7 +853,7 @@ const styles = StyleSheet.create({
     minimiImg: { width: MINIMI_SIZE, height: MINIMI_SIZE },
     bubble: {
         position: "absolute",
-        // 미니미 위로 완전히 띄움(웹 HeroSection/MinihompyStage의 bottom-full과 동일) —
+        // 꼬미 위로 완전히 띄움(웹 HeroSection/MinihompyStage의 bottom-full과 동일) —
         // 터치 확대 애니메이션 중에도 얼굴을 가리지 않도록.
         bottom: "100%",
         marginBottom: 6,
@@ -931,5 +931,5 @@ const styles = StyleSheet.create({
     btnPrimaryText: { fontSize: 12, fontWeight: "700", color: "#fff" },
 });
 
-// 미니미 + stage 배경 한 번에 export
+// 꼬미 + stage 배경 한 번에 export
 export { findMinimi, findBackgroundOrDefault };

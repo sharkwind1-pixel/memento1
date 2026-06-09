@@ -2,8 +2,8 @@
  * HeroSection.tsx
  * 3가지 모드:
  *  1. 비로그인: 기존 히어로 (일러스트 + "특별한 매일을 함께" + CTA)
- *  2. 로그인 + 꼬미 없음: 쇼케이스 이미지 + "나만의 미니홈피" CTA → 미니홈피 탭
- *  3. 로그인 + 꼬미 있음: 개인 미니홈피 프리뷰(배경+배치+인사말) → 미니홈피 탭
+ *  2. 로그인 + 꼬미 없음: 쇼케이스 이미지 + "나만의 펫홈" CTA → 펫홈 탭
+ *  3. 로그인 + 꼬미 있음: 개인 펫홈 프리뷰(배경+배치+인사말) → 펫홈 탭
  */
 
 "use client";
@@ -86,13 +86,13 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
         return <OriginalHero setSelectedTab={setSelectedTab} user={user} isMemorial={isMemorial} />;
     }
 
-    // --- 추모 모드: 미니홈피/꼬미를 히어로에 노출하지 않음 (추모 정서 보호) ---
-    // 꼬미·미니홈피는 일상(꾸미기) 요소라 추모 모드에선 추모 전용 히어로만 보여준다.
+    // --- 추모 모드: 펫홈/꼬미를 히어로에 노출하지 않음 (추모 정서 보호) ---
+    // 꼬미·펫홈은 일상(꾸미기) 요소라 추모 모드에선 추모 전용 히어로만 보여준다.
     if (isMemorial) {
         return <OriginalHero setSelectedTab={setSelectedTab} user={user} isMemorial />;
     }
 
-    // --- 로그인 + 꼬미 있음: 개인 미니홈피 프리뷰 ---
+    // --- 로그인 + 꼬미 있음: 개인 펫홈 프리뷰 ---
     if (hasMinimi && hasPlacedMinimi) {
         const bg = findBackgroundOrDefault(settings?.backgroundSlug ?? "default_sky");
         return (
@@ -149,7 +149,7 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
             >
                 <Image
                     src="/icons/minimi/hero-showcase.jpg"
-                    alt="미니홈피 쇼케이스"
+                    alt="펫홈 쇼케이스"
                     fill
                     className="object-cover"
                     priority
@@ -169,7 +169,7 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                 </div>
             </button>
 
-            {/* 미니홈피 안내 가이드 */}
+            {/* 펫홈 안내 가이드 */}
             <MinihompyGuideModal
                 open={guideOpen}
                 onClose={() => setGuideOpen(false)}
@@ -180,7 +180,7 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
 }
 
 // ============================================================================
-// 미니홈피 안내 가이드 모달
+// 펫홈 안내 가이드 모달
 // ============================================================================
 
 const GUIDE_STEPS = [

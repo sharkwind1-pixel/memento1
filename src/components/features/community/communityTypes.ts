@@ -46,7 +46,7 @@ export interface Post {
     isPinned?: boolean; // 상단 고정 (공지)
     noticeScope?: "board" | "global" | null; // 공지 범위
     region?: string; // 지역 (지역정보 게시판)
-    authorMinimiSlug?: string | null; // 작성자 미니미 slug (미니홈피 아바타 표시용)
+    authorMinimiSlug?: string | null; // 작성자 꼬미 slug (펫홈 아바타 표시용)
     authorPoints?: number; // 작성자 포인트 (등급 아이콘 표시용)
     authorIsAdmin?: boolean; // 작성자 관리자 여부 (관리자 아이콘 표시용)
     /** 작성자가 글 작성 시 연결한 반려동물. null 가능 (종 평등/동명 펫 식별용) */

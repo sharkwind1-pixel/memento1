@@ -1,9 +1,9 @@
 /**
  * MinihompyShop.tsx
- * 통합 상점 — 미니미 / 가구 / 배경을 한 모달에서 전부 구매
+ * 통합 상점 — 꼬미 / 가구 / 배경을 한 모달에서 전부 구매
  *
- * 구조: 상단 3탭(미니미/가구/배경) + 각 탭별 구매 그리드
- * - 미니미: /api/minimi/catalog + /api/minimi/purchase (+ 구매 후 자동 장착)
+ * 구조: 상단 3탭(꼬미/가구/배경) + 각 탭별 구매 그리드
+ * - 꼬미: /api/minimi/catalog + /api/minimi/purchase (+ 구매 후 자동 장착)
  * - 가구:  FURNITURE_CATALOG(로컬) + /api/furniture/purchase
  * - 배경:  /api/minihompy/backgrounds + /api/minihompy/backgrounds/purchase
  *
@@ -51,7 +51,7 @@ interface BackgroundCatalogItem extends BackgroundTheme {
 }
 
 const TAB_META: { key: ShopTab; label: string; Icon: typeof PawPrint }[] = [
-    { key: "minimi", label: "미니미", Icon: PawPrint },
+    { key: "minimi", label: "꼬미", Icon: PawPrint },
     { key: "furniture", label: "가구", Icon: Armchair },
     { key: "background", label: "배경", Icon: Palette },
 ];
@@ -67,7 +67,7 @@ export default function MinihompyShop({
 
     const [tab, setTab] = useState<ShopTab>(initialTab);
 
-    // 미니미
+    // 꼬미
     const [characters, setCharacters] = useState<CatalogCharacter[]>([]);
     const [ownedMinimi, setOwnedMinimi] = useState<string[]>([]);
     const [loadingMinimi, setLoadingMinimi] = useState(true);
@@ -94,7 +94,7 @@ export default function MinihompyShop({
         setLoadingBg(true);
         refreshPoints();
 
-        // 미니미 카탈로그 + 보유
+        // 꼬미 카탈로그 + 보유
         Promise.all([
             fetch(API.MINIMI_CATALOG).then(r => r.json()).catch(() => ({ characters: [] })),
             authFetch(API.MINIMI_INVENTORY).then(r => r.ok ? r.json() : { characters: [] }).catch(() => ({ characters: [] })),

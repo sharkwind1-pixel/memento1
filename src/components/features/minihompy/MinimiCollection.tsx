@@ -1,7 +1,7 @@
 /**
  * MinimiCollection.tsx
- * 미니미 도감 - 사용자가 보유한 미니미 목록
- * 보유 미니미와 미보유 미니미를 구분하여 도감 형태로 표시
+ * 꼬미 도감 - 사용자가 보유한 꼬미 목록
+ * 보유 꼬미와 미보유 꼬미를 구분하여 도감 형태로 표시
  */
 
 "use client";
@@ -23,7 +23,7 @@ interface OwnedCharRow {
 
 interface MinimiCollectionProps {
     onMinimiClick?: (slug: string, owned: boolean) => void;
-    /** "상점 열기" 버튼과 미보유 미니미 클릭 시 상점 모달 오픈 — initialSlug 있으면 해당 캐릭터로 스크롤 */
+    /** "상점 열기" 버튼과 미보유 꼬미 클릭 시 상점 모달 오픈 — initialSlug 있으면 해당 캐릭터로 스크롤 */
     onOpenShop?: (initialSlug?: string) => void;
 }
 
@@ -31,7 +31,7 @@ export default function MinimiCollection({ onMinimiClick, onOpenShop }: MinimiCo
     const [ownedMinimi, setOwnedMinimi] = useState<OwnedCharRow[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // 보유 미니미 로드
+    // 보유 꼬미 로드
     const loadInventory = useCallback(async () => {
         try {
             const res = await authFetch(API.MINIMI_INVENTORY);
@@ -55,7 +55,7 @@ export default function MinimiCollection({ onMinimiClick, onOpenShop }: MinimiCo
         return ownedMinimi.some(m => m.minimi_id === slug);
     };
 
-    // 보유 미니미 수
+    // 보유 꼬미 수
     const ownedCount = CHARACTER_CATALOG.filter(c => isOwned(c.slug)).length;
     const totalCount = CHARACTER_CATALOG.length;
     const completionPercent = Math.round((ownedCount / totalCount) * 100);
@@ -77,7 +77,7 @@ export default function MinimiCollection({ onMinimiClick, onOpenShop }: MinimiCo
                 <div className="flex items-center gap-2">
                     <Book className="w-5 h-5 text-memorial-500" />
                     <h3 className="font-semibold text-gray-800 dark:text-white">
-                        미니미 도감
+                        꼬미 도감
                     </h3>
                 </div>
                 <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export default function MinimiCollection({ onMinimiClick, onOpenShop }: MinimiCo
                     className="w-full mb-3 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-white font-medium text-sm shadow-sm hover:shadow-md active:scale-[0.98] transition-all"
                 >
                     <ShoppingBag className="w-4 h-4" />
-                    미니미 상점 열기
+                    꼬미 상점 열기
                 </button>
             )}
 
@@ -111,7 +111,7 @@ export default function MinimiCollection({ onMinimiClick, onOpenShop }: MinimiCo
                     const handleClick = () => {
                         // 1. 기존 콜백 (있으면)
                         onMinimiClick?.(character.slug, owned);
-                        // 2. 미보유 미니미 클릭 시 상점 자동 오픈 — 해당 slug로 스크롤
+                        // 2. 미보유 꼬미 클릭 시 상점 자동 오픈 — 해당 slug로 스크롤
                         if (!owned && onOpenShop) {
                             onOpenShop(character.slug);
                         }
@@ -128,7 +128,7 @@ export default function MinimiCollection({ onMinimiClick, onOpenShop }: MinimiCo
                                     : "bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-memento-300 hover:shadow-sm active:scale-95"
                             )}
                         >
-                            {/* 미니미 이미지 */}
+                            {/* 꼬미 이미지 */}
                             <div className="relative w-12 h-12 sm:w-14 sm:h-14">
                                 <Image
                                     src={character.imageUrl}
@@ -174,7 +174,7 @@ export default function MinimiCollection({ onMinimiClick, onOpenShop }: MinimiCo
                 <div className="mt-4 p-3 bg-gradient-to-r from-memorial-100 to-orange-100 dark:from-memorial-900/30 dark:to-orange-900/30 rounded-xl text-center">
                     <Sparkles className="w-5 h-5 text-memorial-500 mx-auto mb-1" />
                     <p className="text-sm font-medium text-memorial-700 dark:text-memorial-300">
-                        축하해요! 모든 미니미를 모았어요!
+                        축하해요! 모든 꼬미를 모았어요!
                     </p>
                 </div>
             )}

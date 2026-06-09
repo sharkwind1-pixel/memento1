@@ -2,8 +2,8 @@
  * MinihompyShopModal — 통합 상점 (네이티브)
  * 웹 src/components/features/minihompy/MinihompyShop.tsx 이식.
  *
- * 미니미 / 가구 / 배경 3탭을 한 모달에서 전부 구매.
- * - 미니미: getMinimiCatalog + getMinimiInventory + purchaseMinimi (+ 자동 장착)
+ * 꼬미 / 가구 / 배경 3탭을 한 모달에서 전부 구매.
+ * - 꼬미: getMinimiCatalog + getMinimiInventory + purchaseMinimi (+ 자동 장착)
  * - 가구:  FURNITURE_CATALOG(로컬) + getFurnitureInventory + purchaseFurniture
  * - 배경:  BACKGROUND_CATALOG(로컬) + getOwnedBackgrounds + purchaseBackground
  *
@@ -51,7 +51,7 @@ export default function MinihompyShopModal({
 
     const [tab, setTab] = useState<ShopTab>(initialTab);
 
-    // 미니미
+    // 꼬미
     const [catalog, setCatalog] = useState<MinimiCatalogItem[]>([]);
     const [ownedMinimi, setOwnedMinimi] = useState<Set<string>>(new Set());
     // 가구
@@ -161,7 +161,7 @@ export default function MinihompyShopModal({
     const pointPillBg = isDarkMode ? "rgba(5,178,220,0.12)" : COLORS.memento[50];
 
     const TABS: { key: ShopTab; label: string; icon: React.ComponentProps<typeof Ionicons>["name"] }[] = [
-        { key: "minimi", label: "미니미", icon: "paw" },
+        { key: "minimi", label: "꼬미", icon: "paw" },
         { key: "furniture", label: "가구", icon: "bed" },
         { key: "background", label: "배경", icon: "color-palette" },
     ];
@@ -178,7 +178,7 @@ export default function MinihompyShopModal({
                     </TouchableOpacity>
                     <View style={{ flex: 1 }}>
                         <Text style={[styles.headerTitle, { color: titleColor }]}>상점</Text>
-                        <Text style={[styles.headerSub, { color: subColor }]}>미니미 · 가구 · 배경 구매</Text>
+                        <Text style={[styles.headerSub, { color: subColor }]}>꼬미 · 가구 · 배경 구매</Text>
                     </View>
                     <View style={[styles.pointPill, { backgroundColor: pointPillBg }]}>
                         <Ionicons name="star" size={12} color={COLORS.memento[500]} />

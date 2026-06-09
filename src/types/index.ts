@@ -664,17 +664,17 @@ export interface PointAwardResult {
 }
 
 // ============================================
-// 13. 미니미 시스템 타입
+// 13. 꼬미 시스템 타입
 // ============================================
 
-/** 미니미 픽셀 데이터 (CSS box-shadow 렌더링용) */
+/** 꼬미 픽셀 데이터 (CSS box-shadow 렌더링용) */
 export interface PixelData {
     width: number;
     height: number;
     pixels: string;
 }
 
-/** 미니미 캐릭터 카테고리 */
+/** 꼬미 캐릭터 카테고리 */
 export type MinimiCategory = "dog" | "cat" | "other";
 
 /** 악세서리 카테고리 */
@@ -683,7 +683,7 @@ export type AccessoryCategory = "hat" | "glasses" | "necklace" | "etc";
 /** 악세서리 레이어 위치 */
 export type AccessoryLayer = "top" | "face" | "neck";
 
-/** 미니미 캐릭터 (카탈로그) */
+/** 꼬미 캐릭터 (카탈로그) */
 export interface MinimiCharacter {
     id: string;
     slug: string;
@@ -698,7 +698,7 @@ export interface MinimiCharacter {
     description?: string;
 }
 
-/** 미니미 악세서리 (카탈로그) */
+/** 꼬미 악세서리 (카탈로그) */
 export interface MinimiAccessory {
     id: string;
     slug: string;
@@ -714,7 +714,7 @@ export interface MinimiAccessory {
     description?: string;
 }
 
-/** 사용자 보유 미니미 */
+/** 사용자 보유 꼬미 */
 export interface UserMinimi {
     id: string;
     minimiId: string;
@@ -730,7 +730,7 @@ export interface UserMinimiAccessory {
     accessory: MinimiAccessory;
 }
 
-/** 미니미 장착 상태 */
+/** 꼬미 장착 상태 */
 export interface MinimiEquipState {
     minimiId: string | null;
     accessoryIds: string[];
@@ -740,13 +740,13 @@ export interface MinimiEquipState {
 }
 
 // ============================================
-// 14. 미니홈피 시스템 타입
+// 14. 펫홈 시스템 타입
 // ============================================
 
-/** 미니홈피 배경 테마 카테고리 */
+/** 펫홈 배경 테마 카테고리 */
 export type BackgroundCategory = "nature" | "sky" | "season" | "special" | "room";
 
-/** 미니홈피 배경 테마 */
+/** 펫홈 배경 테마 */
 export interface BackgroundTheme {
     id: string;
     slug: string;
@@ -758,7 +758,7 @@ export interface BackgroundTheme {
     description?: string;
 }
 
-/** 미니홈피 스테이지에 배치된 아이템 (미니미 또는 가구) */
+/** 펫홈 스테이지에 배치된 아이템 (꼬미 또는 가구) */
 export interface PlacedMinimi {
     slug: string;
     x: number;     // 0-100 (% 단위)
@@ -792,7 +792,7 @@ export interface UserFurnitureRow {
     purchase_price?: number;
 }
 
-/** 미니홈피 설정 */
+/** 펫홈 설정 */
 export interface MinihompySettings {
     userId: string;
     isPublic: boolean;
@@ -816,7 +816,7 @@ export interface GuestbookEntry {
     createdAt: string;
 }
 
-/** 다른 사용자 미니홈피 데이터 (방문 시) */
+/** 다른 사용자 펫홈 데이터 (방문 시) */
 export interface MinihompyViewData {
     settings: MinihompySettings;
     ownerNickname: string;

@@ -63,7 +63,7 @@ interface AuthContextType {
     points: number;
     pointsLoaded: boolean;
     refreshPoints: () => Promise<void>;
-    // 미니미 장착 상태
+    // 꼬미 장착 상태
     minimiEquip: MinimiEquipState;
     refreshMinimi: () => Promise<void>;
     // 인증 메서드
@@ -259,7 +259,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             }
 
-            // 미니미 장착 상태 설정 (equipped_minimi_id는 user_minimi UUID → slug 변환 필요)
+            // 꼬미 장착 상태 설정 (equipped_minimi_id는 user_minimi UUID → slug 변환 필요)
             if (!error && data) {
                 let equippedSlug: string | null = null;
                 const equippedUuid = data.equipped_minimi_id || null;
@@ -417,7 +417,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => window.removeEventListener("memento:refresh-points", handleRefreshPoints);
     }, [refreshPoints]);
 
-    // 미니미 장착 상태만 새로고침 (장착/구매/판매 후 호출용)
+    // 꼬미 장착 상태만 새로고침 (장착/구매/판매 후 호출용)
     const refreshMinimi = useCallback(async () => {
         try {
             const { data: { session: currentSession } } = await supabase.auth.getSession();
@@ -468,7 +468,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 });
             }
         } catch {
-            // 미니미 새로고침 실패해도 앱 사용에 영향 없음
+            // 꼬미 새로고침 실패해도 앱 사용에 영향 없음
         }
     }, []);
 

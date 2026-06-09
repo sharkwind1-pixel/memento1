@@ -1,6 +1,6 @@
 /**
  * furnitureCatalog.ts (mobile)
- * 미니홈피 가구/소품 카탈로그
+ * 펫홈 가구/소품 카탈로그
  * 웹 src/data/furnitureCatalog.ts 이식. 이미지 URL은 절대 경로.
  */
 

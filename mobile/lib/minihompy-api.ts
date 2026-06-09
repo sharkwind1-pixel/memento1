@@ -1,5 +1,5 @@
 /**
- * 미니홈피 API 클라이언트 — 웹 API 그대로 호출.
+ * 펫홈 API 클라이언트 — 웹 API 그대로 호출.
  * 모든 함수는 access_token 필요. 실패 시 throw.
  */
 
@@ -46,7 +46,7 @@ async function callApi<T>(
 }
 
 // ============================================================================
-// 미니홈피 설정
+// 펫홈 설정
 // ============================================================================
 
 interface SettingsResponse {
@@ -70,7 +70,7 @@ function normalizeSettings(s: SettingsResponse["settings"]): MinihompySettings {
         totalVisitors: s.totalVisitors ?? 0,
         totalLikes: s.totalLikes ?? 0,
         // **중요**: placedMinimi 매핑 추가. 누락하면 저장 후 다음 load에서
-        // 빈 배열로 덮어써서 미니미가 사라져 보임.
+        // 빈 배열로 덮어써서 꼬미가 사라져 보임.
         placedMinimi: Array.isArray(s.placedMinimi) ? s.placedMinimi : [],
     };
 }
@@ -93,7 +93,7 @@ export async function patchMinihompySettings(
 }
 
 // ============================================================================
-// 미니미 카탈로그 / 인벤토리 / 구매·장착·판매
+// 꼬미 카탈로그 / 인벤토리 / 구매·장착·판매
 // ============================================================================
 
 interface CatalogResponse {
@@ -173,7 +173,7 @@ export async function purchaseBackground(accessToken: string, slug: string): Pro
 }
 
 // ============================================================================
-// 미니미 배치 (스테이지 자유 배치)
+// 꼬미 배치 (스테이지 자유 배치)
 // ============================================================================
 
 export async function putPlacedMinimi(
@@ -188,7 +188,7 @@ export async function putPlacedMinimi(
 }
 
 // ============================================================================
-// 다른 유저 미니홈피 방문
+// 다른 유저 펫홈 방문
 // ============================================================================
 
 /**
@@ -316,7 +316,7 @@ export async function getGuestbook(
         writerId: e.visitorId,
         writerNickname: e.visitorNickname,
         // 서버는 minimi 픽셀 데이터(JSON)를 주지 avatar URL이 아님 → 일단 빈값.
-        // 미니미 그리기는 별도 컴포넌트로 후속 작업.
+        // 꼬미 그리기는 별도 컴포넌트로 후속 작업.
         writerAvatar: undefined,
         content: e.content,
         createdAt: e.createdAt,

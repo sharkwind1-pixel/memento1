@@ -94,8 +94,8 @@ export default function MinimiPlacementPicker({
                 <div className="text-center py-6 text-gray-400 dark:text-gray-500">
                     <p className="text-sm">
                         {owned.length === 0
-                            ? "보관함이 비어있어요. 미니미 상점에서 구매해보세요!"
-                            : "모든 미니미가 스테이지에 배치중이에요"}
+                            ? "보관함이 비어있어요. 꼬미 상점에서 구매해보세요!"
+                            : "모든 꼬미가 스테이지에 배치중이에요"}
                     </p>
                 </div>
             ) : (

@@ -1,6 +1,6 @@
 /**
  * MinihompySettingsSection.tsx
- * 미니홈피 설정 섹션 - 공개/비공개, 인사말 편집, 배경 변경
+ * 펫홈 설정 섹션 - 공개/비공개, 인사말 편집, 배경 변경
  */
 
 "use client";
@@ -69,7 +69,7 @@ export default function MinihompySettingsSection({
                 <div className="flex items-center gap-2 mb-3">
                     <Settings className="w-5 h-5 text-memento-600" />
                     <h3 className="font-semibold text-gray-800 dark:text-white">
-                        미니홈피 설정
+                        펫홈 설정
                     </h3>
                 </div>
 

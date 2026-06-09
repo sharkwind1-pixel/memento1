@@ -697,7 +697,7 @@ export default function PostDetailView({
                 />
             )}
 
-            {/* 미니홈피 방문 모달 */}
+            {/* 펫홈 방문 모달 */}
             {visitUserId && (
                 <MinihompyVisitModal
                     isOpen={true}

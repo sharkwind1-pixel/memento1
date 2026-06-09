@@ -280,7 +280,7 @@ export type AdminTab =
 // ============================================
 
 // ============================================
-// 9.5 미니홈피 / 미니미
+// 9.5 펫홈 / 꼬미
 // ============================================
 
 export type MinimiCategory = "dog" | "cat" | "other";
@@ -334,7 +334,7 @@ export interface MinihompySettings {
     placedMinimi?: PlacedMinimi[];
 }
 
-/** 스테이지에 자유 배치된 아이템 (미니미 또는 가구, x/y는 5~95 범위 %) */
+/** 스테이지에 자유 배치된 아이템 (꼬미 또는 가구, x/y는 5~95 범위 %) */
 export interface PlacedMinimi {
     slug: string;
     x: number;

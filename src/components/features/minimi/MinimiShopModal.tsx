@@ -1,6 +1,6 @@
 /**
  * MinimiShopModal.tsx
- * 미니미 상점 - 캐릭터 구매
+ * 꼬미 상점 - 캐릭터 구매
  */
 
 "use client";
@@ -30,7 +30,7 @@ interface MinimiShopModalProps {
     onClose: () => void;
     ownedCharacters?: string[];
     onPurchased?: () => void;
-    /** 모달 열릴 때 이 slug로 자동 스크롤 + 1회 펄스 강조 (미니미 도감에서 미보유 클릭 시 등) */
+    /** 모달 열릴 때 이 slug로 자동 스크롤 + 1회 펄스 강조 (꼬미 도감에서 미보유 클릭 시 등) */
     initialSlug?: string;
 }
 
@@ -172,7 +172,7 @@ export default function MinimiShopModal({
                             <div className="flex items-center gap-2">
                                 <ShoppingBag className="w-5 h-5" />
                                 <div>
-                                    <h2 id="minimi-shop-title" className="text-sm font-bold leading-tight">미니미 상점</h2>
+                                    <h2 id="minimi-shop-title" className="text-sm font-bold leading-tight">꼬미 상점</h2>
                                     <p className="text-white/80 text-[11px]">
                                         보유: {points.toLocaleString()}P
                                     </p>
@@ -329,7 +329,7 @@ export default function MinimiShopModal({
                     {/* 하단 안내 - sticky */}
                     <div className="sticky bottom-0 z-10 px-3 py-2 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-b-2xl">
                         <p className="text-[10px] text-gray-400 text-center">
-                            구매한 미니미는 영구 소유이며, {Math.round(MINIMI.RESELL_RATIO * 100)}% 가격에 되팔기 가능합니다.
+                            구매한 꼬미는 영구 소유이며, {Math.round(MINIMI.RESELL_RATIO * 100)}% 가격에 되팔기 가능합니다.
                         </p>
                     </div>
 

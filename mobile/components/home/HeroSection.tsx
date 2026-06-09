@@ -3,8 +3,8 @@
  *
  * 3가지 모드:
  *  1. 비로그인: 기존 히어로 (일러스트 + "특별한 매일을 함께" + CTA)
- *  2. 로그인 + 꼬미 없음: 쇼케이스 이미지 + 탭 → 미니홈피 탭으로 이동
- *  3. 로그인 + 꼬미 있음: 개인 미니홈피 미리보기 + 탭 → 미니홈피 탭으로 이동
+ *  2. 로그인 + 꼬미 없음: 쇼케이스 이미지 + 탭 → 펫홈 탭으로 이동
+ *  3. 로그인 + 꼬미 있음: 개인 펫홈 미리보기 + 탭 → 펫홈 탭으로 이동
  */
 
 import { useEffect, useState, useCallback } from "react";
@@ -37,7 +37,7 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
     const router = useRouter();
     const accessToken = session?.access_token ?? null;
 
-    // 미니홈피 데이터 (로그인 유저만)
+    // 펫홈 데이터 (로그인 유저만)
     const [settings, setSettings] = useState<MinihompySettings | null>(null);
     const [ownedMinimis, setOwnedMinimis] = useState<UserMinimiRow[]>([]);
     const [loaded, setLoaded] = useState(false);
@@ -79,13 +79,13 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
         return <OriginalHero isMemorialMode={isMemorialMode} isDarkMode={isDarkMode} fontScale={fontScale} spacingScale={spacingScale} iconScale={iconScale} onCta={() => router.push("/(tabs)/ai-chat")} onSecondary={() => router.push("/(tabs)/community")} ctaText="지금 만나러 가기" />;
     }
 
-    // --- 추모 모드: 미니홈피/꼬미를 히어로에 노출하지 않음 (추모 정서 보호) ---
-    // 꼬미·미니홈피는 일상(꾸미기) 요소라 추모 모드에선 추모 전용 히어로만 보여준다. (웹 HeroSection과 동일)
+    // --- 추모 모드: 펫홈/꼬미를 히어로에 노출하지 않음 (추모 정서 보호) ---
+    // 꼬미·펫홈은 일상(꾸미기) 요소라 추모 모드에선 추모 전용 히어로만 보여준다. (웹 HeroSection과 동일)
     if (isMemorialMode) {
         return <OriginalHero isMemorialMode isDarkMode={isDarkMode} fontScale={fontScale} spacingScale={spacingScale} iconScale={iconScale} onCta={() => router.push("/(tabs)/ai-chat")} onSecondary={() => router.push("/(tabs)/community")} ctaText="지금 만나러 가기" />;
     }
 
-    // --- 로그인 + 꼬미 있음: 개인 미니홈피 프리뷰 ---
+    // --- 로그인 + 꼬미 있음: 개인 펫홈 프리뷰 ---
     if (hasMinimi && hasPlacedMinimi) {
         const bg = findBackgroundOrDefault(settings?.backgroundSlug ?? "default_sky");
         return (
@@ -144,7 +144,7 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
                 </LinearGradient>
             </TouchableOpacity>
 
-            {/* 미니홈피 안내 가이드 모달 */}
+            {/* 펫홈 안내 가이드 모달 */}
             <MinihompyGuideModal
                 visible={guideOpen}
                 onClose={() => setGuideOpen(false)}
@@ -158,7 +158,7 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
 }
 
 // ============================================================================
-// 개인 미니홈피 오버레이 (배치된 꼬미 표시 + 인사말)
+// 개인 펫홈 오버레이 (배치된 꼬미 표시 + 인사말)
 // ============================================================================
 
 function PersonalOverlay({ settings, isMemorialMode, isDarkMode }: {
@@ -198,7 +198,7 @@ function PersonalOverlay({ settings, isMemorialMode, isDarkMode }: {
                 </View>
             )}
 
-            {/* 하단 바 — 미니홈피 바로가기 힌트 */}
+            {/* 하단 바 — 펫홈 바로가기 힌트 */}
             <LinearGradient
                 colors={["transparent", "rgba(0,0,0,0.5)"]}
                 style={styles.personalBottomBar}
@@ -212,7 +212,7 @@ function PersonalOverlay({ settings, isMemorialMode, isDarkMode }: {
 }
 
 // ============================================================================
-// 미니홈피 안내 가이드 모달
+// 펫홈 안내 가이드 모달
 // ============================================================================
 
 const GUIDE_STEPS = [
@@ -661,7 +661,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    // 개인 미니홈피 프리뷰
+    // 개인 펫홈 프리뷰
     personalStage: {
         position: "relative",
         overflow: "hidden",

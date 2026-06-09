@@ -1,6 +1,6 @@
 /**
  * BackgroundShopModal.tsx
- * 미니홈피 배경 상점 - 배경 테마 구매 + 적용
+ * 펫홈 배경 상점 - 배경 테마 구매 + 적용
  */
 
 "use client";

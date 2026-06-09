@@ -1,7 +1,7 @@
 /**
  * minimiReactions.ts
  *
- * 미니미 터치 반응 — 종별 × 모드별 × 연속 터치 레벨별 대사 풀.
+ * 꼬미 터치 반응 — 종별 × 모드별 × 연속 터치 레벨별 대사 풀.
  *
  * 철학:
  * - 일상 모드: 종별 성격을 살린 My Little Puppy 감성
@@ -1383,10 +1383,10 @@ export const REACTIONS_DEFAULT: ReactionsByMode = {
 };
 
 /**
- * 미니미 반응 선택.
- * 같은 미니미가 같은 메시지 연속 노출되면 중복감↑ → "최근 N개" 캐시로 회피.
+ * 꼬미 반응 선택.
+ * 같은 꼬미가 같은 메시지 연속 노출되면 중복감↑ → "최근 N개" 캐시로 회피.
  *
- * @param slug 미니미 slug
+ * @param slug 꼬미 slug
  * @param mode "daily" | "memorial"
  * @param consecutiveCount 연속 터치 횟수 (1부터)
  */

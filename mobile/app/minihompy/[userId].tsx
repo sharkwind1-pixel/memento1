@@ -1,10 +1,10 @@
 /**
- * 다른 유저 미니홈피 방문 화면
+ * 다른 유저 펫홈 방문 화면
  *  - GET /api/minihompy/[userId] → settings + 주인 정보 + isLiked
  *  - POST /api/minihompy/[userId]/visit (마운트 시 1회)
  *  - POST /api/minihompy/[userId]/like (좋아요 토글)
  *  - 방명록 GuestbookModal (ownerUserId 전달)
- *  - 비공개 미니홈피이거나 fetch 실패 시 안내 화면
+ *  - 비공개 펫홈이거나 fetch 실패 시 안내 화면
  */
 
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -66,7 +66,7 @@ export default function VisitMinihompyScreen() {
                 postMinihompyVisit(accessToken, userId).catch(() => {});
             }
         } catch (e) {
-            setError(e instanceof Error ? e.message : "미니홈피를 불러올 수 없어요.");
+            setError(e instanceof Error ? e.message : "펫홈을 불러올 수 없어요.");
         } finally {
             setLoading(false);
         }
@@ -112,7 +112,7 @@ export default function VisitMinihompyScreen() {
         return (
             <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
                 <Stack.Screen options={{ headerShown: false }} />
-                <AppHeader showBack title="미니홈피" hideActions />
+                <AppHeader showBack title="펫홈" hideActions />
                 <View style={styles.center}>
                     <ActivityIndicator color={accentColor} />
                 </View>
@@ -124,10 +124,10 @@ export default function VisitMinihompyScreen() {
         return (
             <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
                 <Stack.Screen options={{ headerShown: false }} />
-                <AppHeader showBack title="미니홈피" hideActions />
+                <AppHeader showBack title="펫홈" hideActions />
                 <View style={styles.center}>
                     <Ionicons name="alert-circle-outline" size={36} color={COLORS.gray[400]} />
-                    <Text style={styles.errorText}>{error || "미니홈피를 찾을 수 없어요"}</Text>
+                    <Text style={styles.errorText}>{error || "펫홈을 찾을 수 없어요"}</Text>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                         <Text style={{ color: accentColor, fontSize: 13, fontWeight: "600" }}>뒤로 가기</Text>
                     </TouchableOpacity>
@@ -140,10 +140,10 @@ export default function VisitMinihompyScreen() {
         return (
             <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
                 <Stack.Screen options={{ headerShown: false }} />
-                <AppHeader showBack title="미니홈피" hideActions />
+                <AppHeader showBack title="펫홈" hideActions />
                 <View style={styles.center}>
                     <Ionicons name="lock-closed-outline" size={36} color={COLORS.gray[400]} />
-                    <Text style={styles.errorText}>비공개 미니홈피예요</Text>
+                    <Text style={styles.errorText}>비공개 펫홈이에요</Text>
                     <Text style={[styles.errorText, { fontSize: 12, color: COLORS.gray[400] }]}>
                         주인이 공개로 변경하면 볼 수 있어요
                     </Text>
@@ -158,7 +158,7 @@ export default function VisitMinihompyScreen() {
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
             <Stack.Screen options={{ headerShown: false }} />
-            <AppHeader showBack title={`${data.ownerNickname}님의 미니홈피`} hideActions />
+            <AppHeader showBack title={`${data.ownerNickname}님의 펫홈`} hideActions />
 
             <ScrollView
                 style={styles.flex1}
@@ -195,7 +195,7 @@ export default function VisitMinihompyScreen() {
                     </View>
                 </View>
 
-                {/* Stage — 자유배치 미니미 우선, 없으면 단일 장착 미니미 fallback */}
+                {/* Stage — 자유배치 꼬미 우선, 없으면 단일 장착 꼬미 fallback */}
                 <View style={styles.stageWrap}>
                     <StageBackground background={background}>
                         {data.greeting && (
@@ -205,7 +205,7 @@ export default function VisitMinihompyScreen() {
                             </View>
                         )}
 
-                        {/* 자유배치 미니미 (read-only — 드래그 불가) */}
+                        {/* 자유배치 꼬미 (read-only — 드래그 불가) */}
                         {data.placedMinimi.length > 0 ? (
                             data.placedMinimi.map((p, idx) => {
                                 const m = findMinimi(p.slug);

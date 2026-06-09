@@ -1,10 +1,10 @@
 /**
- * 미니홈피 탭 — 웹 src/components/features/minihompy/MiniHomepyTab.tsx 1:1 이식
+ * 펫홈 탭 — 웹 src/components/features/minihompy/MiniHomepyTab.tsx 1:1 이식
  *
  *  - settings GET → 배경 적용 + 인사말 표시
- *  - inventory GET → 장착된 미니미 stage에 표시
- *  - stage 터치 → 미니미 인사말 (인벤토리 + 모드 + 연속터치 기반)
- *  - 4개 액션: 미니미 상점 / 배경 / 방명록 / 공개 토글
+ *  - inventory GET → 장착된 꼬미 stage에 표시
+ *  - stage 터치 → 꼬미 인사말 (인벤토리 + 모드 + 연속터치 기반)
+ *  - 4개 액션: 꼬미 상점 / 배경 / 방명록 / 공개 토글
  *  - 변경 시 settings refresh
  */
 
@@ -83,8 +83,8 @@ export default function MinihompyScreen() {
     const messageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const touchResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const [shopOpen, setShopOpen] = useState(false);              // 미니미 보관함(장착/판매/추가구매)
-    const [unifiedShopOpen, setUnifiedShopOpen] = useState(false); // 통합 상점(미니미/가구/배경 구매)
+    const [shopOpen, setShopOpen] = useState(false);              // 꼬미 보관함(장착/판매/추가구매)
+    const [unifiedShopOpen, setUnifiedShopOpen] = useState(false); // 통합 상점(꼬미/가구/배경 구매)
     const [shopInitialFilter, setShopInitialFilter] = useState<"all" | "owned" | "dog" | "cat">("all");
     const [bgShopOpen, setBgShopOpen] = useState(false);
     const [guestbookOpen, setGuestbookOpen] = useState(false);
@@ -127,7 +127,7 @@ export default function MinihompyScreen() {
     }
 
     function handleStageTouch() {
-        // 미니미가 배치/장착된 경우만 미니미 인사말. 그 외엔 터치 무반응 (혼동 방지)
+        // 꼬미가 배치/장착된 경우만 꼬미 인사말. 그 외엔 터치 무반응 (혼동 방지)
         const hasMinimi = (settings?.placedMinimi && settings.placedMinimi.length > 0) || !!equippedSlug;
         if (!hasMinimi) return;
 
@@ -203,7 +203,7 @@ export default function MinihompyScreen() {
 
     const bgSlug = settings?.backgroundSlug ?? "room_default";
     const background = findBackgroundOrDefault(bgSlug);
-    // equippedSlug는 StageEditor 내부에서 자체 처리. 단일 미니미 fallback 표시는 추후 추가.
+    // equippedSlug는 StageEditor 내부에서 자체 처리. 단일 꼬미 fallback 표시는 추후 추가.
     const bgColor = usePageBgColor();
 
     if (loading) {
@@ -233,7 +233,7 @@ export default function MinihompyScreen() {
                 <View style={styles.headerRow}>
                     <View style={{ flex: 1 }}>
                         <Text style={[styles.title, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
-                            미니홈피
+                            펫홈
                         </Text>
                         {settings && (
                             <TouchableOpacity
@@ -267,7 +267,7 @@ export default function MinihompyScreen() {
 
                 <PetSwitcher accentColor={accentColor} onAddPet={() => router.push("/pet/new")} />
 
-                {/* Stage — 자유 배치 미니미가 있으면 StageEditor, 없으면 단일 장착 미니미 */}
+                {/* Stage — 자유 배치 꼬미가 있으면 StageEditor, 없으면 단일 장착 꼬미 */}
                 {(settings?.placedMinimi && settings.placedMinimi.length > 0) || ownedMinimis.length > 0 ? (
                     <View style={styles.stageWrap}>
                         {accessToken && (
@@ -298,7 +298,7 @@ export default function MinihompyScreen() {
                         )}
                     </View>
                 ) : (
-                    // 보유 미니미 0 + 배치 0 → 단일 stage + 상점 CTA
+                    // 보유 꼬미 0 + 배치 0 → 단일 stage + 상점 CTA
                     <View style={styles.stageWrap}>
                         <TouchableOpacity
                             activeOpacity={0.95}
@@ -331,7 +331,7 @@ export default function MinihompyScreen() {
                                     상점 둘러보기
                                 </Text>
                                 <Text style={styles.shopCtaSub}>
-                                    미니미·가구·배경을 사서 나만의 공간을 꾸며보세요
+                                    꼬미·가구·배경을 사서 나만의 공간을 꾸며보세요
                                 </Text>
                             </View>
                             <Ionicons name="chevron-forward" size={16} color={accentColor} />
@@ -350,7 +350,7 @@ export default function MinihompyScreen() {
                     />
                     <ActionCard
                         icon="library"
-                        label={`미니미${ownedMinimis.length > 0 ? ` ${ownedMinimis.length}` : ""}`}
+                        label={`꼬미${ownedMinimis.length > 0 ? ` ${ownedMinimis.length}` : ""}`}
                         color="#FB923C"
                         bgColor={isDarkMode ? COLORS.gray[900] : "#FFF7ED"}
                         onPress={() => { setShopInitialFilter("owned"); setShopOpen(true); }}
@@ -404,7 +404,7 @@ export default function MinihompyScreen() {
             {/* 모달들 */}
             {accessToken && (
                 <>
-                    {/* 통합 상점 (미니미/가구/배경 구매) */}
+                    {/* 통합 상점 (꼬미/가구/배경 구매) */}
                     <MinihompyShopModal
                         visible={unifiedShopOpen}
                         onClose={() => setUnifiedShopOpen(false)}
@@ -414,7 +414,7 @@ export default function MinihompyScreen() {
                         accentColor={accentColor}
                         initialTab="minimi"
                     />
-                    {/* 미니미 보관함 (보유 미니미 장착/판매/추가구매) */}
+                    {/* 꼬미 보관함 (보유 꼬미 장착/판매/추가구매) */}
                     <MinimiShopModal
                         visible={shopOpen}
                         onClose={() => setShopOpen(false)}

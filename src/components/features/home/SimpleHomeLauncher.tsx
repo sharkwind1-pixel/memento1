@@ -69,7 +69,7 @@ const LAUNCHER_ITEMS: {
     },
     {
         id: "minihompy",
-        label: "내 미니홈피",
+        label: "내 펫홈",
         description: "나만의 공간",
         icon: Home,
         color: "text-memento-600 dark:text-memento-400",

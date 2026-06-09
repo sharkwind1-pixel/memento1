@@ -3,7 +3,7 @@
  * 5개 탭: 기록 / 커뮤니티 / 홈 (가운데 강조) / AI펫톡 / 매거진
  *
  * React Navigation의 native tabBarLabel 시스템 사용 (커스텀 TabIcon 라벨 클립 방지).
- * 미니홈피는 탭에서 숨김 (기록 탭 내부 서브탭으로 접근).
+ * 펫홈은 탭에서 숨김 (기록 탭 내부 서브탭으로 접근).
  */
 
 import { Tabs } from "expo-router";

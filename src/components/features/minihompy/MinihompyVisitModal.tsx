@@ -1,7 +1,7 @@
 /**
  * MinihompyVisitModal.tsx
- * 다른 사용자의 미니홈피 방문 모달
- * - 배경 + 미니미 스테이지
+ * 다른 사용자의 펫홈 방문 모달
+ * - 배경 + 꼬미 스테이지
  * - 좋아요 + 방명록 + 방문 카운터
  */
 
@@ -59,7 +59,7 @@ export default function MinihompyVisitModal({
             const res = await authFetch(API.MINIHOMPY_VIEW(userId));
             if (!res.ok) {
                 const err = await res.json();
-                setError(err.error || "미니홈피를 불러올 수 없습니다");
+                setError(err.error || "펫홈을 불러올 수 없습니다");
                 return;
             }
 
@@ -70,7 +70,7 @@ export default function MinihompyVisitModal({
             setGuestbook(viewData.guestbook);
             setGuestbookTotal(viewData.guestbookTotal);
         } catch {
-            setError("미니홈피를 불러올 수 없습니다");
+            setError("펫홈을 불러올 수 없습니다");
         } finally {
             setLoading(false);
         }
@@ -99,7 +99,7 @@ export default function MinihompyVisitModal({
             return;
         }
         if (user.id === userId) {
-            toast.error("자신의 미니홈피에는 좋아요를 할 수 없습니다");
+            toast.error("자신의 펫홈에는 좋아요를 할 수 없습니다");
             return;
         }
 
@@ -222,7 +222,7 @@ export default function MinihompyVisitModal({
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
                     <h2 id="visit-title" className="text-lg font-bold text-gray-800 dark:text-white">
-                        {data?.ownerNickname || "..."}의 미니홈피
+                        {data?.ownerNickname || "..."}의 펫홈
                     </h2>
                     <button
                         onClick={onClose}

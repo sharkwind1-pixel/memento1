@@ -1,6 +1,6 @@
 /**
  * minihompyBackgrounds.ts
- * 미니홈피 배경 테마 카탈로그
+ * 펫홈 배경 테마 카탈로그
  * - 픽셀아트 이미지 배경 8종, 200포인트 통일
  * - imageUrl이 있으면 이미지 배경, 없으면 CSS gradient
  */

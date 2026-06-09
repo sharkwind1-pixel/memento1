@@ -376,7 +376,7 @@ export const MAGAZINE_AUTO = {
     AUTHOR_ROLE: "AI 큐레이션",
 } as const;
 
-// ===== 미니미 시스템 =====
+// ===== 꼬미 시스템 =====
 export const MINIMI = {
     MAX_EQUIPPED_ACCESSORIES: 3,
     NEW_ARRIVAL_DAYS: 30,
@@ -384,12 +384,12 @@ export const MINIMI = {
     PIXEL_SIZE: 3,
 } as const;
 
-// ===== 미니홈피 시스템 =====
+// ===== 펫홈 시스템 =====
 export const MINIHOMPY = {
     GREETING_MAX_LENGTH: 50,
     GUESTBOOK_MAX_LENGTH: 200,
     GUESTBOOK_PAGE_SIZE: 10,
-    DEFAULT_BACKGROUND: "room_default",  // 신규 미니홈피 기본 = 빈집(가구 배치용)
+    DEFAULT_BACKGROUND: "room_default",  // 신규 펫홈 기본 = 빈집(가구 배치용)
     MAX_PLACED_MINIMI: 999,  // 사실상 무제한
 } as const;
 

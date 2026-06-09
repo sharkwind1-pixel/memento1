@@ -77,7 +77,7 @@ export default function AccountDeletionPage() {
                         <li>타임라인 일기 / 케어 리마인더</li>
                         <li>AI 펫톡 대화 기록 / 장기 메모리</li>
                         <li>커뮤니티 게시글 / 댓글 / 좋아요</li>
-                        <li>미니홈피 / 미니미 / 방명록</li>
+                        <li>펫홈 / 꼬미 / 방명록</li>
                         <li>포인트 잔액 / 포인트 거래 내역</li>
                         <li>AI 영상 생성물</li>
                         <li>알림 / 푸시 토큰</li>

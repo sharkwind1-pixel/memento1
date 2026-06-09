@@ -1,5 +1,5 @@
 /**
- * TouchParticles — 미니홈피 스테이지 터치 시 잠깐 떠올랐다 사라지는 파티클
+ * TouchParticles — 펫홈 스테이지 터치 시 잠깐 떠올랐다 사라지는 파티클
  *
  * 부모가 `key={particleKey}`로 강제 remount해서 매 터치마다 새 애니메이션이 시작됨.
  * variant:

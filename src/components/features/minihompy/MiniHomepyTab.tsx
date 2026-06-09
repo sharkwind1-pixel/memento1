@@ -1,8 +1,8 @@
 /**
  * MiniHomepyTab.tsx
- * RecordPage 내 미니홈피 탭
- * - 내 미니홈피 스테이지 표시
- * - 미니미 배치 편집모드
+ * RecordPage 내 펫홈 탭
+ * - 내 펫홈 스테이지 표시
+ * - 꼬미 배치 편집모드
  * - 설정 (인사말, 배경, 공개/비공개)
  * - 방명록 목록
  */
@@ -49,19 +49,19 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
 
-    // 미니미 배치 편집모드
+    // 꼬미 배치 편집모드
     const [editMode, setEditMode] = useState(false);
     const [editPlaced, setEditPlaced] = useState<PlacedMinimi[]>([]);
     const [saving, setSaving] = useState(false);
 
-    // 보관함 (보유 미니미 목록)
+    // 보관함 (보유 꼬미 목록)
     const [ownedMinimis, setOwnedMinimis] = useState<OwnedChar[]>([]);
     const [loadingOwned, setLoadingOwned] = useState(false);
 
     // 보유 가구 목록
     const [ownedFurniture, setOwnedFurniture] = useState<OwnedFurniture[]>([]);
 
-    // 통합 상점 모달 (미니미/가구/배경 탭)
+    // 통합 상점 모달 (꼬미/가구/배경 탭)
     const [shopOpen, setShopOpen] = useState(false);
     const [shopInitialTab, setShopInitialTab] = useState<"minimi" | "furniture" | "background">("minimi");
 
@@ -83,11 +83,11 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 setSettings(data.settings);
             }
         } catch {
-            toast.error("미니홈피 설정을 불러오지 못했습니다.");
+            toast.error("펫홈 설정을 불러오지 못했습니다.");
         }
     }, []);
 
-    // 보유 미니미 로드
+    // 보유 꼬미 로드
     const loadOwnedMinimis = useCallback(async () => {
         setLoadingOwned(true);
         try {
@@ -175,12 +175,12 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
         }
     }, []);
 
-    // 편집모드 진입 - 장착 미니미가 배치 배열에 없으면 자동 포함
+    // 편집모드 진입 - 장착 꼬미가 배치 배열에 없으면 자동 포함
     const enterEditMode = () => {
         const current = settings?.placedMinimi || [];
         let initial = [...current];
 
-        // 장착된 미니미가 있는데 배치 배열에 없으면 자동 추가
+        // 장착된 꼬미가 있는데 배치 배열에 없으면 자동 추가
         if (minimiEquip.minimiId && !initial.some(p => p.slug === minimiEquip.minimiId)) {
             initial.push({
                 slug: minimiEquip.minimiId,
@@ -208,7 +208,7 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
             if (res.ok) {
                 const data = await res.json();
                 setSettings(prev => prev ? { ...prev, placedMinimi: data.placedMinimi } : prev);
-                toast.success("미니미 배치가 저장되었습니다");
+                toast.success("꼬미 배치가 저장되었습니다");
             } else {
                 const err = await res.json();
                 toast.error(err.error || "저장 실패");
@@ -227,7 +227,7 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
         setEditPlaced([]);
     };
 
-    // 보관함에서 아이템 꺼내 배치 (미니미 또는 가구)
+    // 보관함에서 아이템 꺼내 배치 (꼬미 또는 가구)
     const handleAddItem = (slug: string, type?: "minimi" | "furniture") => {
         const newItem: PlacedMinimi = {
             slug,
@@ -296,7 +296,7 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
 
     return (
         <div className="space-y-4">
-            {/* 미니홈피 스테이지 */}
+            {/* 펫홈 스테이지 */}
             <MinihompyStage
                 backgroundSlug={currentSettings.backgroundSlug}
                 minimiEquip={minimiEquip}
@@ -325,11 +325,11 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 >
                     <ShoppingBag className="w-5 h-5" />
                     <span>상점</span>
-                    <span className="text-white/80 text-xs font-normal">미니미 · 가구 · 배경 구매</span>
+                    <span className="text-white/80 text-xs font-normal">꼬미 · 가구 · 배경 구매</span>
                 </button>
             )}
 
-            {/* 편집모드: 인라인 보관함 트레이 (미니미 + 가구 탭) */}
+            {/* 편집모드: 인라인 보관함 트레이 (꼬미 + 가구 탭) */}
             {editMode && (
                 <StorageTray
                     ownedMinimis={ownedMinimis}
@@ -348,10 +348,10 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 isActive={isActive}
             />
 
-            {/* 미니미 도감 — 미보유 클릭 시 상점(미니미 탭) 자동 오픈 */}
+            {/* 꼬미 도감 — 미보유 클릭 시 상점(꼬미 탭) 자동 오픈 */}
             <MinimiCollection onOpenShop={() => openShop("minimi")} />
 
-            {/* 통합 상점 모달 (미니미/가구/배경) */}
+            {/* 통합 상점 모달 (꼬미/가구/배경) */}
             <MinihompyShop
                 isOpen={shopOpen}
                 onClose={closeShop}
@@ -380,7 +380,7 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                         <MessageSquare className="w-10 h-10 mx-auto mb-2 opacity-30" />
                         <p className="text-sm">아직 방명록이 없어요</p>
                         <p className="text-xs mt-1">
-                            다른 사용자가 미니홈피에 놀러오면 방명록을 남겨줄 거에요
+                            다른 사용자가 펫홈에 놀러오면 방명록을 남겨줄 거에요
                         </p>
                     </div>
                 ) : (
@@ -441,7 +441,7 @@ function GuestbookItem({
 
     return (
         <div className="flex gap-2.5 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/30">
-            {/* 방문자 미니미 */}
+            {/* 방문자 꼬미 */}
             <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-pink-50 dark:bg-pink-900/20 flex items-center justify-center overflow-hidden">
                 {entry.visitorImageUrl ? (
                     <Image
@@ -486,7 +486,7 @@ function GuestbookItem({
     );
 }
 
-/** 보관함 트레이 - 편집모드에서 스테이지 바로 아래에 표시 (미니미 + 가구 탭) */
+/** 보관함 트레이 - 편집모드에서 스테이지 바로 아래에 표시 (꼬미 + 가구 탭) */
 function StorageTray({
     ownedMinimis,
     ownedFurniture,
@@ -504,7 +504,7 @@ function StorageTray({
 }) {
     const [tab, setTab] = useState<"minimi" | "furniture">("minimi");
 
-    // 미니미: 배치된 slug 제외 (미니미는 1개씩만)
+    // 꼬미: 배치된 slug 제외 (꼬미는 1개씩만)
     const placedMinimiSlugs = new Set(
         placedMinimi.filter(p => !p.type || p.type === "minimi").map(p => p.slug)
     );
@@ -548,7 +548,7 @@ function StorageTray({
                                 : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                         )}
                     >
-                        미니미
+                        꼬미
                     </button>
                     <button
                         onClick={() => setTab("furniture")}
@@ -572,13 +572,13 @@ function StorageTray({
                     <Loader2 className="w-4 h-4 text-memorial-500 animate-spin" />
                 </div>
             ) : tab === "minimi" ? (
-                /* 미니미 탭 */
+                /* 꼬미 탭 */
                 availableMinimis.length === 0 ? (
                     <div className="text-center py-3 text-gray-400 dark:text-gray-500">
                         <p className="text-xs">
                             {ownedMinimis.length === 0
-                                ? "보관함이 비어있어요. 미니미 상점에서 구매해보세요!"
-                                : "모든 미니미가 스테이지에 배치중이에요"}
+                                ? "보관함이 비어있어요. 꼬미 상점에서 구매해보세요!"
+                                : "모든 꼬미가 스테이지에 배치중이에요"}
                         </p>
                     </div>
                 ) : (

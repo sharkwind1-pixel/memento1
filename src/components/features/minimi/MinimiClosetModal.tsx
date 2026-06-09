@@ -1,6 +1,6 @@
 /**
  * MinimiClosetModal.tsx
- * 내 미니미 옷장 - 보유 아이템 관리, 장착/해제, 되팔기
+ * 내 꼬미 옷장 - 보유 아이템 관리, 장착/해제, 되팔기
  */
 
 "use client";
@@ -114,7 +114,7 @@ export default function MinimiClosetModal({
             setEquippedMinimiSlug(newSlug);
             setEquippedImageUrl(newCatalog?.imageUrl || data.equipped.imageUrl || null);
             onChanged?.();
-            toast.success(newMinimiSlug ? "미니미를 장착했습니다" : "미니미를 해제했습니다");
+            toast.success(newMinimiSlug ? "꼬미를 장착했습니다" : "꼬미를 해제했습니다");
         } catch (err) {
             toast.error(err instanceof Error ? err.message : "장착에 실패했습니다");
         } finally {
@@ -167,7 +167,7 @@ export default function MinimiClosetModal({
                             <div className="flex items-center gap-2">
                                 <Shirt className="w-5 h-5" />
                                 <div>
-                                    <h2 id="minimi-closet-title" className="text-sm font-bold leading-tight">내 미니미 옷장</h2>
+                                    <h2 id="minimi-closet-title" className="text-sm font-bold leading-tight">내 꼬미 옷장</h2>
                                     <p className="text-white/80 text-[11px]">
                                         보유 캐릭터 {ownedCharacters.length}개
                                     </p>
@@ -188,7 +188,7 @@ export default function MinimiClosetModal({
                         {equippedImageUrl ? (
                             <Image
                                 src={equippedImageUrl}
-                                alt="장착중인 미니미"
+                                alt="장착중인 꼬미"
                                 width={48}
                                 height={48}
                                 className="object-contain"
@@ -200,7 +200,7 @@ export default function MinimiClosetModal({
                             </div>
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {equippedMinimiSlug ? "현재 장착중" : "미니미를 장착해보세요"}
+                            {equippedMinimiSlug ? "현재 장착중" : "꼬미를 장착해보세요"}
                         </p>
                     </div>
 

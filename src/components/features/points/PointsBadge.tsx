@@ -3,7 +3,7 @@
  * 사이드바에 표시하는 포인트 배지 위젯
  * - 현재 포인트 표시
  * - 클릭 시 내역 모달 열기
- * - 미니미 미리보기 + 상점/옷장 진입
+ * - 꼬미 미리보기 + 상점/옷장 진입
  */
 
 "use client";
@@ -66,7 +66,7 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700" />
                 </div>
-                {/* 미니미 스켈레톤 */}
+                {/* 꼬미 스켈레톤 */}
                 <div data-tutorial-id="sidebar-minimi" className="rounded-xl border border-gray-100 dark:border-gray-700 p-3">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700" />
@@ -99,7 +99,7 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
                     <LevelProgress points={points} nickname={nickname} petType={userPetType} isAdmin={isAdminUser} />
                 </div>
 
-                {/* 미니미 섹션 */}
+                {/* 꼬미 섹션 */}
                 <div data-tutorial-id="sidebar-minimi" className={cn(
                     "rounded-xl border p-3",
                     "bg-gradient-to-r from-pink-50/80 to-purple-50/80",
@@ -110,14 +110,14 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
                         <div className="flex items-center gap-3 mb-2">
                             <Image
                                 src={minimiEquip.imageUrl!}
-                                alt="내 미니미"
+                                alt="내 꼬미"
                                 width={48}
                                 height={48}
                                 className="object-contain"
                                 style={{ imageRendering: "pixelated" }}
                             />
                             <div className="text-left flex-1 min-w-0">
-                                <p className="text-xs text-gray-500 dark:text-gray-400">내 미니미</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">내 꼬미</p>
                                 <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
                                     장착 중
                                 </p>
@@ -129,7 +129,7 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
                                 <Sparkles className="w-5 h-5 text-gray-400" />
                             </div>
                             <p className="text-xs text-gray-500 dark:text-gray-400 flex-1">
-                                미니미를 꾸며보세요!
+                                꼬미를 꾸며보세요!
                             </p>
                         </div>
                     )}

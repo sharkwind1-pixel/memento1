@@ -55,7 +55,7 @@ export default function RefundPolicyPage() {
                         </li>
                     </ul>
 
-                    <h2 className="text-xl font-display font-bold">2. 단건 결제 환불 (미니미, AI 영상 단건 등)</h2>
+                    <h2 className="text-xl font-display font-bold">2. 단건 결제 환불 (꼬미, AI 영상 단건 등)</h2>
                     <ul className="list-disc pl-6 space-y-1">
                         <li><strong>사용 전</strong>: 결제 후 7일 이내 전액 환불 (전자상거래법 제17조).</li>
                         <li><strong>사용 후</strong>: 디지털 콘텐츠의 특성상 환불이 제한될 수 있습니다.</li>

@@ -405,7 +405,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                         }`}
                     >
                         <Home className="w-4 h-4" />
-                        <span className="hidden sm:inline">미니홈피</span>
+                        <span className="hidden sm:inline">펫홈</span>
                         <span className="sm:hidden">홈피</span>
                     </button>
                     <div className="flex-1" />
@@ -444,7 +444,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                     />
                 )}
 
-                {/* 미니홈피 탭 */}
+                {/* 펫홈 탭 */}
                 {activeTab === "minihompy" && (
                     <MiniHomepyTab isActive={isActive} />
                 )}

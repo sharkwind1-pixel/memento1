@@ -278,7 +278,7 @@ export default function CommunityGuidelinesPage() {
                                 제재 기간 중 추가 위반이 확인되면 상위 단계로 즉시 격상됩니다.
                             </li>
                             <li>
-                                영구 이용 제한 시 보유 포인트, 미니미 등 디지털 자산은 모두 소멸됩니다.
+                                영구 이용 제한 시 보유 포인트, 꼬미 등 디지털 자산은 모두 소멸됩니다.
                             </li>
                         </ol>
                     </section>

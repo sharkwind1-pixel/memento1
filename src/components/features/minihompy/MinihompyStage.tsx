@@ -1,12 +1,12 @@
 /**
  * MinihompyStage.tsx
- * 미니홈피 스테이지 - 배경 + 미니미 캐릭터(들) + 방문자 카운터
+ * 펫홈 스테이지 - 배경 + 꼬미 캐릭터(들) + 방문자 카운터
  * 싸이월드 미니룸 감성의 디스플레이 컴포넌트
  *
- * 멀티 미니미 배치 시스템:
- * - placedMinimi 배열로 여러 미니미를 자유 배치
+ * 멀티 꼬미 배치 시스템:
+ * - placedMinimi 배열로 여러 꼬미를 자유 배치
  * - editMode에서 드래그 앤 드롭으로 위치 조정
- * - placedMinimi가 비어있으면 기존처럼 장착 미니미 1마리 하단 중앙
+ * - placedMinimi가 비어있으면 기존처럼 장착 꼬미 1마리 하단 중앙
  */
 
 "use client";
@@ -49,7 +49,7 @@ interface MinihompyStageProps {
     compact?: boolean;
     placedMinimi?: PlacedMinimi[];
     editMode?: boolean;
-    /** 추모 모드 여부 — 미니미 터치 대사/액션이 "재회 + 응원" 톤으로 바뀜 */
+    /** 추모 모드 여부 — 꼬미 터치 대사/액션이 "재회 + 응원" 톤으로 바뀜 */
     isMemorialMode?: boolean;
     onPlacementChange?: (placed: PlacedMinimi[]) => void;
     onRemoveMinimi?: (index: number) => void;
@@ -103,14 +103,14 @@ export default function MinihompyStage({
         };
     }, []);
 
-    // 터치 이펙트 상태 (미니미 클릭 시 애니메이션)
+    // 터치 이펙트 상태 (꼬미 클릭 시 애니메이션)
     const [touchEffectIndex, setTouchEffectIndex] = useState<number | null>(null);
     const [touchEffectMessage, setTouchEffectMessage] = useState<string>("");
     const [touchEffectAction, setTouchEffectAction] = useState<MinimiAction>("heart");
 
-    // 연속 터치 추적 — 같은 미니미를 반복 터치하면 대사가 점진적으로 바뀐다.
+    // 연속 터치 추적 — 같은 꼬미를 반복 터치하면 대사가 점진적으로 바뀐다.
     // (1~3회: 반가움 · 4~6회: 장난 · 7+: 간지러움/만족)
-    // 다른 미니미를 누르거나 2.5초 이상 텀이 생기면 카운트 리셋.
+    // 다른 꼬미를 누르거나 2.5초 이상 텀이 생기면 카운트 리셋.
     const consecutiveRef = useRef<{ index: number; count: number; lastAt: number }>({
         index: -1,
         count: 0,
@@ -147,10 +147,10 @@ export default function MinihompyStage({
         }));
     }, []);
 
-    // 배치된 미니미가 있으면 사용, 없으면 장착 미니미 1마리를 하단 중앙에 표시
+    // 배치된 꼬미가 있으면 사용, 없으면 장착 꼬미 1마리를 하단 중앙에 표시
     const displayPlaced = placedMinimi.length > 0;
 
-    /** 미니미 또는 가구 이미지 URL 조회 */
+    /** 꼬미 또는 가구 이미지 URL 조회 */
     const getItemImage = (slug: string, type?: "minimi" | "furniture"): string | null => {
         if (type === "furniture") {
             const f = findFurnitureOrFallback(slug);
@@ -279,9 +279,9 @@ export default function MinihompyStage({
         }
     }, [editMode]);
 
-    // 미니미 터치 이펙트 핸들러 (비편집 모드에서만)
+    // 꼬미 터치 이펙트 핸들러 (비편집 모드에서만)
     const touchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const [touchKey, setTouchKey] = useState(0); // 동일 미니미 연속 터치 시 리렌더 강제
+    const [touchKey, setTouchKey] = useState(0); // 동일 꼬미 연속 터치 시 리렌더 강제
     const handleMinimiTouch = useCallback((index: number) => {
         if (editMode) return;
 
@@ -290,7 +290,7 @@ export default function MinihompyStage({
             clearTimeout(touchTimerRef.current);
         }
 
-        // 연속 터치 카운트 업데이트 (같은 미니미 + 2.5초 이내면 누적)
+        // 연속 터치 카운트 업데이트 (같은 꼬미 + 2.5초 이내면 누적)
         const now = Date.now();
         const prev = consecutiveRef.current;
         const isSameAndRecent = prev.index === index && now - prev.lastAt < 2500;
@@ -345,12 +345,12 @@ export default function MinihompyStage({
                         "text-sm font-medium",
                         "text-white drop-shadow-md"
                     )}>
-                        {ownerNickname ? `${ownerNickname}의 미니홈피` : "미니홈피"}
+                        {ownerNickname ? `${ownerNickname}의 펫홈` : "펫홈"}
                     </p>
                 </div>
             </div>
 
-            {/* 배치된 미니미들 */}
+            {/* 배치된 꼬미들 */}
             {displayPlaced ? (
                 placedMinimi.map((placed, index) => {
                     const isFurniture = placed.type === "furniture";
@@ -363,7 +363,7 @@ export default function MinihompyStage({
                     const mobileScale = isMobile ? 0.7 : 1;
 
                     // 가구: 카탈로그에 정의된 stageWidth/stageHeight 사용
-                    // 미니미: 기존 정사각 baseSize
+                    // 꼬미: 기존 정사각 baseSize
                     let itemW: number;
                     let itemH: number;
                     if (isFurniture) {
@@ -385,7 +385,7 @@ export default function MinihompyStage({
                             style={{
                                 left: `${placed.x}%`,
                                 top: `${placed.y}%`,
-                                // 가구는 미니미보다 항상 뒤(배경 가까이)에 깔림. 가구 0~99 / 미니미 100+ / 선택·터치 최상단
+                                // 가구는 꼬미보다 항상 뒤(배경 가까이)에 깔림. 가구 0~99 / 꼬미 100+ / 선택·터치 최상단
                                 zIndex: isSelected ? 999 : hasTouchEffect ? 998
                                     : isFurniture ? Math.min(placed.zIndex || index + 1, 99)
                                     : 100 + (placed.zIndex || index + 1),
@@ -399,7 +399,7 @@ export default function MinihompyStage({
                             {hasTouchEffect && touchEffectMessage && (
                                 <div
                                     key={`bubble-${touchKey}`}
-                                    // 미니미 상단 기준으로 항상 위에(bottom-full) + 여백 → 터치 애니메이션(확대/점프) 중에도 얼굴 안 가림
+                                    // 꼬미 상단 기준으로 항상 위에(bottom-full) + 여백 → 터치 애니메이션(확대/점프) 중에도 얼굴 안 가림
                                     className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50"
                                     style={{
                                         animation: "minimiPop 0.3s ease-out, minimiFadeOut 0.3s ease-in 1.2s forwards",
@@ -449,14 +449,14 @@ export default function MinihompyStage({
                                 {/* 그림자 제거됨 - 캐릭터별 발 위치 차이로 자연스러운 배치 어려움 */}
                                 <Image
                                     src={imgUrl}
-                                    alt={isFurniture ? "가구" : "미니미"}
+                                    alt={isFurniture ? "가구" : "꼬미"}
                                     width={itemW}
                                     height={itemH}
                                     className="object-contain select-none"
                                     style={{ imageRendering: "pixelated" }}
                                     draggable={false}
                                 />
-                                {/* 드래그 힌트 - 선택된 미니미에 표시 */}
+                                {/* 드래그 힌트 - 선택된 꼬미에 표시 */}
                                 {isSelected && !isDragging && (
                                     <div
                                         className="absolute -top-5 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 bg-black/50 text-white rounded-full whitespace-nowrap pointer-events-none"
@@ -496,7 +496,7 @@ export default function MinihompyStage({
                                     </div>
                                 )}
                             </div>
-                            {/* 히트 영역: 미니미 누끼에 맞춘 타원형 + 패딩으로 터치 편의성 확보 */}
+                            {/* 히트 영역: 꼬미 누끼에 맞춘 타원형 + 패딩으로 터치 편의성 확보 */}
                             <div
                                 className={cn(
                                     "absolute",
@@ -588,7 +588,7 @@ export default function MinihompyStage({
                     )}
                 >
                     <Pencil className="w-3.5 h-3.5 text-memento-500" />
-                    미니미 배치
+                    꼬미 배치
                 </button>
             )}
 

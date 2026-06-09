@@ -1,6 +1,6 @@
 /**
  * minimiPixels.ts
- * 미니미 캐릭터 카탈로그
+ * 꼬미 캐릭터 카탈로그
  * PNG 이미지 기반 렌더링
  *
  * footPadding: 이미지 하단 투명 영역 비율 (PIL getbbox 기준 실측값)

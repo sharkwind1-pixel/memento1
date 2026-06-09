@@ -44,7 +44,7 @@ export const API = {
     REMINDERS: "/api/reminders",
     REMINDER_DETAIL: (id: string) => `/api/reminders/${id}`,
 
-    // 미니미
+    // 꼬미
     MINIMI_CATALOG: "/api/minimi/catalog",
     MINIMI_INVENTORY: "/api/minimi/inventory",
     MINIMI_PURCHASE: "/api/minimi/purchase",
@@ -55,7 +55,7 @@ export const API = {
     FURNITURE_PURCHASE: "/api/furniture/purchase",
     FURNITURE_INVENTORY: "/api/furniture/inventory",
 
-    // 미니홈피
+    // 펫홈
     MINIHOMPY_SETTINGS: "/api/minihompy/settings",
     MINIHOMPY_VIEW: (userId: string) => `/api/minihompy/${userId}`,
     MINIHOMPY_GUESTBOOK: (userId: string) => `/api/minihompy/${userId}/guestbook`,

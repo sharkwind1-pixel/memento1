@@ -1,6 +1,6 @@
 /**
  * MinimiRenderer.tsx
- * CSS box-shadow 기반 픽셀 미니미 렌더러
+ * CSS box-shadow 기반 픽셀 꼬미 렌더러
  * 캐릭터 + 악세서리 레이어링 지원
  */
 

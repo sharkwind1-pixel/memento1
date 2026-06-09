@@ -2,7 +2,7 @@
  * GuestbookModal — 방명록 목록 + 작성
  *
  * - ownerUserId의 방명록을 fetch + 매 작성 시 갱신
- * - 자기 자신 미니홈피일 때만 작성 가능 / 다른 유저면 모두 작성 가능 (서버가 검증)
+ * - 자기 자신 펫홈일 때만 작성 가능 / 다른 유저면 모두 작성 가능 (서버가 검증)
  */
 
 import { useEffect, useState, useCallback } from "react";
@@ -22,7 +22,7 @@ interface Props {
     visible: boolean;
     onClose: () => void;
     accessToken: string;
-    ownerUserId: string;        // 미니홈피 주인의 user_id
+    ownerUserId: string;        // 펫홈 주인의 user_id
     accentColor: string;
     canWrite?: boolean;
 }

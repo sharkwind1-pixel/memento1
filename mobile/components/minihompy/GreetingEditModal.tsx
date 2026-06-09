@@ -1,5 +1,5 @@
 /**
- * GreetingEditModal — 미니홈피 인사말 편집
+ * GreetingEditModal — 펫홈 인사말 편집
  * PATCH /api/minihompy/settings { greeting: string }
  *
  * - 100자 이내, 빈 문자열 허용 (인사말 제거)

@@ -49,7 +49,7 @@ const TABS: Array<{ id: TabType; label: string; icon: React.ComponentProps<typeo
     { id: "gallery", label: "사진첩", icon: "images-outline" },
     { id: "albums", label: "앨범", icon: "albums-outline" },
     { id: "videos", label: "AI 영상", icon: "videocam-outline" },
-    { id: "minihompy", label: "미니홈피", icon: "home-outline" },
+    { id: "minihompy", label: "펫홈", icon: "home-outline" },
 ];
 
 export default function RecordScreen() {

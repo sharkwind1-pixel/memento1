@@ -1,10 +1,10 @@
 /**
- * MinimiShopModal — 미니미 도감 + 상점 + 장착
+ * MinimiShopModal — 꼬미 도감 + 상점 + 장착
  *
  * 기능:
  *  - 카탈로그 fetch + 보유 인벤토리 fetch (병렬)
  *  - 카드 클릭: 보유 시 장착, 미보유 시 구매 확인 다이얼로그
- *  - 장착된 미니미는 별 표시
+ *  - 장착된 꼬미는 별 표시
  *  - 카테고리 필터 (전체/강아지/고양이)
  */
 
@@ -34,7 +34,7 @@ interface Props {
     points: number;
     onChanged: () => void;        // 구매/장착 후 부모 화면 새로고침 트리거
     accentColor: string;
-    /** 모달 열릴 때 미리 선택할 필터 (예: "내 미니미" 진입 시 "owned") */
+    /** 모달 열릴 때 미리 선택할 필터 (예: "내 꼬미" 진입 시 "owned") */
     initialFilter?: CategoryFilter;
 }
 
@@ -272,7 +272,7 @@ export default function MinimiShopModal({
                         <Ionicons name="close" size={24} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[800]} />
                     </TouchableOpacity>
                     <View style={{ flex: 1 }}>
-                        <Text style={[styles.headerTitle, { color: titleColor }]}>미니미 상점</Text>
+                        <Text style={[styles.headerTitle, { color: titleColor }]}>꼬미 상점</Text>
                         <Text style={[styles.headerSub, { color: subColor }]}>탭해서 구매 · 장착</Text>
                     </View>
                     <View style={[styles.pointPill, { backgroundColor: pointPillBg }]}>
