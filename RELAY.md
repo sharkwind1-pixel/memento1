@@ -18,8 +18,8 @@
 ## 🔴 NEXT — 지금 이어서 (우선순위순)
 
 0. **★진행중 — 펫홈(싸이월드형) 가입전환 개선 Phase 0** (단일 진실: `docs/PETHOME-SPEC.md` §12 로드맵·§13 결정·§15 튜토리얼체크 / `docs/AI-ROADMAP.md`).
-   - **완료**(L2~L4·배포됨): 비회원 히어로 카피·CTA / 명칭 펫홈·꼬미 전면(52파일) / 닉네임=펫홈주소(`/u/{nickname}`)+DB unique·RPC+**가입 회귀 수정(트리거 접미사)** / **①맥락 가입후크(웹+앱, `8151cd7`)** — openAuthModal detail.message + 앱 Alert 로그인유도, 좋아요/댓글/방명록 누수 차단.
-   - **남은 Phase 0**: ②진짜 목소리 다시 듣기(추모·본인전용·수동재생·원본만, pet-media 영상오디오 — PhotoViewer `<video>` 재사용) ③게스트 AI펫톡 체험 3회(코어모델+핑거프린트/토큰 가드, chat-pipeline 인증체크 앞 경량경로) ④visit_logs 퍼널 측정(랜딩→스크롤→CTA→가입 drop) — ⚠️현 비콘은 세션당 1회 진입만, `visit_logs.event` 컬럼(DB마이그)+비콘 step 이벤트 신규 필요(9번 적대검증 대상).
+   - **완료**(L2~L4·배포됨): 비회원 히어로 카피·CTA / 명칭 펫홈·꼬미 전면(52파일) / 닉네임=펫홈주소(`/u/{nickname}`)+DB unique·RPC+**가입 회귀 수정(트리거 접미사)** / **①맥락 가입후크(웹+앱, `8151cd7`)** — openAuthModal detail.message + 앱 Alert 로그인유도, 좋아요/댓글/방명록 누수 차단 / **②진짜 목소리 다시 듣기(웹+앱, `ee71101`)** — PhotoViewer autoPlay prop+VoiceMemorySection(추모 전용, 영상 수동재생), 앱은 PhotoLightbox 영상불가 갭→자체 ExpoVideo 플레이어. 본인전용.
+   - **남은 Phase 0**: ③게스트 AI펫톡 체험 3회(코어모델+핑거프린트/토큰 가드, chat-pipeline 인증체크 앞 경량경로) ④visit_logs 퍼널 측정(랜딩→스크롤→CTA→가입 drop) — ⚠️현 비콘은 세션당 1회 진입만, `visit_logs.event` 컬럼(DB마이그)+비콘 step 이벤트 신규 필요(9번 적대검증 대상).
    - **Phase 1**(전환 누수 데이터 확인 후): 공개 펫홈 페이지 `/u/{nickname}`(웹 모달→독립페이지+OG / 앱 `minihompy/[userId].tsx` 게스트차단 해제). **보류**: 이웃(팔로우) 그래프 타이밍 미정·retention.
    - 잔여 명칭 점검: §15 튜토리얼/NicknameSetupModal 일부만 반영, 라벨 전수 재확인 권장.
 1. **EAS 빌드 → 베타 12명 신규 배포** (사용자 액션 필요): 5/19~5/20 모바일 11+커밋(웹1:1 패리티/PKCE/사진첩/펫 사진 히어로/추천멘트 정화/PawLoading/추천칩/감정글로우/스트리밍커서/채팅 회귀 fix 등)이 옛 AAB에 미반영. 사용자가 EAS 빌드 + Closed 트랙 AAB 업로드 + "출시 시작" 클릭. 그 후 베타 시각 검증으로 ⚠️미검증 모바일 묶음 해소.

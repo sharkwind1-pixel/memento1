@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-06-09 펫홈 Phase 0 ② 진짜 목소리 다시 듣기 (웹+앱) — L2
+배경: 추모 모드에서 업로드 영상의 원본 오디오로 우리 아이 진짜 목소리를 다시 듣기. 합성음성 아님(AI-ROADMAP 결정). 기존 자산 재사용.
+- **웹**(`ee71101`): `PhotoViewer`에 `autoPlay` prop(기본 true=후방호환) → 추모 목소리는 수동재생(false, 갑작스러운 재생 방지+소리 autoplay 차단 회피). 새 `VoiceMemorySection`(추모 전용): `selectedPet.photos` 영상만 모아 "다시 듣고 싶은 목소리" 카드, 클릭→PhotoViewer 수동재생, 영상 없으면 업로드 유도. RecordPage `photoViewerAutoPlay` state로 앨범(true)/목소리(false) 분기.
+- **앱 패리티**(`ee71101`): **공유 `PhotoLightbox`가 `<Image>`만 렌더해 영상 재생 자체가 불가하던 갭 발견** → 자체 `ExpoVideo`(useNativeControls+shouldPlay=false 수동) 플레이어 포함한 모바일 `VoiceMemorySection` 신규, GalleryTab(사진첩) 추모 모드 상단 배치.
+- 본인전용: 양쪽 본인 record에서만 렌더, pet-media public이지만 공개페이지 미노출. 검증: 웹 L2(tsc+build exit0)/모바일 L2(tsc, 실기 EAS대기). UI-only→9번 비대상.
+
+---
+
 ## 2026-06-09 펫홈 Phase 0 ① 맥락 가입후크 (웹+앱) — L2 + 후방호환 self-review
 배경: 비회원→가입 진짜 누수=동기. 좋아요/댓글/방명록 시도 시 "왜 가입하는지" 가치문구로 전환 유도. 기존 자산 재사용·새 인증 X.
 - **웹**(`8151cd7`): `openAuthModal` CustomEvent에 `detail.message` 추가(openAccountSettings의 detail.scrollTo 선례 패턴). Layout 리스너→state→AuthModal `contextMessage` prop+Sparkles 배너. **기존 15곳 dispatch는 detail 없이도 그대로 동작(깨짐 0)**. 후크 카피: 글 좋아요/비추천·댓글 좋아요/작성. **MinihompyVisitModal 펫홈 좋아요·방명록이 toast만 띄우고 가입경로 없던 누수→후크 교체.**
