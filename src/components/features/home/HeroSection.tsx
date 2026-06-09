@@ -294,12 +294,12 @@ function OriginalHero({ setSelectedTab, user, isMemorial = false }: HeroSectionP
                         <div className="text-center md:text-left space-y-4 sm:space-y-5">
                             <div className="space-y-2">
                                 <h1 className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold leading-tight ${isMemorial ? "text-memorial-50" : "text-gray-800 dark:text-white"}`}>
-                                    특별한 매일을 함께
+                                    우리 아이와 대화해보세요
                                 </h1>
                                 <p className={`text-sm sm:text-base md:text-lg leading-relaxed ${isMemorial ? "text-memorial-200/80" : "text-gray-600 dark:text-gray-300"}`}>
-                                    반려동물과의 소중한 순간을 기록하고,
+                                    AI 펫톡으로 성격 그대로 이야기하고,
                                     <br className="hidden sm:block" />
-                                    따뜻한 추억으로 간직하세요
+                                    펫홈에 우리 아이의 매일을 담아요
                                 </p>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start pt-1">
@@ -312,7 +312,7 @@ function OriginalHero({ setSelectedTab, user, isMemorial = false }: HeroSectionP
                                             : "bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-600 shadow-[0_4px_20px_-4px_rgba(5,178,220,0.4)] hover:shadow-[0_6px_24px_-4px_rgba(5,178,220,0.5)]"
                                     }`}
                                 >
-                                    {user ? "지금 만나러 가기" : "시작하기"}
+                                    {user ? "지금 만나러 가기" : "무료로 시작하기"}
                                 </Button>
                                 <Button
                                     size="lg"

@@ -474,7 +474,7 @@ function OriginalHero({ isMemorialMode, isDarkMode, fontScale, spacingScale, ico
                     </View>
 
                     <Text style={[styles.title, { color: titleColor, fontSize: 26 * fontScale, marginBottom: 10 * spacingScale }]}>
-                        특별한 매일을 함께
+                        우리 아이와 대화해보세요
                     </Text>
                     <Text style={[styles.subtitle, {
                         color: subtitleColor,
@@ -482,7 +482,7 @@ function OriginalHero({ isMemorialMode, isDarkMode, fontScale, spacingScale, ico
                         lineHeight: 22 * fontScale,
                         marginBottom: 20 * spacingScale,
                     }]}>
-                        반려동물과의 소중한 순간을 기록하고,{"\n"}따뜻한 추억으로 간직하세요
+                        AI 펫톡으로 성격 그대로 이야기하고,{"\n"}펫홈에 우리 아이의 매일을 담아요
                     </Text>
 
                     <View style={[styles.ctaRow, { gap: 12 * spacingScale }]}>
@@ -498,7 +498,7 @@ function OriginalHero({ isMemorialMode, isDarkMode, fontScale, spacingScale, ico
                                 }]}
                             >
                                 <Text style={[styles.ctaPrimaryText, { fontSize: 15 * fontScale }]}>
-                                    {ctaText ?? "시작하기"}
+                                    {ctaText ?? "무료로 시작하기"}
                                 </Text>
                             </LinearGradient>
                         </TouchableOpacity>
