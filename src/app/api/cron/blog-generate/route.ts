@@ -124,7 +124,7 @@ const BLOG_TOPICS: BlogTopic[] = [
     { category: "메멘토애니 소식", species: "공통", topic: "AI 펫톡 — 우리 아이 성격으로 대화하는 AI가 있다면", searchQuery: "반려동물 AI 대화 챗봇 펫 성격 맞춤 인공지능 반려", keywords: ["AI펫톡", "반려동물AI", "펫챗봇"] },
     { category: "메멘토애니 소식", species: "공통", topic: "반려동물 케어 리마인더 — 예방접종, 병원, 산책을 깜빡하지 않는 법", searchQuery: "반려동물 예방접종 일정 관리 앱 리마인더 병원 알림", keywords: ["반려동물리마인더", "예방접종일정", "펫케어관리"] },
     { category: "메멘토애니 소식", species: "공통", topic: "반려동물 사진 정리 — 갤러리에 묻힌 만 장을 되살리는 법", searchQuery: "반려동물 사진 정리 앱 추억 앨범 자동 생성 기록", keywords: ["반려동물사진정리", "반려동물앨범", "펫사진관리"] },
-    { category: "메멘토애니 소식", species: "공통", topic: "미니홈피로 우리 아이만의 공간 꾸미기", searchQuery: "반려동물 미니홈피 커스텀 공간 싸이월드 감성 SNS", keywords: ["반려동물미니홈피", "펫꾸미기", "반려동물SNS"] },
+    { category: "메멘토애니 소식", species: "공통", topic: "펫홈으로 우리 아이만의 공간 꾸미기", searchQuery: "반려동물 펫홈 커스텀 공간 싸이월드 감성 SNS", keywords: ["반려동물펫홈", "펫꾸미기", "반려동물SNS"] },
     { category: "메멘토애니 소식", species: "공통", topic: "AI가 만들어주는 추억 앨범 — 한 달의 기록이 작품이 되는 순간", searchQuery: "반려동물 자동 앨범 생성 AI 추억 정리 월간 기록", keywords: ["AI추억앨범", "반려동물앨범자동", "월간기록"] },
     { category: "메멘토애니 소식", species: "공통", topic: "반려동물 커뮤니티 — 같은 마음을 가진 사람들과 연결되기", searchQuery: "반려동물 커뮤니티 게시판 경험 공유 입양 정보 지역", keywords: ["반려동물커뮤니티", "펫커뮤니티", "반려인모임"] },
     { category: "메멘토애니 소식", species: "공통", topic: "무지개다리를 건넌 아이를 위한 추모 공간", searchQuery: "반려동물 추모 디지털 메모리얼 무지개다리 기록 보존", keywords: ["반려동물추모", "디지털메모리얼", "무지개다리추모"] },

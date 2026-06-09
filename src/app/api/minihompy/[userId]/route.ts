@@ -47,7 +47,7 @@ export async function GET(
         } else {
             // 비공개 체크 (본인은 항상 볼 수 있음)
             if (!settingsData.is_public && currentUser?.id !== userId) {
-                return NextResponse.json({ error: "비공개 미니홈피입니다" }, { status: 403 });
+                return NextResponse.json({ error: "비공개 펫홈입니다" }, { status: 403 });
             }
 
             // today_date 리셋 체크 (KST 기준)

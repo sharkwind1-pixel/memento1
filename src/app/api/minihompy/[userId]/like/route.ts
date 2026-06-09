@@ -33,7 +33,7 @@ export async function POST(
 
         // 자기 미니홈피 좋아요 불가
         if (user.id === userId) {
-            return NextResponse.json({ error: "자신의 미니홈피에는 좋아요를 할 수 없습니다" }, { status: 400 });
+            return NextResponse.json({ error: "자신의 펫홈에는 좋아요를 할 수 없습니다" }, { status: 400 });
         }
 
         const supabase = await createServerSupabase();
