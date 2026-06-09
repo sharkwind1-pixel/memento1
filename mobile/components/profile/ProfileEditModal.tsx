@@ -19,6 +19,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
 
+// 닉네임 = 펫홈 주소(/u/{nickname}) → URL-안전 문자만(한글·영문·숫자·_, 2~20자). 공백·특수문자 불가.
+const HANDLE_REGEX = /^[가-힣a-zA-Z0-9_]{2,20}$/;
+
 type DupeStatus = "idle" | "checking" | "available" | "taken" | "invalid";
 
 interface Props {
@@ -56,7 +59,7 @@ export default function ProfileEditModal({
             setDupeStatus("idle");
             return;
         }
-        if (trimmed.length < 2 || trimmed.length > 20) {
+        if (trimmed.length < 2 || trimmed.length > 20 || !HANDLE_REGEX.test(trimmed)) {
             setDupeStatus("invalid");
             return;
         }
@@ -64,13 +67,12 @@ export default function ProfileEditModal({
         setDupeStatus("checking");
         dupeTimerRef.current = setTimeout(async () => {
             try {
-                const { data, error } = await supabase
-                    .from("profiles")
-                    .select("id")
-                    .eq("nickname", trimmed)
-                    .neq("id", userId)
-                    .maybeSingle();
-                if (error && error.code !== "PGRST116") {
+                // 대소문자 무관 + 본인 제외 (DB unique(lower(nickname)) 제약과 동일 기준)
+                const { data, error } = await supabase.rpc("is_nickname_taken", {
+                    p_nick: trimmed,
+                    p_exclude: userId,
+                });
+                if (error) {
                     setDupeStatus("idle");
                     return;
                 }
@@ -89,6 +91,10 @@ export default function ProfileEditModal({
         const trimmed = nickname.trim();
         if (trimmed.length < 2 || trimmed.length > 20) {
             Alert.alert("닉네임 형식", "닉네임은 2~20자로 입력해주세요.");
+            return;
+        }
+        if (!HANDLE_REGEX.test(trimmed)) {
+            Alert.alert("형식 오류", "펫홈 주소엔 한글·영문·숫자·_만 쓸 수 있어요 (공백·특수문자 불가).");
             return;
         }
         if (dupeStatus === "taken") {
@@ -167,35 +173,41 @@ export default function ProfileEditModal({
 
                         {/* 닉네임 */}
                         <View style={styles.field}>
-                            <Text style={styles.label}>닉네임</Text>
+                            <Text style={styles.label}>펫홈 주소 (닉네임)</Text>
                             <TextInput
                                 style={[
                                     styles.input,
-                                    dupeStatus === "taken" && { borderColor: "#EF4444" },
+                                    (dupeStatus === "taken" || dupeStatus === "invalid") && { borderColor: "#EF4444" },
                                     dupeStatus === "available" && { borderColor: "#10B981" },
                                 ]}
                                 value={nickname}
                                 onChangeText={setNickname}
-                                placeholder="2~20자"
+                                placeholder="예: 콩이네 (한글·영문·숫자)"
                                 placeholderTextColor={COLORS.gray[400]}
                                 maxLength={20}
                                 autoCapitalize="none"
                             />
+                            {(dupeStatus === "available" || dupeStatus === "checking") && (
+                                <Text style={styles.previewText}>
+                                    내 펫홈 주소: <Text style={{ color: accentColor, fontWeight: "600" }}>mementoani.com/u/{nickname.trim()}</Text>
+                                </Text>
+                            )}
                             <View style={styles.helperRow}>
                                 {dupeStatus === "checking" && (
                                     <Text style={[styles.helperText, { color: COLORS.gray[500] }]}>확인 중...</Text>
                                 )}
                                 {dupeStatus === "taken" && (
-                                    <Text style={[styles.helperText, { color: "#EF4444" }]}>이미 사용 중인 닉네임</Text>
+                                    <Text style={[styles.helperText, { color: "#EF4444" }]}>이미 사용 중인 이름</Text>
                                 )}
                                 {dupeStatus === "available" && (
                                     <Text style={[styles.helperText, { color: "#10B981" }]}>사용 가능</Text>
                                 )}
                                 {dupeStatus === "invalid" && (
-                                    <Text style={[styles.helperText, { color: "#EF4444" }]}>2~20자 필요</Text>
+                                    <Text style={[styles.helperText, { color: "#EF4444" }]}>한글·영문·숫자·_ 2~20자</Text>
                                 )}
                                 <Text style={[styles.helperText, { marginLeft: "auto" }]}>{nickname.trim().length}/20</Text>
                             </View>
+                            <Text style={styles.noticeText}>이 이름은 공개 펫홈 주소(공유 링크)와 커뮤니티에 표시돼요.</Text>
                         </View>
                     </View>
                 </KeyboardAvoidingView>
@@ -238,4 +250,6 @@ const styles = StyleSheet.create({
     },
     helperText: { fontSize: 11, color: COLORS.gray[400], marginTop: 6 },
     helperRow: { flexDirection: "row", alignItems: "center", marginTop: 6 },
+    previewText: { fontSize: 12, color: COLORS.gray[500], marginTop: 8 },
+    noticeText: { fontSize: 11, color: COLORS.gray[400], marginTop: 12, lineHeight: 16 },
 });

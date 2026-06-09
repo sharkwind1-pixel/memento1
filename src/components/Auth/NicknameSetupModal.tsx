@@ -20,6 +20,9 @@ import {
 } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 
+// 닉네임 = 펫홈 주소(/u/{nickname}) → URL-안전 문자만(한글·영문·숫자·_, 2~20자). 공백·특수문자 불가.
+const HANDLE_REGEX = /^[가-힣a-zA-Z0-9_]{2,20}$/;
+
 interface NicknameSetupModalProps {
     isOpen: boolean;
     onComplete: () => void;
@@ -32,24 +35,29 @@ export default function NicknameSetupModal({
     const { user, checkNickname, updateProfile } = useAuth();
 
     const [nickname, setNickname] = useState("");
-    const [nicknameStatus, setNicknameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+    const [nicknameStatus, setNicknameStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [ageConfirmed, setAgeConfirmed] = useState(false);
     const [termsAgreed, setTermsAgreed] = useState(false);
     const [locationConsent, setLocationConsent] = useState(false);
 
-    // 닉네임 변경 시 중복 체크 (디바운스)
+    // 닉네임(=펫홈 주소) 검증: URL-안전 문자 + 중복(대소문자무관) 체크 (디바운스)
     useEffect(() => {
-        if (!nickname.trim() || nickname.trim().length < 2) {
+        const trimmed = nickname.trim();
+        if (!trimmed || trimmed.length < 2) {
             setNicknameStatus("idle");
+            return;
+        }
+        if (!HANDLE_REGEX.test(trimmed)) {
+            setNicknameStatus("invalid");
             return;
         }
 
         setNicknameStatus("checking");
 
         const timer = setTimeout(async () => {
-            const { available } = await checkNickname(nickname.trim());
+            const { available } = await checkNickname(trimmed);
             setNicknameStatus(available ? "available" : "taken");
         }, 500);
 
@@ -79,6 +87,11 @@ export default function NicknameSetupModal({
             return;
         }
 
+        if (nicknameStatus === "invalid") {
+            setError("펫홈 주소엔 한글·영문·숫자·_만 쓸 수 있어요 (공백·특수문자 불가).");
+            return;
+        }
+
         if (nicknameStatus === "checking") {
             setError("닉네임 확인 중입니다. 잠시 후 다시 시도해주세요.");
             return;
@@ -103,7 +116,16 @@ export default function NicknameSetupModal({
                 })
                 .eq("id", user?.id);
 
-            if (profileError) throw profileError;
+            if (profileError) {
+                // 동시 가입 레이스로 DB unique(lower(nickname)) 위반 시 친절히 안내
+                if ((profileError as { code?: string }).code === "23505") {
+                    setNicknameStatus("taken");
+                    setError("이미 사용 중인 이름이에요. 다른 이름을 골라주세요.");
+                    setLoading(false);
+                    return;
+                }
+                throw profileError;
+            }
 
             onComplete();
         } catch (err) {
@@ -129,7 +151,7 @@ export default function NicknameSetupModal({
                     </div>
                     <h2 id="nickname-setup-title" className="text-2xl font-display font-bold">환영합니다!</h2>
                     <p className="text-white/80 mt-1">
-                        메멘토애니에서 사용할 닉네임을 설정해주세요
+                        우리 아이 펫홈 주소가 될 이름을 정해주세요
                     </p>
                 </div>
 
@@ -146,13 +168,13 @@ export default function NicknameSetupModal({
                     {/* 닉네임 입력 */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            닉네임 <span className="text-red-500">*</span>
+                            펫홈 주소 (닉네임) <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <Input
                                 type="text"
-                                placeholder="닉네임을 입력하세요 (2~20자)"
+                                placeholder="예: 콩이네 (한글·영문·숫자, 2~20자)"
                                 value={nickname}
                                 onChange={(e) => setNickname(e.target.value)}
                                 className={`pl-10 pr-10 h-12 rounded-xl ${
@@ -179,15 +201,26 @@ export default function NicknameSetupModal({
                                 )}
                             </div>
                         </div>
+                        {/* 펫홈 주소 미리보기 (형식 유효 시) */}
+                        {(nicknameStatus === "checking" || nicknameStatus === "available") && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                내 펫홈 주소: <span className="font-medium text-memento-600 dark:text-memento-400">mementoani.com/u/{nickname.trim()}</span>
+                            </p>
+                        )}
                         {/* 상태 메시지 */}
                         {nicknameStatus === "available" && (
                             <p className="text-xs text-green-600">
-                                사용 가능한 닉네임입니다
+                                사용 가능한 이름이에요
                             </p>
                         )}
                         {nicknameStatus === "taken" && (
                             <p className="text-xs text-red-600">
-                                이미 사용 중인 닉네임입니다
+                                이미 사용 중인 이름이에요
+                            </p>
+                        )}
+                        {nicknameStatus === "invalid" && (
+                            <p className="text-xs text-red-600">
+                                한글·영문·숫자·_만 쓸 수 있어요 (공백·특수문자 불가)
                             </p>
                         )}
                         {nicknameStatus === "idle" && nickname.length > 0 && nickname.length < 2 && (
@@ -198,8 +231,8 @@ export default function NicknameSetupModal({
                     </div>
 
                     <p className="text-xs text-gray-500 text-center">
-                        닉네임은 다른 사용자에게 표시되며,<br />
-                        커뮤니티 활동 시 사용됩니다.
+                        이 이름은 <span className="font-medium">공개 펫홈 주소(공유 링크)</span>와<br />
+                        커뮤니티에 표시돼요.
                     </p>
 
                     {/* 약관 동의 및 연령 확인 */}
@@ -252,7 +285,7 @@ export default function NicknameSetupModal({
                     {/* 제출 버튼 */}
                     <Button
                         type="submit"
-                        disabled={loading || nicknameStatus === "taken" || nicknameStatus === "checking" || nickname.trim().length < 2 || !ageConfirmed || !termsAgreed}
+                        disabled={loading || nicknameStatus === "taken" || nicknameStatus === "invalid" || nicknameStatus === "checking" || nickname.trim().length < 2 || !ageConfirmed || !termsAgreed}
                         className="w-full h-12 bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-600 rounded-xl text-base disabled:opacity-50"
                     >
                         {loading ? (

@@ -1158,25 +1158,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [user?.id]);
 
-    // 닉네임 중복 체크
+    // 닉네임 중복 체크 — 닉네임 = 펫홈 주소(/u/{nickname})라 대소문자 무관 + 본인 제외.
+    // DB의 unique(lower(nickname)) 제약과 동일 기준(is_nickname_taken RPC). 본인 제외라 닉네임 변경 시 자기 이름 허용.
     const checkNickname = useCallback(async (nickname: string) => {
         try {
-            const { data, error } = await supabase
-                .from("profiles")
-                .select("id")
-                .eq("nickname", nickname)
-                .maybeSingle();
-
+            const { data, error } = await supabase.rpc("is_nickname_taken", {
+                p_nick: nickname,
+                p_exclude: user?.id ?? null,
+            });
             if (error) {
                 return { available: false, error };
             }
-
-            // data가 null이면 사용 가능 (중복 없음)
-            return { available: data === null, error: null };
+            return { available: data === false, error: null };
         } catch (error) {
             return { available: false, error: error as Error };
         }
-    }, []);
+    }, [user?.id]);
 
     const value = useMemo(() => ({
         user,
