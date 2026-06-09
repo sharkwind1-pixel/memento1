@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-06-09 펫홈 Phase 0 ④ visit_logs 가입전환 퍼널 (웹) — L2+DB L3 + 9번
+배경: 비회원이 어디서 이탈하는지(landing→scroll→cta→signup drop-off) 측정해 전환 개선 근거 확보. 기존 방문 인프라 재사용, event 컬럼만 신규.
+- **DB 마이그 적용**(`3264a9b`, MCP apply_migration `visit_logs_funnel`): `visit_logs.event` 컬럼+인덱스. **get_visit_stats를 퍼널-step 제외(event IS NULL OR 'landing')로 보정 → 한 세션 다중행이어도 기존 "방문자" 수치 회귀 0**(9번 prod 실측). `get_funnel_stats(p_days)` 신규(단계별 고유 방문자, SECURITY DEFINER service_role).
+- **클라**: `src/lib/funnel.ts`(공용 visitor_id+trackFunnel, 세션당 단계별 1회 dedupe). VisitBeacon=landing/scroll/cta(scroll·cta는 landing 선행 보장). AuthContext=차단체크 통과한 fresh SIGNED_IN에서 signup(restore 제외). /api/visit=event 화이트리스트+토큰없는 signup 무효화.
+- **관리자**: admin/visits에 퍼널 추가, AdminDashboardTab 퍼널 막대(전환% + 단조 클램프 pct≤100).
+- **패리티**: 퍼널=웹 게스트 획득 측정(데스크탑웹+모바일웹=src/). 네이티브 앱은 설치 후라 랜딩 퍼널 **N/A**(mobile 변경 없음).
+- **9번 적대검증(DB)**: SHIP WITH FIXES(배포차단급 0, 회귀/NPE/보안/개인정보 통과) → F1(pct>100 단조성)·F3("가입완료"→"로그인·가입" 라벨)·F7(비인증 signup 위조) 3건 반영. 검증: 웹 L2(tsc+build)+DB L3(적용+RPC/grant/회귀 실측). 배포 후 데이터 누적 시 L5 권장.
+- **★ 펫홈 Phase 0 전체(①②③④) 완료. 다음=Phase 1(공개 펫홈 페이지 /u/{nickname}).**
+
+---
+
 ## 2026-06-09 게시글 첨부 이미지 클릭 → 모달 라이트박스 (웹+앱) — L2
 배경: 사용자 요청. 이미지 클릭 시 새 탭(window.open `_blank`) 대신 모달로 크게 보고, 재클릭/터치/Esc/백버튼으로 닫힘.
 - **웹**(`c0c7660`): 신규 `ImageLightbox`(controlled — src 있으면 열림, 이미지·배경·Esc로 닫힘). `PostDetailBody`가 `window.open`→`setLightboxSrc` 교체, cursor-zoom-in.
