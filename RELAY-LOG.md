@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-09 펫홈 Phase 0 ③ 게스트 AI펫톡 체험 (웹+앱) — L2 + 9번 2회
+배경: 비회원이 가입 전 AI펫톡을 데모펫(초코)과 3회 맛보기 → 가입 전환. 메인 인증경로와 완전 분리된 경량경로(user.id 의존 0).
+- **서버**(`fdb5602`): 신규 `/api/chat/guest` — 코어 gpt-4o-mini + `getDailySystemPrompt` + 가드만 재사용, DB저장/메모리/사진매칭 0. SSE 프로토콜 메인과 동일.
+- **웹**: `GuestChatExperience`(데모펫 대화, 3회 localStorage, 소진→`openAuthModal` detail.message=①후크 재사용). AIChatPage 게스트 분기 로그인벽→체험 교체. **AIChatLoginPrompt.tsx는 고아됨(무해, 추후 정리 가능).**
+- **앱 패리티**: 모바일 `GuestChatExperience`(RN fetch 스트리밍 미지원 대비 full-text SSE 파싱) + ai-chat `!session` 게이트.
+- **9번 적대검증 2회**(중요): 1차 **DO NOT SHIP — CRITICAL 비용 무한구멍**(`checkGlobalDailyLimit`이 인증 `ai_chat`행만 합산→게스트 미반영 + IP캡 인메모리 분산 + 클라 trialCount 위조). 수정: `checkDailyUsageDB("guest:IP", false)`로 게스트도 전역캡 반영 + IP당 일일 하드캡(DB=인스턴스 공유). 2차 재검증 **C1/H1 닫힘 확인** + SHIP WITH FIXES(`sanitizeAIOutput` 반환객체 `.cleaned` 미언랩 HIGH) → 수정. M3 권고(게스트가 결제유저 가용성 잠식)→`checkGuestGlobalDailyLimit` 서브캡 3,000/일 추가.
+- 검증: 웹 L2(tsc+build exit0)/모바일 L2(tsc, 실기 EAS대기). **신규 공개 AI엔드포인트라 배포 후 L4(curl 실응답+비용캡 동작) 권장.**
+
+---
+
 ## 2026-06-09 펫홈 Phase 0 ② 진짜 목소리 다시 듣기 (웹+앱) — L2
 배경: 추모 모드에서 업로드 영상의 원본 오디오로 우리 아이 진짜 목소리를 다시 듣기. 합성음성 아님(AI-ROADMAP 결정). 기존 자산 재사용.
 - **웹**(`ee71101`): `PhotoViewer`에 `autoPlay` prop(기본 true=후방호환) → 추모 목소리는 수동재생(false, 갑작스러운 재생 방지+소리 autoplay 차단 회피). 새 `VoiceMemorySection`(추모 전용): `selectedPet.photos` 영상만 모아 "다시 듣고 싶은 목소리" 카드, 클릭→PhotoViewer 수동재생, 영상 없으면 업로드 유도. RecordPage `photoViewerAutoPlay` state로 앨범(true)/목소리(false) 분기.
