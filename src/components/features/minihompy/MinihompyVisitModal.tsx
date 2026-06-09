@@ -95,7 +95,7 @@ export default function MinihompyVisitModal({
     // 좋아요 토글 — 공용 낙관적 토글 훅으로 연타 가드 + 즉시 반영 + 실패 롤백 표준화
     const handleLike = async () => {
         if (!user) {
-            toast.error("로그인이 필요합니다");
+            window.dispatchEvent(new CustomEvent("openAuthModal", { detail: { message: "이 펫홈에 마음을 남기려면 회원가입이 필요해요. 무료로 시작할 수 있어요." } }));
             return;
         }
         if (user.id === userId) {
@@ -132,7 +132,7 @@ export default function MinihompyVisitModal({
     // 방명록 작성
     const handleSubmitGuestbook = async () => {
         if (!user) {
-            toast.error("로그인이 필요합니다");
+            window.dispatchEvent(new CustomEvent("openAuthModal", { detail: { message: "방명록을 남기려면 회원가입이 필요해요. 무료로 시작할 수 있어요." } }));
             return;
         }
         if (!guestbookText.trim()) {

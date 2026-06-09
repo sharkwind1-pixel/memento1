@@ -360,6 +360,8 @@ function Layout({
         setIsDarkMode(document.documentElement.classList.contains("dark"));
     }, []);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    // 맥락 가입후크: openAuthModal CustomEvent의 detail.message를 받아 AuthModal에 "왜 가입하는지" 한 줄 전달
+    const [authModalMessage, setAuthModalMessage] = useState<string | undefined>(undefined);
     const [supportModalType, setSupportModalType] = useState<
         "inquiry" | "suggestion" | null
     >(null);
@@ -368,7 +370,10 @@ function Layout({
 
 
     useEffect(() => {
-        const handleOpenAuthModal = () => {
+        const handleOpenAuthModal = (e: Event) => {
+            // openAccountSettings의 detail.scrollTo 선례와 동일 패턴 — detail.message 있으면 맥락 카피 표시, 없으면 기본 환영문구
+            const detail = (e as CustomEvent<{ message?: string } | undefined>).detail;
+            setAuthModalMessage(detail?.message);
             setIsAuthModalOpen(true);
         };
         window.addEventListener("openAuthModal", handleOpenAuthModal);
@@ -414,6 +419,7 @@ function Layout({
     };
 
     const openLoginModal = () => {
+        setAuthModalMessage(undefined);
         setIsAuthModalOpen(true);
     };
 
@@ -428,6 +434,7 @@ function Layout({
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
+                contextMessage={authModalMessage}
             />
 
             {/* 질문/신고 & 건의사항 모달 */}

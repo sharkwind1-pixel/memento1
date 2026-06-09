@@ -143,7 +143,7 @@ export default function PostDetailView({
     // 좋아요 토글 — 공용 낙관적 토글 훅으로 가드/롤백/보정 표준화
     const handleLike = async () => {
         if (!user) {
-            window.dispatchEvent(new CustomEvent("openAuthModal"));
+            window.dispatchEvent(new CustomEvent("openAuthModal", { detail: { message: "이 글에 마음을 표현하려면 회원가입이 필요해요. 무료로 시작할 수 있어요." } }));
             return;
         }
         // 자기 글 좋아요 방지
@@ -190,7 +190,7 @@ export default function PostDetailView({
     // 비추천 토글 — 공용 낙관적 토글 훅으로 표준화
     const handleDislike = async () => {
         if (!user) {
-            window.dispatchEvent(new CustomEvent("openAuthModal"));
+            window.dispatchEvent(new CustomEvent("openAuthModal", { detail: { message: "이 글에 의견을 남기려면 회원가입이 필요해요. 무료로 시작할 수 있어요." } }));
             return;
         }
         if (post && user.id === post.user_id) {
@@ -236,7 +236,7 @@ export default function PostDetailView({
     // 댓글 작성
     const handleSubmitComment = async () => {
         if (!user) {
-            window.dispatchEvent(new CustomEvent("openAuthModal"));
+            window.dispatchEvent(new CustomEvent("openAuthModal", { detail: { message: "댓글을 남기려면 회원가입이 필요해요. 무료로 시작할 수 있어요." } }));
             return;
         }
         if (!commentText.trim() || isSubmittingComment) return;
@@ -513,7 +513,7 @@ export default function PostDetailView({
 
     // 댓글 좋아요 — 공용 낙관적 토글 훅으로 가드/롤백/보정 표준화 (탭 즉시 토글 → 서버 보정 → 실패 시 롤백)
     const handleCommentLike = async (commentId: string) => {
-        if (!user) { window.dispatchEvent(new CustomEvent("openAuthModal")); return; }
+        if (!user) { window.dispatchEvent(new CustomEvent("openAuthModal", { detail: { message: "댓글에 공감하려면 회원가입이 필요해요. 무료로 시작할 수 있어요." } })); return; }
         const before = comments.find(c => c.id === commentId);
         await runToggle<{ likes: number; liked: boolean; dislikes?: number; disliked?: boolean }>(`comment-like:${commentId}`, {
             apply: () => setComments(prev => prev.map(c => c.id === commentId

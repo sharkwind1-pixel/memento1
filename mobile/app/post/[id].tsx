@@ -241,8 +241,17 @@ export default function PostDetailScreen() {
         }
     }
 
+    // 맥락 가입후크 (웹 openAuthModal detail.message 패리티) — 게스트가 상호작용 시도 시 가치문구 + 로그인 경로
+    function promptLogin(message: string) {
+        Alert.alert("로그인 필요", message, [
+            { text: "취소", style: "cancel" },
+            { text: "로그인", onPress: () => router.push("/(auth)/login") },
+        ]);
+    }
+
     async function handleLike() {
-        if (!session || !post || isLiking) return;
+        if (isLiking || !post) return;
+        if (!session) { promptLogin("이 글에 마음을 표현하려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
         setIsLiking(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
@@ -301,7 +310,8 @@ export default function PostDetailScreen() {
     }
 
     async function handleDislike() {
-        if (!session || !post || isDisliking) return;
+        if (isDisliking || !post) return;
+        if (!session) { promptLogin("이 글에 의견을 남기려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
         setIsDisliking(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
@@ -557,7 +567,8 @@ export default function PostDetailScreen() {
     }
 
     async function submitComment() {
-        if (!commentInput.trim() || !session || isSubmittingComment) return;
+        if (!commentInput.trim() || isSubmittingComment) return;
+        if (!session) { promptLogin("댓글을 남기려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
         setIsSubmittingComment(true);
         try {
             const res = await fetch(`${API_BASE_URL}/api/posts/${id}/comments`, {
@@ -865,9 +876,18 @@ function CommentItem({
     const isMine = !!currentUserId && currentUserId === comment.authorId;
     const hasAuthorLink = !!comment.authorId;
     const [reacting, setReacting] = useState(false);
+    const router = useRouter();
+    // 맥락 가입후크 (웹 패리티) — 게스트가 댓글 반응 시도 시 가치문구 + 로그인 경로
+    function promptLogin(message: string) {
+        Alert.alert("로그인 필요", message, [
+            { text: "취소", style: "cancel" },
+            { text: "로그인", onPress: () => router.push("/(auth)/login") },
+        ]);
+    }
 
     async function handleLikeComment() {
-        if (!accessToken || reacting) return;
+        if (reacting) return;
+        if (!accessToken) { promptLogin("댓글에 공감하려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
         setReacting(true);
         const newLiked = !comment.isLiked;
         const wasDisliked = comment.isDisliked;
@@ -914,7 +934,8 @@ function CommentItem({
     }
 
     async function handleDislikeComment() {
-        if (!accessToken || reacting) return;
+        if (reacting) return;
+        if (!accessToken) { promptLogin("댓글에 의견을 남기려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
         setReacting(true);
         const newDisliked = !comment.isDisliked;
         const wasLiked = comment.isLiked;

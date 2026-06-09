@@ -230,7 +230,7 @@ export default function PostDetailComments({
                     </div>
                 ) : (
                     <button
-                        onClick={() => window.dispatchEvent(new CustomEvent("openAuthModal"))}
+                        onClick={() => window.dispatchEvent(new CustomEvent("openAuthModal", { detail: { message: "댓글을 남기려면 회원가입이 필요해요. 무료로 시작할 수 있어요." } }))}
                         className="w-full py-3 text-center text-sm text-gray-500 hover:text-memento-500 transition-colors"
                     >
                         로그인하고 댓글을 남겨보세요

@@ -9,14 +9,16 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
-import { X, AlertCircle, Loader2 } from "lucide-react";
+import { X, AlertCircle, Loader2, Sparkles } from "lucide-react";
 
 interface AuthModalProps {
     isOpen: boolean;
     onClose: () => void;
+    /** 맥락 가입후크: 특정 행동(좋아요/댓글/방명록 등) 시도 시 "왜 가입하는지" 한 줄. 없으면 기본 환영문구만 노출. */
+    contextMessage?: string;
 }
 
-export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, contextMessage }: AuthModalProps) {
     const { signInWithGoogle, signInWithKakao, signInWithNaver } = useAuth();
     useEscapeClose(isOpen, onClose);
 
@@ -116,6 +118,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-sm">
                                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                                 {error}
+                            </div>
+                        )}
+
+                        {/* 맥락 가입후크 — 어떤 행동을 하려다 왔는지 + 무료 시작 (좋아요/댓글/방명록 등) */}
+                        {contextMessage && (
+                            <div className="flex items-start gap-2 p-3 bg-memento-50 dark:bg-memento-900/20 text-memento-700 dark:text-memento-200 rounded-xl text-sm font-medium leading-relaxed border border-memento-100 dark:border-memento-800/60">
+                                <Sparkles className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                                <span>{contextMessage}</span>
                             </div>
                         )}
 
