@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-11 전체 코드베이스 전수검수 배치2 (B:웹/D:AI·cron/F:컨벤션) — 수정 3커밋
+배경: 전수검수 후반부. 검수→수정 에이전트 3개 병렬→9번 묶음 재검증(SHIP WITH FIXES 1건 반영).
+- **B 웹**(`d4bc8fd`): plain fetch→authFetch 5곳(**차단한 유저 글이 차단 후에도 노출**·**매거진 좋아요 하트 새로고침 소실** 포함 — getAuthUser는 Bearer만 읽는 기지 패턴 재발) / **영상 진행 폴링 폭주**(deps에 active 객체→15초 간격 무력화·조기 타임아웃)→원시값 deps+ref / dismiss를 dismissed 분리(완료 토스트 복원) / StoryCreateModal 모달 스크롤 금지조합 교정 / 타이머·race·리스너 가드 4건 / chatUtils TimelineEntry 중앙타입화.
+- **D AI·cron**(`890f082`): **chat/summary 비용 가드 전무**→rate-limit+60개/1000자/8000자 캡 / **아침 인사 푸시 이중 발사 확정**(pg_cron 매시간 실측+vercel.json 중복)→vercel.json에서 제거 / KST +9h 통일(생일·추모일 KST 00~09시 전날 오판) / greetings gender male/female→남아/여아(항상 누락이던 버그) / 편향 셔플 재발 1곳 Fisher-Yates / 추모 offTopic 고정문구→풀 셔플(9번이 "잘 자"/"산책" 블록리스트 위반 잡아 교체) / 추모 폴백 톤 정정 / usage phase 한도 / no-store 2곳.
+- **F 가격표기**(`0cb4505`): **구버전 18,900원/베이직/영상 월6회가 구글 리치결과(JSON-LD)·noscript·sr-only·결제약관(법적 고지)·업셀 모달에 잔존** — 실청구 9,900과 불일치(표시광고 리스크) → 전면 현행화+환불 예시 재계산(검산 PASS)+이모지 정리. grep 잔존 0.
+- 검증: 웹 L2(tsc+build exit0)+9번 묶음 재검증(10항목 중 9 PASS, 1건 수정). 배포 후 L5: 차단 목록 갱신·매거진 하트·구글 리치결과 리크롤.
+- **후순위 미수정(보드 기재)**: E의 save_deleted_account 시그니처 불일치(탈퇴기록 0건)+mark_account_rejoined 부재 / 펫톡 일일횟수 선차감 후 거절 / 스트리밍 delta 원문 노출 / subscription-renewal 멱등성 / 고아 파일 23건 / aiChat_rpm 행 누적 / SubscriptionSection API 상수 일탈 / DROP+CREATE 시 RPC ACL 부활 주의.
+
+---
+
 ## 2026-06-10 전체 코드베이스 전수검수 배치1 (A:API/E:DB/C:모바일) — CRITICAL 2건 수술
 배경: 사용자 요청(fable5 기념 전체 코드 리딩+오류 수정). 6영역 병렬 검수 중 배치1 완료.
 - **[CRITICAL] 민감 RPC PUBLIC 잠금**(`1cd5317`, 마이그 `lock_sensitive_rpcs` 적용): 20260511 마이그가 REVOKE FROM anon,authenticated만 해서 **PUBLIC EXECUTE grant 잔존=no-op** → anon key로 grant_premium(무료 프리미엄 자가부여)/increment_user_points(무가드 오버로드, 무제한 적립)/purchase_*·sell_*(가격 조작) 직접 호출 가능했음(A/E 독립 발견). 13함수 service_role 전용 잠금+실측. **교훈: REVOKE는 PUBLIC부터. DROP+CREATE 재생성 시 ACL 디폴트 부활 주의(CREATE OR REPLACE는 보존).**

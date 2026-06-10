@@ -23,6 +23,7 @@
    - **후순위(9번 권고)**: N2=`is_minihompy_private` RPC가 anon EXECUTE라 uuid로 비공개 여부 1비트 조회 가능(비노출 스키마 이전 권고) · N3=비공개 펫홈에 like/guestbook/visit POST 쓰기 가드 없음(의도 결정 필요) · 모바일 게스트 방명록 열람 불가(웹은 가능 — 패리티 갭) · guestbook/visits owner_id 인덱스 부재.
    - ⚠️**배포 후 시각확인**(전부 L2~L3): Phase 0 4건+Phase 1 웹(특히 `/u/{닉네임}` 게스트 열람+OG) / ②③+펫홈 게스트 앱(EAS 대기) / ④ 퍼널 데이터 누적 후 대시보드 / ③ 게스트 엔드포인트 curl L4.
    - 잔여 명칭 점검: §15 튜토리얼 라벨 전수 재확인 권장. ③에서 AIChatLoginPrompt.tsx 고아(무해).
+0.5. **전수검수(2026-06-10~11) 잔여 후순위** (상세: RELAY-LOG 배치1·2 항목): ①**[H] save_deleted_account 시그니처 불일치**(20260209 마이그 일부 미실행 — 탈퇴기록 0건·쿨다운 안내 무동작, mark_account_rejoined도 부재) ②펫톡 일일횟수 선차감 후 거절(실패에도 횟수 소모) ③스트리밍 delta에 sanitize 미적용(done만) ④subscription-renewal 멱등성(merchant_uid 랜덤 — 결제라 전용 작업) ⑤고아 파일 23건 삭제(AIChatLoginPrompt·logger·chat-context-builders 등, F 보고 목록) ⑥aiChat_rpm 행 무한 누적 정리 ⑦SubscriptionSection API 상수 일탈 ⑧increment_field RPC 부재 죽은 폴백 제거 ⑨N2(is_minihompy_private 1비트 오라클)·N3(비공개 펫홈 쓰기 가드). **재발방지 메모: RPC DROP+CREATE 시 PUBLIC EXECUTE 부활(CREATE OR REPLACE는 ACL 보존) / 20260225 pg_cron 마이그 파일은 auth 헤더 없는 구버전(라이브와 다름 — 재실행 금지).**
 1. **EAS 빌드 → 베타 12명 신규 배포** (사용자 액션 필요): 5/19~5/20 모바일 11+커밋(웹1:1 패리티/PKCE/사진첩/펫 사진 히어로/추천멘트 정화/PawLoading/추천칩/감정글로우/스트리밍커서/채팅 회귀 fix 등)이 옛 AAB에 미반영. 사용자가 EAS 빌드 + Closed 트랙 AAB 업로드 + "출시 시작" 클릭. 그 후 베타 시각 검증으로 ⚠️미검증 모바일 묶음 해소.
 2. **앱 AI펫톡 남은 갭**: (사이드바 `4be8fa9` · 내보내기 `a9e621f` L2완료 EAS실기대기 · 푸시배너=모바일 Expo Push 이미 구현, 이식 불필요)
 3. **서울 유니콘 챌린지 신청** (마감 6/30): 농식품 사업계획서 자산 변형. 메모리얼 카테고리. constants.ts 가격/한도 동일 인용. 폐업이력 PR-B(2017~2024 스마트스토어) 약점 보강 필수.
