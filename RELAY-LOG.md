@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-06-10 관리자 포인트 차감 기능 + 원자 RPC (웹+앱) — L2+DB L4 + 9번
+배경: 사용자 요청 — 포인트 "지급"만 되던 걸 "차감"까지(넣다 뺐다, 특히 관리자 본인 테스트용). 기존 /api/admin/points 확장.
+- **DB 마이그 적용**(`bde3519`, MCP `admin_adjust_points_atomic`): `admin_adjust_points` RPC — FOR UPDATE 행잠금 + GREATEST(0) 클램프로 **read-then-write race 제거**(잔액↔장부 불일치·음수 방지). total_points_earned 단조 증가(차감 시 불변). service_role 전용. smoke test(delta=0) 통과.
+- **API**: 음수 허용(양수=지급/음수=차감)+정수검증, RPC 호출로 교체, 응답 delta+newTotal(하위호환 awarded).
+- **웹**: PointsAwardModal 지급/차감 토글+레벨다운 표시. AdminUsersTab delta 토스트 분기+본인계정 refreshPoints.
+- **앱**: mobile AdminUsersTab은 이미 "양수:지급/음수:차감" 프롬프트 있었으나 **구 API가 음수 거부해 차감 작동 안 하던 잠복버그** → API 수정으로 동작 + 응답필드(newPoints→newTotal)·delta·클램프 폴백 수정.
+- **9번(DB)**: SHIP WITH FIXES → High(race)=원자RPC / Med(total_earned 단조성) / Low(비정수 가드) 전부 반영. 검증: 웹 L2(tsc+build)+DB L4(RPC smoke). 배포 후 실 차감 1회 L5 권장.
+- 부수발견(범위밖): profiles에 protect_sensitive_columns 트리거 2개 중복 바인딩(무해, 정리대상).
+
+---
+
 ## 2026-06-09 펫홈 Phase 0 ④ visit_logs 가입전환 퍼널 (웹) — L2+DB L3 + 9번
 배경: 비회원이 어디서 이탈하는지(landing→scroll→cta→signup drop-off) 측정해 전환 개선 근거 확보. 기존 방문 인프라 재사용, event 컬럼만 신규.
 - **DB 마이그 적용**(`3264a9b`, MCP apply_migration `visit_logs_funnel`): `visit_logs.event` 컬럼+인덱스. **get_visit_stats를 퍼널-step 제외(event IS NULL OR 'landing')로 보정 → 한 세션 다중행이어도 기존 "방문자" 수치 회귀 0**(9번 prod 실측). `get_funnel_stats(p_days)` 신규(단계별 고유 방문자, SECURITY DEFINER service_role).
