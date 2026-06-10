@@ -35,7 +35,7 @@ export default function PaymentTermsPage() {
 
                         <h3 className="text-lg font-semibold mt-4">1. 구독 서비스</h3>
                         <p className="text-gray-600 dark:text-gray-300">
-                            회사는 다음과 같은 월간 구독 서비스를 제공합니다.
+                            회사는 다음과 같은 구독 서비스(월간 또는 연간)를 제공합니다.
                         </p>
                         <div className="overflow-x-auto mt-3">
                             <table className="w-full text-sm border-collapse">
@@ -43,7 +43,6 @@ export default function PaymentTermsPage() {
                                     <tr className="bg-memento-200 dark:bg-memento-900/30">
                                         <th className="border border-gray-200 dark:border-gray-600 px-4 py-2 text-left font-semibold">구분</th>
                                         <th className="border border-gray-200 dark:border-gray-600 px-4 py-2 text-left font-semibold">무료</th>
-                                        <th className="border border-gray-200 dark:border-gray-600 px-4 py-2 text-left font-semibold">베이직</th>
                                         <th className="border border-gray-200 dark:border-gray-600 px-4 py-2 text-left font-semibold">프리미엄</th>
                                     </tr>
                                 </thead>
@@ -52,31 +51,31 @@ export default function PaymentTermsPage() {
                                         <td className="border border-gray-200 dark:border-gray-600 px-4 py-2 font-medium">월 요금</td>
                                         <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">0원</td>
                                         <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">9,900원</td>
-                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">18,900원</td>
                                     </tr>
                                     <tr className="bg-gray-50 dark:bg-gray-700/30">
+                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2 font-medium">연 요금 (선택)</td>
+                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">-</td>
+                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">88,800원 (월 환산 7,400원)</td>
+                                    </tr>
+                                    <tr>
                                         <td className="border border-gray-200 dark:border-gray-600 px-4 py-2 font-medium">AI 펫톡</td>
                                         <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">하루 10회</td>
-                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">하루 50회</td>
-                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">무제한</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2 font-medium">반려동물 등록</td>
-                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">1마리</td>
-                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">3마리</td>
-                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">10마리</td>
+                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">하루 1,000회</td>
                                     </tr>
                                     <tr className="bg-gray-50 dark:bg-gray-700/30">
-                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2 font-medium">사진 저장</td>
-                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">펫당 50장</td>
-                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">펫당 200장</td>
-                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">펫당 1,000장</td>
+                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2 font-medium">반려동물 등록</td>
+                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">1마리</td>
+                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">10마리</td>
                                     </tr>
                                     <tr>
+                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2 font-medium">사진 저장</td>
+                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">펫당 50장</td>
+                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">펫당 1,000장</td>
+                                    </tr>
+                                    <tr className="bg-gray-50 dark:bg-gray-700/30">
                                         <td className="border border-gray-200 dark:border-gray-600 px-4 py-2 font-medium">AI 영상 생성</td>
                                         <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">평생 1회</td>
                                         <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">월 3회</td>
-                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">월 6회</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -87,7 +86,9 @@ export default function PaymentTermsPage() {
                             구독 플랜의 기본 제공 횟수를 초과한 경우, 다음과 같이 건당 추가 구매가 가능합니다.
                         </p>
                         <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1 mt-2">
-                            <li>AI 영상 생성: 건당 3,500원 (부가세 포함)</li>
+                            <li>AI 영상 생성 단품 1회: 4,900원 (부가세 포함)</li>
+                            <li>AI 영상 생성 5회 묶음권: 19,900원 (부가세 포함, 회당 3,980원)</li>
+                            <li>AI 영상 생성 10회 묶음권: 34,900원 (부가세 포함, 회당 3,490원)</li>
                         </ul>
 
                         <h3 className="text-lg font-semibold mt-4">3. 요금 변경</h3>
@@ -190,8 +191,8 @@ export default function PaymentTermsPage() {
                             <li>
                                 환불 예시:
                                 <ul className="list-disc list-inside ml-4 mt-1 space-y-1 text-sm text-gray-500 dark:text-gray-400">
-                                    <li>프리미엄(18,900원) 결제 후 10일 사용, 20일 남음: 18,900 x (20/30) = 12,600원 환불</li>
-                                    <li>베이직(9,900원) 결제 후 15일 사용, 15일 남음: 9,900 x (15/30) = 4,950원 환불</li>
+                                    <li>프리미엄(9,900원) 결제 후 10일 사용, 20일 남음: 9,900 x (20/30) = 6,600원 환불</li>
+                                    <li>프리미엄(9,900원) 결제 후 15일 사용, 15일 남음: 9,900 x (15/30) = 4,950원 환불</li>
                                     <li>결제 후 25일 사용, 5일 남음: 결제 금액 x (5/30) 환불</li>
                                 </ul>
                             </li>
@@ -200,7 +201,7 @@ export default function PaymentTermsPage() {
                         <h3 className="text-lg font-semibold mt-4">2. 단품 결제 환불</h3>
                         <ol className="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-3">
                             <li>
-                                AI 영상 생성 단품 결제(건당 3,500원)는 결제 후 영상 생성이 시작되기 전까지 전액 환불이 가능합니다.
+                                AI 영상 생성 단품·묶음 결제(단품 4,900원, 5회 묶음 19,900원, 10회 묶음 34,900원)는 결제 후 영상 생성이 시작되기 전까지 전액 환불이 가능합니다.
                             </li>
                             <li>
                                 영상 생성이 개시된 이후에는 디지털콘텐츠의 특성상 청약철회가 제한됩니다.

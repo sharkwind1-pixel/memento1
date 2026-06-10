@@ -164,21 +164,21 @@ export default async function RootLayout({
                                     "offers": [
                                         {
                                             "@type": "Offer",
-                                            "name": "베이직 플랜",
+                                            "name": "프리미엄 월간 플랜",
                                             "price": "9900",
                                             "priceCurrency": "KRW",
                                             "priceValidUntil": "2027-12-31",
                                             "availability": "https://schema.org/InStock",
-                                            "description": "AI 펫톡 하루 50회, 반려동물 3마리, 사진 펫당 200장, AI 영상 월 3회",
+                                            "description": "AI 펫톡 하루 1,000회, 반려동물 10마리, 사진 펫당 1,000장, AI 영상 월 3회, 우선 고객 지원",
                                         },
                                         {
                                             "@type": "Offer",
-                                            "name": "프리미엄 플랜",
-                                            "price": "18900",
+                                            "name": "프리미엄 연간 플랜",
+                                            "price": "88800",
                                             "priceCurrency": "KRW",
                                             "priceValidUntil": "2027-12-31",
                                             "availability": "https://schema.org/InStock",
-                                            "description": "AI 펫톡 무제한, 반려동물 10마리, 사진 펫당 1,000장, AI 영상 월 6회, 우선 고객 지원",
+                                            "description": "연 88,800원 (월 환산 7,400원, 월 결제 대비 25% 할인). AI 펫톡 하루 1,000회, 반려동물 10마리, 사진 펫당 1,000장, AI 영상 월 3회, 우선 고객 지원",
                                         },
                                     ],
                                     "aggregateRating": {
@@ -231,7 +231,7 @@ export default async function RootLayout({
                         </div>
                         <div className="bg-gray-50 p-6 rounded-lg">
                             <h2 className="text-xl font-semibold text-gray-800 mb-4">요금제 안내</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="p-4 bg-white rounded-lg border">
                                     <h3 className="font-bold text-gray-900">무료 플랜</h3>
                                     <p className="text-2xl font-bold text-gray-900 my-2">0원</p>
@@ -239,26 +239,18 @@ export default async function RootLayout({
                                         <li>AI 펫톡 하루 10회</li>
                                         <li>반려동물 1마리 등록</li>
                                         <li>사진 펫당 50장</li>
-                                    </ul>
-                                </div>
-                                <div className="p-4 bg-white rounded-lg border-2 border-memento-400">
-                                    <h3 className="font-bold text-memento-600">베이직 플랜</h3>
-                                    <p className="text-2xl font-bold text-memento-600 my-2">월 9,900원</p>
-                                    <ul className="text-sm text-gray-600 space-y-1">
-                                        <li>AI 펫톡 하루 50회</li>
-                                        <li>반려동물 3마리 등록</li>
-                                        <li>사진 펫당 200장</li>
-                                        <li>AI 영상 월 3회</li>
+                                        <li>AI 영상 평생 1회</li>
                                     </ul>
                                 </div>
                                 <div className="p-4 bg-white rounded-lg border-2 border-memento-400">
                                     <h3 className="font-bold text-memento-600">프리미엄 플랜</h3>
-                                    <p className="text-2xl font-bold text-memento-600 my-2">월 18,900원</p>
+                                    <p className="text-2xl font-bold text-memento-600 my-2">월 9,900원</p>
+                                    <p className="text-sm text-gray-500 mb-2">연 결제 시 88,800원 (월 환산 7,400원)</p>
                                     <ul className="text-sm text-gray-600 space-y-1">
-                                        <li>AI 펫톡 무제한</li>
+                                        <li>AI 펫톡 하루 1,000회</li>
                                         <li>반려동물 10마리 등록</li>
                                         <li>사진 펫당 1,000장</li>
-                                        <li>AI 영상 월 6회</li>
+                                        <li>AI 영상 월 3회</li>
                                         <li>우선 고객 지원</li>
                                     </ul>
                                 </div>
@@ -288,9 +280,8 @@ export default async function RootLayout({
                             <p>반려동물과 함께하는 모든 순간을 기록하고, 이별 후에도 따뜻한 추억을 간직할 수 있는 플랫폼입니다. AI 펫톡, 타임라인, 커뮤니티, 펫매거진 등 다양한 서비스를 제공합니다.</p>
                             <h3>요금제 안내</h3>
                             <ul>
-                                <li>무료 플랜: AI 펫톡 하루 10회, 반려동물 1마리, 사진 펫당 50장</li>
-                                <li>베이직 플랜: 월 9,900원 - AI 펫톡 하루 50회, 반려동물 3마리, 사진 펫당 200장, AI 영상 월 3회</li>
-                                <li>프리미엄 플랜: 월 18,900원 - AI 펫톡 무제한, 반려동물 10마리, 사진 펫당 1,000장, AI 영상 월 6회, 우선 고객 지원</li>
+                                <li>무료 플랜: AI 펫톡 하루 10회, 반려동물 1마리, 사진 펫당 50장, AI 영상 평생 1회</li>
+                                <li>프리미엄 플랜: 월 9,900원 또는 연 88,800원(월 환산 7,400원) - AI 펫톡 하루 1,000회, 반려동물 10마리, 사진 펫당 1,000장, AI 영상 월 3회, 우선 고객 지원</li>
                             </ul>
                             <h3>환불 정책</h3>
                             <p>구독 서비스: 결제 후 24시간 이내 사용 이력이 없거나 미미한 경우 전액 환불. 24시간 경과 후 해지 시 결제일~해지 시점까지의 기간을 일할 계산하여 잔여분 환불. 단건 디지털 콘텐츠는 사용 전 7일 이내 전액 환불. 환불 처리 기간은 3~7 영업일 소요.</p>

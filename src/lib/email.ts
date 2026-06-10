@@ -132,7 +132,7 @@ export async function sendWelcomeEmail(
 
     const betaBlock = betaPromotion ? `
         <div style="background: linear-gradient(135deg, #FEF3C7, #FFEDD5); padding: 20px; border-radius: 16px; margin: 20px 0; border-left: 4px solid #F59E0B;">
-            <p style="margin: 0 0 8px; font-size: 14px; font-weight: 700; color: #92400E;">🎁 베타 프로모션 자동 적용</p>
+            <p style="margin: 0 0 8px; font-size: 14px; font-weight: 700; color: #92400E;">베타 프로모션 자동 적용</p>
             <ul style="margin: 0; padding-left: 18px; color: #78350F; font-size: 13px; line-height: 1.7;">
                 <li><strong>${betaPoints.toLocaleString()}P</strong> 보너스 포인트 지급</li>
                 <li>구독 첫 3개월 <strong>${betaDiscountPercent}% 할인</strong></li>

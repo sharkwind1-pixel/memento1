@@ -3,7 +3,7 @@
  *
  * PG사(KCP) 심사용 — 로그인 없이 확인 가능한 결제 상품/수단 안내.
  *  - 모든 플랜의 가격, 제공 횟수, 결제 수단(신용카드 명시) 표시
- *  - 단건 결제(영상 1건 3,500원) + 정기 구독 모두 노출
+ *  - 단건 결제(영상 1건 4,900원) + 정기 구독 모두 노출
  *  - 휴대폰 소액결제 정책 명시 (KCP 추가 심사 대응)
  *  - 환불 정책 직링크
  *
@@ -12,6 +12,7 @@
 
 import { Metadata } from "next";
 import Link from "next/link";
+import { CreditCard, Smartphone, Landmark, Receipt, type LucideIcon } from "lucide-react";
 import { PRICING, VIDEO, calculateAnnualSavings } from "@/config/constants";
 
 const ANNUAL_SAVINGS = calculateAnnualSavings();
@@ -46,10 +47,10 @@ export default function PricingPage() {
                         모든 결제는 PG사 NHN KCP를 통해 안전하게 처리되며, 결제 정보는 메멘토애니 서버에 저장되지 않습니다.
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <PayMethodChip icon="💳" label="신용카드 결제" emphasis />
-                        <PayMethodChip icon="📱" label="휴대폰 소액결제" />
-                        <PayMethodChip icon="🏦" label="실시간 계좌이체" />
-                        <PayMethodChip icon="🧾" label="가상계좌 입금" />
+                        <PayMethodChip icon={CreditCard} label="신용카드 결제" emphasis />
+                        <PayMethodChip icon={Smartphone} label="휴대폰 소액결제" />
+                        <PayMethodChip icon={Landmark} label="실시간 계좌이체" />
+                        <PayMethodChip icon={Receipt} label="가상계좌 입금" />
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                         ※ 정기 구독(자동결제)은 신용카드 결제만 지원됩니다 (빌링키 발급).<br />
@@ -160,7 +161,7 @@ export default function PricingPage() {
                 {/* 휴대폰 소액결제 정책 — KCP 추가 심사용 */}
                 <section className="bg-white dark:bg-gray-800 rounded-2xl shadow p-8 space-y-4 border-2 border-amber-200 dark:border-amber-800">
                     <h2 className="text-xl font-display font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <span>📱</span> 휴대폰 소액결제 환불 정책
+                        <Smartphone className="w-5 h-5 text-amber-600 dark:text-amber-400" aria-hidden="true" /> 휴대폰 소액결제 환불 정책
                     </h2>
                     <ul className="list-disc pl-6 space-y-2 text-sm text-gray-700 dark:text-gray-300">
                         <li>
@@ -226,7 +227,7 @@ export default function PricingPage() {
     );
 }
 
-function PayMethodChip({ icon, label, emphasis = false }: { icon: string; label: string; emphasis?: boolean }) {
+function PayMethodChip({ icon: Icon, label, emphasis = false }: { icon: LucideIcon; label: string; emphasis?: boolean }) {
     return (
         <div
             className={`flex items-center gap-2 px-4 py-3 rounded-xl border ${
@@ -235,7 +236,7 @@ function PayMethodChip({ icon, label, emphasis = false }: { icon: string; label:
                     : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700"
             }`}
         >
-            <span className="text-xl">{icon}</span>
+            <Icon className={`w-5 h-5 flex-shrink-0 ${emphasis ? "text-memento-600 dark:text-memento-400" : "text-gray-500 dark:text-gray-400"}`} aria-hidden="true" />
             <span className={`text-sm font-medium ${emphasis ? "text-memento-700 dark:text-memento-300" : "text-gray-700 dark:text-gray-300"}`}>
                 {label}
             </span>

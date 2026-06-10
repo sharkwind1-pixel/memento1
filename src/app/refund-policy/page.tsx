@@ -63,8 +63,7 @@ export default function RefundPolicyPage() {
                     </ul>
 
                     <div className="my-6 rounded-xl border-2 border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-5">
-                        <h2 className="text-xl font-display font-bold flex items-center gap-2 mt-0">
-                            <span aria-hidden="true">📱</span>
+                        <h2 className="text-xl font-display font-bold mt-0">
                             3. 휴대폰 소액결제 환불 (이동통신사 정책)
                         </h2>
                         <ul className="list-disc pl-6 space-y-2 mb-0">

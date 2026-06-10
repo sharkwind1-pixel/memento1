@@ -1,7 +1,7 @@
 /**
  * PremiumModal.tsx
  * 프리미엄 기능 유도 모달
- * - 베이직(9,900원/월) / 프리미엄(18,900원/월) 2단계 플랜
+ * - 단일 프리미엄 플랜 (월 9,900원 / 연 88,800원)
  * - 부드럽고 친근한 톤
  */
 
@@ -54,13 +54,13 @@ const featureInfo: Record<PremiumFeature, {
         icon: MessageCircle,
         title: "AI 펫톡 더 많이",
         description: "오늘의 무료 대화를 다 사용했어요",
-        benefit: "베이직 플랜부터 하루 50회, 프리미엄이면 무제한으로 대화할 수 있어요",
+        benefit: `프리미엄으로 업그레이드하면 하루 ${PREMIUM_LIMITS.DAILY_CHATS.toLocaleString()}회까지 대화할 수 있어요`,
     },
     "pet-limit": {
         icon: Heart,
         title: "반려동물 등록 더 많이",
         description: "무료는 1마리만 등록할 수 있어요",
-        benefit: "여러 아이를 키우신다면 베이직(3마리) 또는 프리미엄(10마리)으로 모두 등록하세요",
+        benefit: `여러 아이를 키우신다면 프리미엄으로 ${PREMIUM_LIMITS.PETS}마리까지 모두 등록하세요`,
     },
     "photo-limit": {
         icon: Camera,
@@ -277,7 +277,7 @@ export default function PremiumModal({
                             <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5">
                                 <li className="text-[12px] text-gray-600 dark:text-gray-300 flex items-start gap-1">
                                     <Check className="w-3.5 h-3.5 text-violet-500 flex-shrink-0 mt-0.5" />
-                                    AI 펫톡 무제한
+                                    AI 펫톡 하루 {PREMIUM_LIMITS.DAILY_CHATS.toLocaleString()}회
                                 </li>
                                 <li className="text-[12px] text-gray-600 dark:text-gray-300 flex items-start gap-1">
                                     <Check className="w-3.5 h-3.5 text-violet-500 flex-shrink-0 mt-0.5" />
