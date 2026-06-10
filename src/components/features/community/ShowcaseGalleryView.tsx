@@ -76,7 +76,7 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick, onCreateVide
                 sort: "latest",
                 limit: "20",
             });
-            const res = await fetch(`${API.POSTS}?${params}`);
+            const res = await authFetch(`${API.POSTS}?${params}`);
             if (res.ok) {
                 const data = await res.json();
                 if (data.posts?.length > 0) {

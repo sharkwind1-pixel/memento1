@@ -38,6 +38,7 @@ import { getBadgeStyle, getBadgeLabel, dbArticleToMagazineArticle, type Magazine
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { API } from "@/config/apiEndpoints";
+import { authFetch } from "@/lib/auth-fetch";
 import MagazineReader from "@/components/features/magazine/MagazineReader";
 import PopularArticleCarousel from "@/components/features/magazine/PopularArticleCarousel";
 import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
@@ -129,7 +130,8 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
             try {
                 const params = buildFilterParams();
                 params.set("offset", "0");
-                const res = await fetch(`${API.MAGAZINE}?${params}`);
+                // authFetch: 로그인 유저면 userLiked(좋아요 여부) 포함 — 새로고침 후에도 하트 유지
+                const res = await authFetch(`${API.MAGAZINE}?${params}`);
                 if (!res.ok) {
                     throw new Error("매거진 불러오기 실패");
                 }
@@ -156,7 +158,7 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
         try {
             const params = buildFilterParams();
             params.set("offset", String(articles.length));
-            const res = await fetch(`${API.MAGAZINE}?${params}`);
+            const res = await authFetch(`${API.MAGAZINE}?${params}`);
             if (!res.ok) throw new Error("매거진 불러오기 실패");
             const data = await res.json();
             if (data.articles && data.articles.length > 0) {

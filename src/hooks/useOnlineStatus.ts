@@ -6,12 +6,13 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export function useOnlineStatus() {
     const [isOnline, setIsOnline] = useState(true);
     const [wasOffline, setWasOffline] = useState(false);
+    const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleOnline = useCallback(() => {
         setIsOnline(true);
@@ -21,8 +22,9 @@ export function useOnlineStatus() {
         const supabase = getSupabaseClient();
         supabase.auth.startAutoRefresh();
 
-        // 3초 후 복귀 배너 숨기기
-        setTimeout(() => setWasOffline(false), 3000);
+        // 3초 후 복귀 배너 숨기기 (기존 타이머 있으면 교체)
+        if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
+        bannerTimerRef.current = setTimeout(() => setWasOffline(false), 3000);
     }, []);
 
     const handleOffline = useCallback(() => {
@@ -43,6 +45,7 @@ export function useOnlineStatus() {
         return () => {
             window.removeEventListener("online", handleOnline);
             window.removeEventListener("offline", handleOffline);
+            if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
         };
     }, [handleOnline, handleOffline]);
 

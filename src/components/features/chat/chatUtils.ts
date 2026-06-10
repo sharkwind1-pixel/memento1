@@ -5,7 +5,7 @@ import { STORAGE_KEYS } from "@/constants/storage";
 import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 import { fixKoreanParticles } from "@/lib/agent/helpers";
 import { nameParticle } from "@/lib/korean-particle";
-import type { Pet } from "@/types";
+import type { Pet, TimelineEntry as FullTimelineEntry } from "@/types";
 import { inferSpeciesFromPet, getSpeciesSound, type PetSpecies } from "@/lib/species-context";
 
 // config에서 가져온 값을 re-export (하위 호환성)
@@ -67,14 +67,8 @@ export function getTimeBasedGreeting(): string {
     return "늦은 밤";
 }
 
-// 타임라인 엔트리 타입
-export interface TimelineEntry {
-    id: string;
-    date: string;
-    title: string;
-    content: string;
-    mood?: "happy" | "normal" | "sad" | "sick";
-}
+// 타임라인 엔트리 타입 — @/types의 TimelineEntry 부분집합 (인사말 생성에 필요한 필드만)
+export type TimelineEntry = Pick<FullTimelineEntry, "id" | "date" | "title" | "content" | "mood">;
 
 /**
  * pet.id 기반 결정론적 해시 — 같은 펫은 항상 같은 템플릿 선택

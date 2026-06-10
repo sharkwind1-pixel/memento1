@@ -31,7 +31,14 @@ export default function ServiceWorkerUpdater() {
 
         let intervalId: ReturnType<typeof setInterval> | null = null;
 
+        // cleanup용 핸들러 추적 (updatefound/statechange 리스너 해제)
+        let registration: ServiceWorkerRegistration | null = null;
+        let onUpdateFound: (() => void) | null = null;
+        const stateChangeTargets: Array<{ worker: ServiceWorker; handler: () => void }> = [];
+
         navigator.serviceWorker.register("/sw.js").then((reg) => {
+            registration = reg;
+
             // 1) 즉시 update 체크
             reg.update().catch(() => {});
 
@@ -41,15 +48,18 @@ export default function ServiceWorkerUpdater() {
             }
 
             // 3) updatefound: 새 SW가 install 끝나면 SKIP_WAITING 보내서 활성화
-            reg.addEventListener("updatefound", () => {
+            onUpdateFound = () => {
                 const newWorker = reg.installing;
                 if (!newWorker) return;
-                newWorker.addEventListener("statechange", () => {
+                const onStateChange = () => {
                     if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
                         newWorker.postMessage({ type: "SKIP_WAITING" });
                     }
-                });
-            });
+                };
+                newWorker.addEventListener("statechange", onStateChange);
+                stateChangeTargets.push({ worker: newWorker, handler: onStateChange });
+            };
+            reg.addEventListener("updatefound", onUpdateFound);
 
             // 4) 5분마다 update 체크 (PWA 장기 사용 시 새 코드 누락 방지)
             intervalId = setInterval(() => {
@@ -59,6 +69,12 @@ export default function ServiceWorkerUpdater() {
 
         return () => {
             navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+            if (registration && onUpdateFound) {
+                registration.removeEventListener("updatefound", onUpdateFound);
+            }
+            stateChangeTargets.forEach(({ worker, handler }) => {
+                worker.removeEventListener("statechange", handler);
+            });
             if (intervalId) clearInterval(intervalId);
         };
     }, []);

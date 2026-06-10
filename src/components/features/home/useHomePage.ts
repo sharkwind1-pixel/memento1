@@ -279,7 +279,7 @@ export function useHomePage() {
                 sort: "latest",
                 limit: "20",
             });
-            const res = await fetch(`${API.POSTS}?${params}`);
+            const res = await authFetch(`${API.POSTS}?${params}`);
             if (res.ok) {
                 const data = await res.json();
                 // AI 영상이 있는 글만 필터링 (함께보기 = AI 영상 전용 섹션)

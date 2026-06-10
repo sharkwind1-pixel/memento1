@@ -23,6 +23,8 @@ import { toast } from "sonner";
 interface VideoProgressContextValue {
     /** 현재 진행 중인 영상 (없으면 null) */
     active: VideoGeneration | null;
+    /** 사용자가 위젯을 닫았는지 (true면 위젯만 숨김, 폴링/완료 알림은 유지) */
+    dismissed: boolean;
     /** 진행 시작 — generateId만 알려주면 폴링 시작 */
     startTracking: (generationId: string, petName?: string) => void;
     /** 사용자가 위젯 닫기 (백그라운드는 유지) */
@@ -40,6 +42,7 @@ const VideoProgressContext = createContext<VideoProgressContextValue | null>(nul
 
 export function VideoProgressProvider({ children }: { children: ReactNode }) {
     const [active, setActive] = useState<VideoGeneration | null>(null);
+    const [dismissed, setDismissed] = useState(false);
     const [petNameForToast, setPetNameForToast] = useState<string>("");
     const [completedVideo, setCompletedVideo] = useState<VideoGeneration | null>(null);
     const [autoOpenResultOnComplete, setAutoOpenResultOnComplete] = useState(true);
@@ -47,6 +50,16 @@ export function VideoProgressProvider({ children }: { children: ReactNode }) {
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const pollCountRef = useRef(0);
     const completedToastShownRef = useRef<Set<string>>(new Set());
+
+    // tick 내부에서 최신 값 참조용 ref (effect deps를 원시값으로 좁히기 위함 —
+    // active 객체를 deps에 넣으면 매 tick의 setActive(새 객체)가 effect를 재실행시켜
+    // 인터벌이 무력화되고 연속 폴링이 발생함)
+    const activeRef = useRef<VideoGeneration | null>(null);
+    activeRef.current = active;
+    const autoOpenRef = useRef(autoOpenResultOnComplete);
+    autoOpenRef.current = autoOpenResultOnComplete;
+    const petNameRef = useRef(petNameForToast);
+    petNameRef.current = petNameForToast;
 
     const stopPolling = useCallback(() => {
         if (intervalRef.current) {
@@ -57,9 +70,8 @@ export function VideoProgressProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const dismiss = useCallback(() => {
-        setActive(null);
-        // 폴링은 유지 — 완료 알림은 여전히 보내기. 다만 위젯만 숨김.
-        // 완전히 멈추려면 stopPolling()도 호출해야 하지만, 백그라운드 처리를 위해 유지.
+        // 위젯만 숨김 — active는 유지해서 폴링/완료 토스트는 계속 동작
+        setDismissed(true);
     }, []);
 
     const clearCompleted = useCallback(() => {
@@ -69,6 +81,7 @@ export function VideoProgressProvider({ children }: { children: ReactNode }) {
     const startTracking = useCallback((generationId: string, petName?: string) => {
         // 이미 같은 ID 추적 중이면 무시 (중복 시작 방지)
         if (active?.id === generationId) return;
+        setDismissed(false);
         setPetNameForToast(petName ?? "");
         // 초기 상태로 active 설정 — 즉시 위젯 표시
         setActive({
@@ -94,14 +107,23 @@ export function VideoProgressProvider({ children }: { children: ReactNode }) {
     }, [active?.id]);
 
     // ===== 폴링 (단일 소스) =====
+    // deps는 원시값(id/status)만 — tick의 setActive(새 객체)로 effect가 재실행되어
+    // 15초 인터벌이 무력화되는 것을 방지. tick 내부 최신 값은 ref로 참조.
+    const activeId = active?.id ?? null;
+    const activeStatus = active?.status ?? null;
     useEffect(() => {
-        if (!active || active.status === "completed" || active.status === "failed") {
+        if (!activeId || activeStatus === "completed" || activeStatus === "failed") {
             stopPolling();
             return;
         }
         if (intervalRef.current) return; // 이미 폴링 중
 
         const tick = async () => {
+            const current = activeRef.current;
+            if (!current) {
+                stopPolling();
+                return;
+            }
             pollCountRef.current += 1;
             if (pollCountRef.current > VIDEO.MAX_POLL_COUNT) {
                 stopPolling();
@@ -110,7 +132,7 @@ export function VideoProgressProvider({ children }: { children: ReactNode }) {
                 return;
             }
             try {
-                const res = await authFetch(API.VIDEO_STATUS(active.id));
+                const res = await authFetch(API.VIDEO_STATUS(current.id));
                 if (!res.ok) return;
                 const data: VideoGeneration = await res.json();
 
@@ -119,7 +141,7 @@ export function VideoProgressProvider({ children }: { children: ReactNode }) {
                     // 중복 토스트 방지: 같은 영상 ID에 대해 한 번만 토스트
                     if (!completedToastShownRef.current.has(data.id)) {
                         completedToastShownRef.current.add(data.id);
-                        const name = data.petName || petNameForToast;
+                        const name = data.petName || petNameRef.current;
                         toast.success(
                             name ? `${name}의 영상이 완성되었어요!` : "영상이 완성되었어요!",
                             {
@@ -131,7 +153,7 @@ export function VideoProgressProvider({ children }: { children: ReactNode }) {
                             },
                         );
                     }
-                    if (autoOpenResultOnComplete) {
+                    if (autoOpenRef.current) {
                         setCompletedVideo(data);
                     }
                     setActive(null);
@@ -158,12 +180,13 @@ export function VideoProgressProvider({ children }: { children: ReactNode }) {
                 intervalRef.current = null;
             }
         };
-    }, [active, autoOpenResultOnComplete, petNameForToast, stopPolling]);
+    }, [activeId, activeStatus, stopPolling]);
 
     return (
         <VideoProgressContext.Provider
             value={{
                 active,
+                dismissed,
                 startTracking,
                 dismiss,
                 autoOpenResultOnComplete,

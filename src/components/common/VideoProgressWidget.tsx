@@ -19,7 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const VideoResultModal = lazy(() => import("@/components/features/video/VideoResultModal"));
 
 export default function VideoProgressWidget() {
-    const { active, dismiss, completedVideo, clearCompleted } = useVideoProgress();
+    const { active, dismissed, dismiss, completedVideo, clearCompleted } = useVideoProgress();
     const { user } = useAuth();
     const [secondsElapsed, setSecondsElapsed] = useState(0);
 
@@ -42,8 +42,8 @@ export default function VideoProgressWidget() {
 
     return (
         <>
-            {/* 진행 위젯 */}
-            {active && (
+            {/* 진행 위젯 (닫기 누르면 위젯만 숨김 — 폴링/완료 알림은 유지) */}
+            {active && !dismissed && (
                 <div
                     className="fixed z-50 bottom-20 right-4 sm:bottom-6 sm:right-6 max-w-xs animate-in fade-in slide-in-from-bottom-2 duration-300"
                     role="status"

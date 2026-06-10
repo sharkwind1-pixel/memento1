@@ -120,8 +120,10 @@ export default function StoryCreateModal({ onClose, onSuccess }: StoryCreateModa
     };
 
     return (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center">
-            <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm mx-4 overflow-hidden shadow-2xl">
+        // backdrop 자체가 스크롤 컨테이너 (모바일 스크롤 패턴 — useBodyScrollLock/items-center 금지)
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm overflow-y-auto">
+            <div className="flex justify-center pt-8 pb-8 px-4">
+                <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl">
                 {/* 헤더 */}
                 <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                     <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">스토리 올리기</h2>
@@ -238,6 +240,7 @@ export default function StoryCreateModal({ onClose, onSuccess }: StoryCreateModa
                     >
                         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "스토리 올리기"}
                     </Button>
+                </div>
                 </div>
             </div>
         </div>

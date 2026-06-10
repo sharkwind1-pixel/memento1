@@ -74,12 +74,18 @@ export function useNicknameCheck(
 
         setStatus("checking");
 
+        // 늦게 도착한 이전 요청 응답이 현재 상태를 덮어쓰지 않도록 가드
+        let cancelled = false;
         const timer = setTimeout(async () => {
             const { available } = await checkNickname(trimmed);
+            if (cancelled) return;
             setStatus(available ? "available" : "taken");
         }, debounceMs);
 
-        return () => clearTimeout(timer);
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
     }, [nickname, enabled, currentNickname, checkNickname, debounceMs]);
 
     // 상태별 메시지

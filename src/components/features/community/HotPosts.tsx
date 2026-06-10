@@ -11,6 +11,7 @@ import { Flame, Heart, MessageCircle } from "lucide-react";
 import type { CommunitySubcategory } from "@/types";
 import type { Post } from "./communityTypes";
 import { API } from "@/config/apiEndpoints";
+import { authFetch } from "@/lib/auth-fetch";
 import LevelBadge from "@/components/features/points/LevelBadge";
 
 interface HotPostsProps {
@@ -31,7 +32,7 @@ export default function HotPosts({ boardType, onSelectPost }: HotPostsProps) {
                     hot: "true",
                     limit: "5",
                 });
-                const res = await fetch(`${API.POSTS}?${params}`);
+                const res = await authFetch(`${API.POSTS}?${params}`);
                 if (!res.ok) return;
 
                 const data = await res.json();

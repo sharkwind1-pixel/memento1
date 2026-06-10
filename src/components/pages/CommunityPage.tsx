@@ -166,7 +166,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
         const fetchShowcaseCount = async () => {
             try {
                 const params = new URLSearchParams({ board: "free", badge: "자랑", limit: "1" });
-                const res = await fetch(`${API.POSTS}?${params}`);
+                const res = await authFetch(`${API.POSTS}?${params}`);
                 if (res.ok) {
                     const data = await res.json();
                     setShowcasePostCount(data.total ?? data.posts?.length ?? 0);
@@ -307,7 +307,8 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
                 params.append("search", searchQuery);
             }
 
-            const response = await fetch(`${API.POSTS}?${params}`);
+            // authFetch: 로그인 유저면 차단 필터/userLiked 등 개인화 데이터 적용
+            const response = await authFetch(`${API.POSTS}?${params}`);
             if (!response.ok) {
                 throw new Error("게시글을 불러오는데 실패했습니다");
             }
@@ -347,11 +348,14 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
     }, [currentSubcategory, sortBy, selectedTag, selectedBadge, selectedRegion, searchQuery]);
 
     // 탭 재진입 시 목록 갱신 (다른 탭에서 돌아올 때 최신 데이터)
+    // 초기 마운트는 스킵 — 아래 필터 변경 effect가 첫 로드를 담당 (이중 fetch 방지)
     const prevCommunityActiveRef = useRef(false);
+    const hasMountedActiveEffectRef = useRef(false);
     useEffect(() => {
-        if (isActive && !prevCommunityActiveRef.current) {
+        if (isActive && !prevCommunityActiveRef.current && hasMountedActiveEffectRef.current) {
             fetchPosts(false);
         }
+        hasMountedActiveEffectRef.current = true;
         prevCommunityActiveRef.current = !!isActive;
     }, [isActive, fetchPosts]);
 
