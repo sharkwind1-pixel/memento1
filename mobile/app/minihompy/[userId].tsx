@@ -49,19 +49,21 @@ export default function VisitMinihompyScreen() {
     const accentColor = COLORS.memento[500];
 
     const load = useCallback(async () => {
-        if (!accessToken || !userId) {
+        if (!userId) {
             setLoading(false);
-            setError("로그인이 필요해요.");
+            setError("펫홈을 찾을 수 없어요.");
             return;
         }
         setLoading(true);
         setError(null);
         try {
+            // 게스트(비로그인)도 공개 펫홈 열람 가능 (Phase 1 게스트차단 해제, 웹 /u/{nickname} 패리티).
+            // 비공개면 API가 403 → 안내 화면.
             const result = await visitMinihompy(accessToken, userId);
             setData(result);
 
-            // 본인 홈피가 아니고 첫 진입이면 visit POST
-            if (!isOwnHompy && !visitPostedRef.current) {
+            // 본인 홈피가 아니고 첫 진입이면 visit POST (방문 카운트는 로그인 유저만)
+            if (accessToken && !isOwnHompy && !visitPostedRef.current) {
                 visitPostedRef.current = true;
                 postMinihompyVisit(accessToken, userId).catch(() => {});
             }
@@ -76,8 +78,20 @@ export default function VisitMinihompyScreen() {
         load();
     }, [load]);
 
+    // 맥락 가입후크 (① 패턴) — 게스트가 상호작용 시도 시 가치문구 + 로그인 경로
+    function promptLogin(message: string) {
+        Alert.alert("로그인 필요", message, [
+            { text: "취소", style: "cancel" },
+            { text: "로그인", onPress: () => router.push("/(auth)/login") },
+        ]);
+    }
+
     async function handleLike() {
-        if (!accessToken || !userId || liking || isOwnHompy) return;
+        if (!userId || liking || isOwnHompy) return;
+        if (!accessToken) {
+            promptLogin("이 펫홈에 마음을 남기려면 로그인이 필요해요. 무료로 시작할 수 있어요.");
+            return;
+        }
         setLiking(true);
         // 낙관적 업데이트
         setData((prev) => prev ? {
@@ -272,7 +286,13 @@ export default function VisitMinihompyScreen() {
                         </TouchableOpacity>
                     )}
                     <TouchableOpacity
-                        onPress={() => setGuestbookOpen(true)}
+                        onPress={() => {
+                            if (!accessToken) {
+                                promptLogin("방명록을 남기려면 로그인이 필요해요. 무료로 시작할 수 있어요.");
+                                return;
+                            }
+                            setGuestbookOpen(true);
+                        }}
                         style={[
                             styles.actionBtn,
                             {

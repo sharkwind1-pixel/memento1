@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase, createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { MINIHOMPY } from "@/config/constants";
 
 export const dynamic = "force-dynamic";
@@ -24,9 +24,12 @@ export async function GET(
             createServerSupabase(),
         ]);
 
-        // 미니홈피 설정 조회
+        // 미니홈피 설정 조회 — admin 클라 사용 (필수):
+        // RLS에 의존하면 anon/타인에게 비공개 행이 안 보여 settingsData=null → 아래 "기본 공개" 분기로
+        // 오판되어 비공개 펫홈이 노출된다. is_public 판정은 반드시 admin으로 읽어 API에서 직접 수행.
+        const admin = createAdminSupabase();
         let settings = null;
-        const { data: settingsData } = await supabase
+        const { data: settingsData } = await admin
             .from("minihompy_settings")
             .select("*")
             .eq("user_id", userId)
@@ -71,10 +74,13 @@ export async function GET(
 
         // profile / guestbook / like 는 모두 userId(또는 currentUser)에만 의존하고 서로 독립
         // → 병렬 실행으로 3왕복을 1왕복으로 단축. (settings는 위에서 403 분기 때문에 선행)
+        // 소유자 표시 정보(닉네임/꼬미)는 admin 클라로 조회 — profiles RLS가 로그인 전용이라
+        // 게스트(공개 펫홈 /u/{nickname})에서도 표시되도록. 비공개는 위 403에서 이미 차단, 노출 필드 최소.
         const [profileRes, guestbookRes, likeRes] = await Promise.all([
-            supabase
+            admin
                 .from("profiles")
-                .select("nickname, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, onboarding_data")
+                // onboarding_data 전체 대신 petType만 추출 (최소권한 — 이별시기 등 민감 응답 over-fetch 방지)
+                .select("nickname, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, petType:onboarding_data->>petType")
                 .eq("id", userId)
                 .single(),
             supabase
@@ -99,15 +105,14 @@ export async function GET(
         const isLiked = !!likeRes.data;
 
         const ownerNickname = profile?.nickname || "익명";
-        const onboardingData = profile?.onboarding_data as Record<string, unknown> | null;
-        const ownerPetType = (onboardingData?.petType as string) || "dog";
+        const ownerPetType = (profile?.petType as string) || "dog";
 
         // 2차 의존 쿼리: 소유자 미니미 slug(profile 의존) + 방명록 작성자 프로필(guestbook 의존)
         // → 서로 독립이라 병렬.
         const visitorIds = Array.from(new Set((guestbook || []).map(g => g.visitor_id)));
         const [minimiRow, visitorProfileRows] = await Promise.all([
             profile?.equipped_minimi_id
-                ? supabase
+                ? admin
                       .from("user_minimi")
                       .select("minimi_id")
                       .eq("id", profile.equipped_minimi_id)
@@ -115,7 +120,7 @@ export async function GET(
                       .then(r => r.data)
                 : Promise.resolve(null),
             visitorIds.length > 0
-                ? supabase
+                ? admin
                       .from("profiles")
                       .select("id, nickname, minimi_pixel_data")
                       .in("id", visitorIds)

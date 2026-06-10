@@ -1,6 +1,7 @@
 /**
  * 펫홈 API 클라이언트 — 웹 API 그대로 호출.
- * 모든 함수는 access_token 필요. 실패 시 throw.
+ * 대부분 access_token 필요. 실패 시 throw.
+ * 예외: visitMinihompy(공개 펫홈 열람)는 게스트(token null) 허용 — Phase 1 게스트차단 해제.
  */
 
 import { API_BASE_URL } from "@/config/constants";
@@ -13,7 +14,8 @@ import type {
 export type { PlacedMinimi };
 
 interface FetchOpts {
-    accessToken: string;
+    /** null = 게스트 호출 (Authorization 헤더 생략 — "Bearer null" 전송 방지) */
+    accessToken: string | null;
 }
 
 async function callApi<T>(
@@ -27,7 +29,7 @@ async function callApi<T>(
     const res = await fetch(`${API_BASE_URL}${path}`, {
         method,
         headers: {
-            Authorization: `Bearer ${accessToken}`,
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
             ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
         },
         body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -242,7 +244,7 @@ export interface VisitedMinihompy {
 }
 
 export async function visitMinihompy(
-    accessToken: string,
+    accessToken: string | null,
     ownerUserId: string,
 ): Promise<VisitedMinihompy> {
     const data = await callApi<VisitProfileResponse>(`/api/minihompy/${ownerUserId}`, { accessToken });

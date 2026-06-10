@@ -258,9 +258,10 @@ export default function MinihompyVisitModal({
 
                             {/* 좋아요 */}
                             <div className="flex items-center justify-center">
+                                {/* 게스트도 클릭 가능 — handleLike가 맥락 가입후크(openAuthModal)로 분기 (Phase 1 퍼널) */}
                                 <button
                                     onClick={handleLike}
-                                    disabled={liking || !user || user.id === userId}
+                                    disabled={liking || user?.id === userId}
                                     className={cn(
                                         "flex items-center gap-2 px-4 py-2 rounded-full transition-all",
                                         isLiked
@@ -284,6 +285,16 @@ export default function MinihompyVisitModal({
                                         방명록 ({guestbookTotal})
                                     </span>
                                 </div>
+
+                                {/* 게스트: 가입후크 버튼 (PostDetailComments 패턴 — 퍼널 cta 연결) */}
+                                {!user && (
+                                    <button
+                                        onClick={() => window.dispatchEvent(new CustomEvent("openAuthModal", { detail: { message: "방명록을 남기려면 회원가입이 필요해요. 무료로 시작할 수 있어요." } }))}
+                                        className="w-full py-2.5 text-center text-sm text-gray-500 hover:text-pink-500 transition-colors rounded-xl border border-dashed border-gray-300 dark:border-gray-600"
+                                    >
+                                        로그인하고 방명록을 남겨보세요
+                                    </button>
+                                )}
 
                                 {/* 방명록 작성 */}
                                 {user && user.id !== userId && (

@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase, createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { getClientIP, checkRateLimit, getRateLimitHeaders, sanitizeInput } from "@/lib/rate-limit";
 import { MINIHOMPY } from "@/config/constants";
 import { awardPoints } from "@/lib/points";
@@ -23,9 +23,23 @@ export async function GET(
         const offset = parseInt(searchParams.get("offset") || "0");
         const limit = MINIHOMPY.GUESTBOOK_PAGE_SIZE;
 
-        const supabase = await createServerSupabase();
+        // admin 클라: profiles RLS(로그인 전용) 때문에 게스트에게 작성자 닉네임이 "익명"으로 깨지던 문제 해결.
+        // 대신 비공개 펫홈 방명록 가드를 API에서 직접 수행 (기존엔 가드 자체가 없었음).
+        const admin = createAdminSupabase();
 
-        const { data: guestbook, count } = await supabase
+        const { data: gbSettings } = await admin
+            .from("minihompy_settings")
+            .select("is_public")
+            .eq("user_id", userId)
+            .maybeSingle();
+        if (gbSettings && gbSettings.is_public === false) {
+            const currentUser = await getAuthUser().catch(() => null);
+            if (currentUser?.id !== userId) {
+                return NextResponse.json({ error: "비공개 펫홈입니다" }, { status: 403 });
+            }
+        }
+
+        const { data: guestbook, count } = await admin
             .from("minihompy_guestbook")
             .select("id, owner_id, visitor_id, content, created_at", { count: "exact" })
             .eq("owner_id", userId)
@@ -37,7 +51,7 @@ export async function GET(
         let visitorProfiles: Record<string, { nickname: string; pixelData: unknown }> = {};
 
         if (visitorIds.length > 0) {
-            const { data: profiles } = await supabase
+            const { data: profiles } = await admin
                 .from("profiles")
                 .select("id, nickname, minimi_pixel_data")
                 .in("id", visitorIds);

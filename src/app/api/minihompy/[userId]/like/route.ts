@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase, createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 import { PG_ERROR_CODES } from "@/config/constants";
 
@@ -37,6 +37,9 @@ export async function POST(
         }
 
         const supabase = await createServerSupabase();
+        // 카운트 집계/settings 갱신용 — 세션(RLS) 클라로는 settings UPDATE(owner-only)가 silent fail이라
+        // total_likes가 영원히 0이던 잠복버그(visit 카운터와 동일 패턴). 본인 like 행 조작은 세션 클라 유지.
+        const admin = createAdminSupabase();
 
         // 기존 좋아요 확인
         const { data: existing } = await supabase
@@ -53,16 +56,15 @@ export async function POST(
                 .delete()
                 .eq("id", existing.id);
 
-            // 직접 카운트 업데이트
-            const { count } = await supabase
+            // 직접 카운트 업데이트 (admin + upsert — settings 행 없는 유저도 반영, RLS 무관 정확 집계)
+            const { count } = await admin
                 .from("minihompy_likes")
                 .select("id", { count: "exact", head: true })
                 .eq("owner_id", userId);
 
-            await supabase
+            await admin
                 .from("minihompy_settings")
-                .update({ total_likes: count || 0 })
-                .eq("user_id", userId);
+                .upsert({ user_id: userId, total_likes: count || 0 }, { onConflict: "user_id" });
 
             return NextResponse.json({ liked: false, totalLikes: count || 0 });
         } else {
@@ -81,16 +83,15 @@ export async function POST(
                 return NextResponse.json({ error: "좋아요 실패" }, { status: 500 });
             }
 
-            // 직접 카운트 업데이트
-            const { count } = await supabase
+            // 직접 카운트 업데이트 (admin + upsert — settings 행 없는 유저도 반영, RLS 무관 정확 집계)
+            const { count } = await admin
                 .from("minihompy_likes")
                 .select("id", { count: "exact", head: true })
                 .eq("owner_id", userId);
 
-            await supabase
+            await admin
                 .from("minihompy_settings")
-                .update({ total_likes: count || 0 })
-                .eq("user_id", userId);
+                .upsert({ user_id: userId, total_likes: count || 0 }, { onConflict: "user_id" });
 
             return NextResponse.json({ liked: true, totalLikes: count || 0 });
         }
