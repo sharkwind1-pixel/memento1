@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-10 전체 코드베이스 전수검수 배치1 (A:API/E:DB/C:모바일) — CRITICAL 2건 수술
+배경: 사용자 요청(fable5 기념 전체 코드 리딩+오류 수정). 6영역 병렬 검수 중 배치1 완료.
+- **[CRITICAL] 민감 RPC PUBLIC 잠금**(`1cd5317`, 마이그 `lock_sensitive_rpcs` 적용): 20260511 마이그가 REVOKE FROM anon,authenticated만 해서 **PUBLIC EXECUTE grant 잔존=no-op** → anon key로 grant_premium(무료 프리미엄 자가부여)/increment_user_points(무가드 오버로드, 무제한 적립)/purchase_*·sell_*(가격 조작) 직접 호출 가능했음(A/E 독립 발견). 13함수 service_role 전용 잠금+실측. **교훈: REVOKE는 PUBLIC부터. DROP+CREATE 재생성 시 ACL 디폴트 부활 주의(CREATE OR REPLACE는 보존).**
+- **[CRITICAL] 포인트 적립 수개월 사망 부활**(`1cd5317`): points.ts가 레거시 오버로드(p_one_time, auth.uid() 가드) 호출 → service_role/타인적립 전부 unauthorized silent 실패. **prod 실측: ai_chat 적립 마지막 2/20, write_comment·receive_like·receive_dislike·receive_guestbook 0건.** 수술: p_is_one_time 전환+TABLE 배열 언랩, 레거시 DROP, 세션→admin 클라(posts/guestbook/quests/daily-check), telegram /premium null호출 제거, **daily-check SETOF 미언랩(출석 토스트 영구 실패) 수정**. 9번 재검증 SHIP WITH FIXES→반영, 회귀 0 확인.
+- **[모바일 일괄]**(`7c51558`): **알림 읽음 처리 완전 사망**(존재하지 않는 PUT 엔드포인트 404→PATCH 교정) / 펫홈 탭 게스트 버튼 전부 무반응→표준 Alert 가드 / pet등록·신고·차단·매거진좋아요 silent return→가드 / console.log 21개 제거(AuthContext 민감정보·push 토큰 노출 포함) / PointsHistoryModal 무한 스피너.
+- 검증: 웹+모바일 L2(tsc+build), DB L3(ACL/호출부/시그니처 실측). **배포 후 L4: 댓글 작성→포인트 적립 확인, 출석 토스트, 모바일 알림 읽음(EAS).**
+- E 잔여(후순위, 보드 행 참조): save_deleted_account 시그니처 불일치(탈퇴기록 0건)·mark_account_rejoined 부재·increment_field/comments 컬럼 죽은 폴백·schema.sql 드리프트.
+
+---
+
 ## 2026-06-10 펫홈 Phase 1 공개 펫홈 /u/{nickname} (웹+앱) — L2+DB L3 + 9번 2회
 배경: 비회원도 닉네임 URL로 펫홈 열람(바이럴 입구). 재사용=MinihompyVisitModal·GET API·닉네임 인프라, 신규=페이지+lookup만.
 - **신규**(`d736856`): `/u/[nickname]/page.tsx`(ilike lookup+이스케이프+React cache+OG, **비공개=notFound**로 오라클/색인 차단) + `PethomePublicView`(모달 풀스크린 재사용+독립페이지 AuthModal 리스너).
