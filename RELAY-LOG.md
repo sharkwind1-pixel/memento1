@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-06-10 펫홈 Phase 1 공개 펫홈 /u/{nickname} (웹+앱) — L2+DB L3 + 9번 2회
+배경: 비회원도 닉네임 URL로 펫홈 열람(바이럴 입구). 재사용=MinihompyVisitModal·GET API·닉네임 인프라, 신규=페이지+lookup만.
+- **신규**(`d736856`): `/u/[nickname]/page.tsx`(ilike lookup+이스케이프+React cache+OG, **비공개=notFound**로 오라클/색인 차단) + `PethomePublicView`(모달 풀스크린 재사용+독립페이지 AuthModal 리스너).
+- **9번 1차 DO NOT SHIP** → 수정: **F5 웹 게스트 퍼널 사망**(좋아요 disabled `!user`·방명록 미렌더로 ①후크 도달 불가→부활) / **F2** GET settings admin 전환(403 판정이 qual=true RLS 결함에 기생하던 구조 해소) / **F3 RLS 마이그**(`minihompy_private_rls_tighten` 적용: settings qual=true DROP, guestbook·likes를 owner/작성자/NOT `is_minihompy_private`(SECURITY DEFINER — 정책 서브쿼리 RLS 오판 우회 방지)로. **anon 트랜잭션 시뮬레이션 차단 실측**) / **F4** 비공개 notFound / **F7** onboarding_data→petType만.
+- **잠복버그 2건**(prod 실측 카운터 영원히 0): visit POST dedup·카운터가 세션 클라(RLS owner-only)라 silent fail → admin+rate-limit / like total_likes 동일 → admin. 재검증 **N1**(settings 무행 54% 유저 no-op)→**upsert(user_id PK)**.
+- **앱 패리티**: `minihompy/[userId].tsx` 게스트 하드차단 해제+좋아요/방명록 promptLogin(①패턴), minihompy-api accessToken nullable("Bearer null" 방지).
+- 기본 공개 정책: 스펙 §1 #2(비회원 구경 OK)+기존 동작 유지. 비공개 명시=API 403+RLS+notFound 3중 차단.
+- 재검증 SHIP WITH FIXES → 필수 N1 반영. **후순위 권고**: N2(RPC 1비트 오라클)·N3(비공개 쓰기 가드)·모바일 게스트 방명록 패리티 갭·owner_id 인덱스 → RELAY 보드 기재.
+- 검증: 웹 L2(tsc+build exit0)+DB L3(마이그+정책/anon 실측)/모바일 L2(tsc). 배포 후 /u/{닉네임} L5 권장.
+
+---
+
 ## 2026-06-10 관리자 포인트 차감 기능 + 원자 RPC (웹+앱) — L2+DB L4 + 9번
 배경: 사용자 요청 — 포인트 "지급"만 되던 걸 "차감"까지(넣다 뺐다, 특히 관리자 본인 테스트용). 기존 /api/admin/points 확장.
 - **DB 마이그 적용**(`bde3519`, MCP `admin_adjust_points_atomic`): `admin_adjust_points` RPC — FOR UPDATE 행잠금 + GREATEST(0) 클램프로 **read-then-write race 제거**(잔액↔장부 불일치·음수 방지). total_points_earned 단조 증가(차감 시 불변). service_role 전용. smoke test(delta=0) 통과.
