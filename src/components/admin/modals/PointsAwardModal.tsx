@@ -56,22 +56,26 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
     const [amount, setAmount] = useState(100);
     const [customAmount, setCustomAmount] = useState("");
     const [useCustom, setUseCustom] = useState(false);
+    const [mode, setMode] = useState<"award" | "deduct">("award"); // 지급 / 차감
     const [reason, setReason] = useState("");
     const [isSaving, setIsSaving] = useState(false);
 
     const currentPoints = user.points ?? 0;
-    const awardAmount = useCustom ? (parseInt(customAmount) || 0) : amount;
-    const afterPoints = currentPoints + awardAmount;
+    const rawAmount = useCustom ? (parseInt(customAmount) || 0) : amount;
+    const isDeduct = mode === "deduct";
+    const signedAmount = isDeduct ? -rawAmount : rawAmount;
+    const afterPoints = Math.max(0, currentPoints + signedAmount); // 잔액 0 미만 클램프(서버와 동일)
 
     const currentLevel = useMemo(() => getPointLevel(currentPoints), [currentPoints]);
     const afterLevel = useMemo(() => getPointLevel(afterPoints), [afterPoints]);
     const isLevelUp = afterLevel.level > currentLevel.level;
+    const isLevelDown = afterLevel.level < currentLevel.level;
 
     const handleSave = async () => {
-        if (awardAmount <= 0) return;
+        if (rawAmount <= 0) return;
         setIsSaving(true);
         try {
-            await onAward(awardAmount, reason);
+            await onAward(signedAmount, reason);
         } finally {
             setIsSaving(false);
         }
@@ -86,7 +90,7 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                 <div className="p-4 border-b bg-gradient-to-r from-memento-200 to-violet-50">
                     <h3 id="points-award-title" className="font-bold text-gray-800 flex items-center gap-2">
                         <Star className="w-5 h-5 text-memento-500" />
-                        포인트 지급
+                        포인트 {isDeduct ? "차감" : "지급"}
                     </h3>
                     <p className="text-sm text-gray-500">
                         {user.user_metadata?.nickname || user.email}
@@ -98,10 +102,30 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
 
                 {/* 본문 */}
                 <div className="p-4 space-y-4">
+                    {/* 지급 / 차감 모드 토글 */}
+                    <div className="grid grid-cols-2 gap-2">
+                        <button
+                            onClick={() => setMode("award")}
+                            className={`px-3 py-2 rounded-lg text-sm font-bold transition-all ${
+                                !isDeduct ? "bg-memento-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            }`}
+                        >
+                            지급 (+)
+                        </button>
+                        <button
+                            onClick={() => setMode("deduct")}
+                            className={`px-3 py-2 rounded-lg text-sm font-bold transition-all ${
+                                isDeduct ? "bg-rose-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            }`}
+                        >
+                            차감 (−)
+                        </button>
+                    </div>
+
                     {/* 금액 선택 */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            지급 포인트
+                            {isDeduct ? "차감" : "지급"} 포인트
                         </label>
                         <div className="grid grid-cols-3 gap-2">
                             {PRESETS.map((p) => (
@@ -149,7 +173,7 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                     {/* 사유 입력 */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            지급 사유 (선택)
+                            {isDeduct ? "차감" : "지급"} 사유 (선택)
                         </label>
                         <Input
                             value={reason}
@@ -159,8 +183,8 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                     </div>
 
                     {/* 미리보기 */}
-                    <div className={`p-3 rounded-lg text-sm ${isLevelUp ? "bg-violet-50" : "bg-memento-200"}`}>
-                        <p className={`font-medium mb-2 ${isLevelUp ? "text-violet-800" : "text-memento-800"}`}>
+                    <div className={`p-3 rounded-lg text-sm ${isLevelUp ? "bg-violet-50" : isLevelDown ? "bg-rose-50" : "bg-memento-200"}`}>
+                        <p className={`font-medium mb-2 ${isLevelUp ? "text-violet-800" : isLevelDown ? "text-rose-700" : "text-memento-800"}`}>
                             적용 미리보기
                         </p>
                         <div className="flex items-center gap-3">
@@ -191,7 +215,7 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                                     className="rounded-full"
                                     unoptimized
                                 />
-                                <span className={`text-xs font-medium ${isLevelUp ? "text-violet-600" : "text-gray-500"}`}>
+                                <span className={`text-xs font-medium ${isLevelUp ? "text-violet-600" : isLevelDown ? "text-rose-600" : "text-gray-500"}`}>
                                     Lv.{afterLevel.level}
                                 </span>
                                 <span className="text-xs text-gray-400">{afterPoints.toLocaleString()}P</span>
@@ -200,6 +224,11 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                             {isLevelUp && (
                                 <span className="ml-1 text-xs font-bold text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">
                                     레벨업!
+                                </span>
+                            )}
+                            {isLevelDown && (
+                                <span className="ml-1 text-xs font-bold text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full">
+                                    레벨다운
                                 </span>
                             )}
                         </div>
@@ -212,11 +241,13 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                         취소
                     </Button>
                     <Button
-                        className="bg-memento-500 hover:bg-memento-600 text-white"
+                        className={isDeduct ? "bg-rose-500 hover:bg-rose-600 text-white" : "bg-memento-500 hover:bg-memento-600 text-white"}
                         onClick={handleSave}
-                        disabled={isSaving || awardAmount <= 0}
+                        disabled={isSaving || rawAmount <= 0}
                     >
-                        {isSaving ? "지급 중..." : `${awardAmount.toLocaleString()}P 지급`}
+                        {isSaving
+                            ? (isDeduct ? "차감 중..." : "지급 중...")
+                            : `${rawAmount.toLocaleString()}P ${isDeduct ? "차감" : "지급"}`}
                     </Button>
                 </div>
             </div>

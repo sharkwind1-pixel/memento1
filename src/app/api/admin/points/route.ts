@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 3. 요청 파라미터 파싱
+        // 3. 요청 파라미터 파싱 (points: 양수=지급 / 음수=차감)
         const body = await request.json();
         const { targetUserId, points, reason } = body as {
             targetUserId: string;
@@ -58,77 +58,63 @@ export async function POST(request: NextRequest) {
             reason?: string;
         };
 
-        if (!targetUserId || !points || points <= 0) {
+        if (
+            !targetUserId ||
+            typeof points !== "number" ||
+            !Number.isFinite(points) ||
+            !Number.isInteger(points) ||
+            points === 0
+        ) {
             return NextResponse.json(
-                { error: "유효하지 않은 요청입니다 (targetUserId, points 필수)" },
+                { error: "유효하지 않은 요청입니다 (targetUserId, points(0이 아닌 정수) 필수)" },
                 { status: 400 }
             );
         }
 
-        if (points > 1000000) {
+        if (Math.abs(points) > 1000000) {
             return NextResponse.json(
-                { error: "최대 1,000,000P까지 지급 가능합니다" },
+                { error: "한 번에 최대 1,000,000P까지 가감 가능합니다" },
                 { status: 400 }
             );
         }
 
-        // 4. service_role로 직접 포인트 업데이트 (트리거 우회)
-        // 현재 포인트 조회
-        const { data: currentProfile, error: fetchError } = await adminSupabase
-            .from("profiles")
-            .select("points, total_points_earned")
-            .eq("id", targetUserId)
-            .single();
+        const isDeduct = points < 0;
 
-        if (fetchError || !currentProfile) {
+        // 4. 원자 RPC로 포인트 가감 (read-then-write race 제거 + GREATEST(0) 클램프 + 거래기록 일괄).
+        //    SECURITY DEFINER지만 service_role 호출이라 protect_sensitive_profile_columns 트리거 통과.
+        const { data: rpcData, error: rpcError } = await adminSupabase.rpc("admin_adjust_points", {
+            p_user_id: targetUserId,
+            p_delta: points,
+            p_action_type: isDeduct ? "admin_deduct" : "admin_award",
+            p_reason: reason || (isDeduct ? "관리자 차감" : "관리자 지급"),
+            p_admin_id: adminUser.id,
+            p_admin_email: adminUser.email || "",
+        });
+
+        if (rpcError) {
+            if ((rpcError.message || "").includes("target_not_found")) {
+                return NextResponse.json({ error: "대상 유저를 찾을 수 없습니다" }, { status: 404 });
+            }
+            console.error("[Admin Points] RPC 에러:", rpcError);
             return NextResponse.json(
-                { error: "대상 유저를 찾을 수 없습니다" },
-                { status: 404 }
-            );
-        }
-
-        const newPoints = (currentProfile.points ?? 0) + points;
-        const newTotalEarned = (currentProfile.total_points_earned ?? 0) + points;
-
-        // 포인트 업데이트 (service_role → 트리거 통과)
-        const { error: updateError } = await adminSupabase
-            .from("profiles")
-            .update({
-                points: newPoints,
-                total_points_earned: newTotalEarned,
-            })
-            .eq("id", targetUserId);
-
-        if (updateError) {
-            console.error("[Admin Points] UPDATE 에러:", updateError);
-            return NextResponse.json(
-                { error: "포인트 지급에 실패했습니다" },
+                { error: isDeduct ? "포인트 차감에 실패했습니다" : "포인트 지급에 실패했습니다" },
                 { status: 500 }
             );
         }
 
-        // 거래 내역 기록
-        await adminSupabase
-            .from("point_transactions")
-            .insert({
-                user_id: targetUserId,
-                action_type: "admin_award",
-                points_earned: points,
-                metadata: {
-                    awarded_by: adminUser.id,
-                    awarded_by_email: adminUser.email || "",
-                    reason: reason || "관리자 지급",
-                },
-            });
+        const row = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+        const newPoints = Number(row?.new_points ?? 0);
+        const actualDelta = Number(row?.actual_delta ?? 0);
 
         return NextResponse.json({
             success: true,
-            awarded: points,
+            delta: actualDelta,
+            awarded: actualDelta, // 하위 호환(기존 클라가 awarded 참조해도 동작)
             newTotal: newPoints,
             targetUserId,
         });
     } catch (err) {
         console.error("[Admin Points] 서버 오류:", err);
-        return NextResponse.json({ error: "포인트 지급에 실패했습니다" }, { status: 500 });
+        return NextResponse.json({ error: "포인트 처리에 실패했습니다" }, { status: 500 });
     }
 }

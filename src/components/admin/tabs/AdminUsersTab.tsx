@@ -378,7 +378,10 @@ export default function AdminUsersTab({
             }
 
             const result = await res.json();
-            const newPoints = result.newTotal ?? (pointsModalUser.points ?? 0) + awardAmount;
+            // 서버가 클램프한 실변동량(delta) 우선 사용 (차감 잔액부족 시 요청액과 다를 수 있음)
+            const delta = typeof result.delta === "number" ? result.delta : awardAmount;
+            const newPoints = result.newTotal ?? Math.max(0, (pointsModalUser.points ?? 0) + delta);
+            const isDeduct = delta < 0;
 
             // 로컬 상태 업데이트
             onUpdateUsers(prev =>
@@ -387,17 +390,20 @@ export default function AdminUsersTab({
                 )
             );
 
-            // 본인에게 지급한 경우 AuthContext 포인트 갱신
+            // 본인 계정 가감 시 AuthContext 포인트 갱신
             if (targetId === currentUserId) {
                 await refreshPoints();
             }
 
+            const who = pointsModalUser.user_metadata?.nickname || pointsModalUser.email;
             toast.success(
-                `${pointsModalUser.user_metadata?.nickname || pointsModalUser.email}에게 ${awardAmount.toLocaleString()}P 지급 완료! (총 ${newPoints.toLocaleString()}P)`
+                isDeduct
+                    ? `${who}에서 ${Math.abs(delta).toLocaleString()}P 차감 완료! (잔액 ${newPoints.toLocaleString()}P)`
+                    : `${who}에게 ${delta.toLocaleString()}P 지급 완료! (총 ${newPoints.toLocaleString()}P)`
             );
             setPointsModalUser(null);
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : "포인트 지급에 실패했습니다.");
+            toast.error(err instanceof Error ? err.message : "포인트 처리에 실패했습니다.");
         }
     };
 

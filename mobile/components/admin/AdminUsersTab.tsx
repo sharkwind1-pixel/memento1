@@ -184,7 +184,7 @@ export default function AdminUsersTab({ accessToken }: Props) {
                 body: JSON.stringify({
                     targetUserId: user.id,
                     points,
-                    reason: "관리자 지급",
+                    reason: points < 0 ? "관리자 차감" : "관리자 지급",
                 }),
             });
             if (!res.ok) {
@@ -194,9 +194,11 @@ export default function AdminUsersTab({ accessToken }: Props) {
                 return;
             }
             const data = await res.json();
-            const newPoints = typeof data.newPoints === "number" ? data.newPoints : user.points + points;
+            // API는 newTotal(잔액) + delta(클램프된 실변동) 반환. 차감 잔액부족 시 요청액과 다를 수 있음.
+            const delta = typeof data.delta === "number" ? data.delta : points;
+            const newPoints = typeof data.newTotal === "number" ? data.newTotal : Math.max(0, user.points + delta);
             setUsers((prev) => prev.map((u) => u.id === user.id ? { ...u, points: newPoints } : u));
-            Alert.alert("완료", `${points > 0 ? "+" : ""}${points.toLocaleString()}P → 현재 ${newPoints.toLocaleString()}P`);
+            Alert.alert("완료", `${delta > 0 ? "+" : ""}${delta.toLocaleString()}P → 현재 ${newPoints.toLocaleString()}P`);
         } catch (e) {
             Alert.alert("오류", e instanceof Error ? e.message : "");
         }
