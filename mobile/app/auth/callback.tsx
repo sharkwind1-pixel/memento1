@@ -69,7 +69,6 @@ export default function AuthCallbackScreen() {
             // 사용자가 OAuth를 명시적으로 취소한 것 → exchange 시도하지 말 것.
             // (Chrome SSO 자동 OAuth가 의도치 않게 다른 Google 계정으로 가입시키던 버그 차단)
             if (!hasStoredVerifier()) {
-                console.log("[Auth callback] verifier 없음 — 사용자가 취소함, exchange skip");
                 router.replace("/(auth)/login");
                 return;
             }

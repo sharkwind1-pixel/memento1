@@ -133,7 +133,10 @@ export default function AdminWithdrawalsTab({ accessToken }: Props) {
                     [
                         { text: "취소", style: "cancel" },
                         { text: "해제", onPress: (text?: string) => {
-                            if (!text?.trim()) return;
+                            if (!text?.trim()) {
+                                Alert.alert("사유 필요", "사유를 입력해주세요");
+                                return;
+                            }
                             executeAllowRejoin(w, text.trim());
                         }},
                     ],

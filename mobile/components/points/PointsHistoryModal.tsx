@@ -99,7 +99,11 @@ export default function PointsHistoryModal({ visible, onClose }: Props) {
     const currentLevel = getPointLevel(points ?? 0);
 
     const fetchHistory = useCallback(async (curOffset: number) => {
-        if (!accessToken) return;
+        if (!accessToken) {
+            // 게스트 — 초기 loading=true가 영원히 남는 무한 스피너 방지
+            setLoading(false);
+            return;
+        }
         try {
             setLoading(true);
             const res = await fetch(
@@ -112,6 +116,8 @@ export default function PointsHistoryModal({ visible, onClose }: Props) {
             if (curOffset === 0) setTransactions(txs);
             else setTransactions((prev) => [...prev, ...txs]);
             setHasMore(!!data.hasMore);
+        } catch {
+            // 네트워크 오류 — unhandled rejection 방지 (스피너는 finally에서 해제)
         } finally {
             setLoading(false);
         }

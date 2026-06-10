@@ -129,14 +129,22 @@ export default function NotificationsScreen() {
         setRefreshing(false);
     }
 
+    // 서버 실제 시그니처 = PATCH /api/notifications, body { ids: [...] } 또는 { markAllRead: true }.
+    // (기존 PUT /{id}/read·/read-all은 존재하지 않는 엔드포인트라 읽음 처리가 전부 404로 죽어 있었음 — 웹과 동일 PATCH로 교정)
     async function markRead(id: string) {
         if (!session) return;
         try {
-            await fetch(`${API_BASE_URL}/api/notifications/${id}/read`, {
-                method: "PUT",
-                headers: { "Authorization": `Bearer ${session.access_token}` },
+            const res = await fetch(`${API_BASE_URL}/api/notifications`, {
+                method: "PATCH",
+                headers: {
+                    "Authorization": `Bearer ${session.access_token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ ids: [id] }),
             });
-            setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, isRead: true } : n));
+            if (res.ok) {
+                setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, isRead: true } : n));
+            }
         } catch {
             // silent
         }
@@ -148,21 +156,15 @@ export default function NotificationsScreen() {
         // 낙관적 업데이트
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
         try {
-            // 서버 일괄 endpoint 우선 시도, 미지원 시 개별 호출 fallback
-            const res = await fetch(`${API_BASE_URL}/api/notifications/read-all`, {
-                method: "PUT",
-                headers: { "Authorization": `Bearer ${session.access_token}` },
+            const res = await fetch(`${API_BASE_URL}/api/notifications`, {
+                method: "PATCH",
+                headers: {
+                    "Authorization": `Bearer ${session.access_token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ markAllRead: true }),
             });
-            if (!res.ok) {
-                // fallback: 개별 PUT 병렬 호출
-                const unread = notifications.filter((n) => !n.isRead);
-                await Promise.all(unread.map((n) =>
-                    fetch(`${API_BASE_URL}/api/notifications/${n.id}/read`, {
-                        method: "PUT",
-                        headers: { "Authorization": `Bearer ${session.access_token}` },
-                    }).catch(() => {})
-                ));
-            }
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
         } catch {
             Alert.alert("실패", "모두 읽음 처리에 실패했어요. 잠시 후 다시 시도해주세요.");
             // 롤백 위해 다시 로드

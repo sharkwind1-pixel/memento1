@@ -197,7 +197,10 @@ export default function WritePostScreen() {
     // ============================================
     async function pickImages() {
         if (!user) {
-            Alert.alert("로그인 필요", "로그인 후 이미지를 첨부할 수 있어요.");
+            Alert.alert("로그인 필요", "이미지를 첨부하려면 로그인이 필요해요. 무료로 시작할 수 있어요.", [
+                { text: "취소", style: "cancel" },
+                { text: "로그인", onPress: () => router.push("/(auth)/login") },
+            ]);
             return;
         }
         const remaining = MAX_IMAGES - images.length;
@@ -288,7 +291,10 @@ export default function WritePostScreen() {
     // ============================================
     async function handleSubmit() {
         if (!session || !user) {
-            Alert.alert("로그인 필요", "로그인 후 게시글을 작성할 수 있어요.");
+            Alert.alert("로그인 필요", "게시글을 작성하려면 로그인이 필요해요. 무료로 시작할 수 있어요.", [
+                { text: "취소", style: "cancel" },
+                { text: "로그인", onPress: () => router.push("/(auth)/login") },
+            ]);
             return;
         }
         if (!title.trim() || !content.trim()) {

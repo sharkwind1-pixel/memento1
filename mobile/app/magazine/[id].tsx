@@ -11,7 +11,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
-    Image, ActivityIndicator, Share, Dimensions, StyleSheet,
+    Image, ActivityIndicator, Share, Dimensions, StyleSheet, Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -167,7 +167,14 @@ export default function MagazineReaderScreen() {
     }
 
     async function handleLike() {
-        if (!session || !article || isLiking) return;
+        if (!article || isLiking) return;
+        if (!session) {
+            Alert.alert("로그인 필요", "좋아요를 남기려면 로그인이 필요해요. 무료로 시작할 수 있어요.", [
+                { text: "취소", style: "cancel" },
+                { text: "로그인", onPress: () => router.push("/(auth)/login") },
+            ]);
+            return;
+        }
         setIsLiking(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         const prevLiked = article.liked;

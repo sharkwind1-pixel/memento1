@@ -459,7 +459,8 @@ export default function PostDetailScreen() {
     }
 
     async function doBlock() {
-        if (!session || !post) return;
+        if (!post) return;
+        if (!session) { promptLogin("차단하려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
         try {
             const res = await fetch(`${API_BASE_URL}/api/blocks`, {
                 method: "POST",
@@ -519,7 +520,8 @@ export default function PostDetailScreen() {
     }
 
     async function submitReport(reason: string) {
-        if (!session || !post) return;
+        if (!post) return;
+        if (!session) { promptLogin("신고하려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
         try {
             const res = await fetch(`${API_BASE_URL}/api/reports`, {
                 method: "POST",

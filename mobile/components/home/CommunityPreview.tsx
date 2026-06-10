@@ -13,7 +13,7 @@ import { useDarkMode } from "@/contexts/ThemeContext";
 import { useSimpleMode } from "@/contexts/SimpleModeContext";
 import {
     View, Text, TouchableOpacity, StyleSheet,
-    ActivityIndicator, Animated, Image,
+    ActivityIndicator, Animated, Image, Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -113,7 +113,10 @@ export default function CommunityPreview({ session, isMemorialMode }: Props) {
 
     async function toggleLike(postId: string) {
         if (!session) {
-            router.push("/(auth)/login");
+            Alert.alert("로그인 필요", "좋아요를 남기려면 로그인이 필요해요. 무료로 시작할 수 있어요.", [
+                { text: "취소", style: "cancel" },
+                { text: "로그인", onPress: () => router.push("/(auth)/login") },
+            ]);
             return;
         }
         // 낙관적 업데이트

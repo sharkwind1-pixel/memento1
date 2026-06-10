@@ -185,7 +185,13 @@ export default function NewPetScreen() {
             Alert.alert("알림", "이름을 입력해주세요.");
             return;
         }
-        if (!user) return;
+        if (!user) {
+            Alert.alert("로그인 필요", "반려동물을 등록하려면 로그인이 필요해요. 무료로 시작할 수 있어요.", [
+                { text: "취소", style: "cancel" },
+                { text: "로그인", onPress: () => router.push("/(auth)/login") },
+            ]);
+            return;
+        }
 
         setIsLoading(true);
         try {

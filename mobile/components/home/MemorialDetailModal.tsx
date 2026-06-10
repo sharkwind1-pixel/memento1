@@ -14,6 +14,7 @@ import {
     StyleSheet, ActivityIndicator, Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
@@ -65,6 +66,7 @@ export default function MemorialDetailModal({
 }: Props) {
     const { user, session, isAdminUser } = useAuth();
     const { isDarkMode } = useDarkMode();
+    const router = useRouter();
     const [messages, setMessages] = useState<CondolenceMessage[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(true);
     const [sending, setSending] = useState(false);
@@ -102,7 +104,12 @@ export default function MemorialDetailModal({
 
     async function handleSelectPreset(preset: string) {
         if (!pet || sending || !user || !session) {
-            if (!session) Alert.alert("로그인 필요", "로그인 후 위로의 말을 남길 수 있어요");
+            if (!session) {
+                Alert.alert("로그인 필요", "로그인 후 위로의 말을 남길 수 있어요. 무료로 시작할 수 있어요.", [
+                    { text: "취소", style: "cancel" },
+                    { text: "로그인", onPress: () => { onClose(); router.push("/(auth)/login"); } },
+                ]);
+            }
             return;
         }
         Haptics.selectionAsync().catch(() => {});

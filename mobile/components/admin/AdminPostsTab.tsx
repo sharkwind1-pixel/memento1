@@ -80,7 +80,6 @@ export default function AdminPostsTab({ accessToken }: Props) {
                 image_urls: [],     // 별도 테이블 또는 video_url만. 목록에서는 빈 배열
                 category: p.board_type ?? null,
             }));
-            console.log("[AdminPosts] loaded", list.length, "posts");
             setPosts(list);
         } catch (e) {
             // 사용자 화면에 정확한 원인 노출 — V5 인계 교훈

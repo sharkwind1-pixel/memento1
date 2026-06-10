@@ -110,7 +110,6 @@ export async function exchangeWithStoredVerifier(
 ): Promise<{ error: Error | null }> {
     // 같은 code 중복 호출 차단 (flow_state_not_found 에러 방지)
     if (usedCodes.has(code)) {
-        console.log(`[Auth] 이 code는 이미 처리됨 → skip`);
         return { error: null };
     }
     usedCodes.add(code);
@@ -136,7 +135,6 @@ export async function exchangeWithStoredVerifier(
 
         if (!tokenRes.ok) {
             const errText = await tokenRes.text();
-            console.log(`[Auth] token endpoint ${tokenRes.status}: ${errText.slice(0, 300)}`);
             // 실패하면 used 표시 풀어서 재시도 가능하게
             usedCodes.delete(code);
             return { error: new Error(`token endpoint ${tokenRes.status}: ${errText.slice(0, 100)}`) };
@@ -153,7 +151,6 @@ export async function exchangeWithStoredVerifier(
         });
         if (setErr) return { error: setErr };
 
-        console.log(`[Auth] PKCE 직접 처리로 세션 교환 성공`);
         return { error: null };
     } catch (e) {
         usedCodes.delete(code);
@@ -240,7 +237,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            console.log(`[Auth] event=${event} hasSession=${!!session}`);
             if (!mounted) return;
             setSession(session);
             setUser(session?.user ?? null);
@@ -324,8 +320,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     data.is_premium &&
                     (!data.premium_expires_at || new Date(data.premium_expires_at) > new Date());
 
-                console.log(`[Profile] loaded id=${data.id} nickname=${data.nickname} points=${data.points} isAdmin=${data.is_admin} tier=${data.subscription_tier}`);
-
                 setProfile({
                     id: data.id,
                     nickname: data.nickname,
@@ -390,7 +384,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // 1. PKCE verifier 생성 → 메모리 보관
             const verifier = generatePKCEVerifier();
             verifierMap[provider] = verifier;
-            console.log(`[OAuth] provider=${provider} verifier=(${verifier.length} chars)`);
 
             // 2. Supabase authorize URL 직접 빌드 (https webBridge redirect)
             const authorizeUrl = new URL(`${SUPABASE_URL}/auth/v1/authorize`);
@@ -407,7 +400,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 authorizeUrl.toString(),
                 nativeDeepLink,
             );
-            console.log(`[OAuth] result.type=${result.type}`);
 
             // 자동 경로: 인앱 브라우저가 deepLink 감지 → result.url에 code
             if (result.type !== "success" || !result.url) {
@@ -415,7 +407,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 // Chrome SSO 자동 OAuth가 callback에서 exchange 시도하는 것 차단.
                 // (이게 없으면 의도치 않게 다른 Google 계정으로 자동 가입되는 보안 버그)
                 delete verifierMap[provider];
-                console.log(`[OAuth] dismiss — verifier 삭제 → deep link race 차단`);
                 return { error: new Error("CANCELLED") };
             }
 
@@ -466,14 +457,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 + `?mobile=1`
                 + `&nativeUrl=${encodeURIComponent(nativeDeepLink)}`;
 
-            console.log(`[OAuth/Naver] start=${naverStart}`);
-
             // 2. WebBrowser로 OAuth (자동 리다이렉트 chain)
             const result = await WebBrowser.openAuthSessionAsync(
                 naverStart,
                 nativeDeepLink,
             );
-            console.log(`[OAuth/Naver] result.type=${result.type}`);
 
             if (result.type !== "success" || !result.url) {
                 // 사용자가 dismiss — 폴백 deep link 핸들러가 처리

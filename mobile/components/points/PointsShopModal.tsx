@@ -13,6 +13,7 @@ import {
     Alert, ActivityIndicator, StyleSheet, Pressable,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/lib/theme";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,6 +55,7 @@ interface Props {
 
 export default function PointsShopModal({ visible, onClose }: Props) {
     const insets = useSafeAreaInsets();
+    const router = useRouter();
     const { session, points, refreshProfile } = useAuth();
     const { isDarkMode } = useDarkMode();
     const accessToken = session?.access_token;
@@ -61,7 +63,10 @@ export default function PointsShopModal({ visible, onClose }: Props) {
 
     async function handlePurchase(item: ShopItem) {
         if (!accessToken) {
-            Alert.alert("로그인이 필요합니다");
+            Alert.alert("로그인 필요", "포인트 상점을 이용하려면 로그인이 필요해요. 무료로 시작할 수 있어요.", [
+                { text: "취소", style: "cancel" },
+                { text: "로그인", onPress: () => { onClose(); router.push("/(auth)/login"); } },
+            ]);
             return;
         }
         if ((points ?? 0) < item.price) {

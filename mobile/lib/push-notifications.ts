@@ -47,8 +47,7 @@ async function loadNotifications(): Promise<NotificationsModule | null> {
     try {
         cachedModule = await import("expo-notifications");
         return cachedModule;
-    } catch (e) {
-        console.log("[Push] expo-notifications 로드 실패");
+    } catch {
         return null;
     }
 }
@@ -91,7 +90,6 @@ export async function getExpoPushToken(): Promise<string | null> {
             finalStatus = status;
         }
         if (finalStatus !== "granted") {
-            console.log("[Push] 권한 거부됨");
             return null;
         }
 
@@ -103,7 +101,6 @@ export async function getExpoPushToken(): Promise<string | null> {
             projectId ? { projectId } : undefined,
         );
         cachedToken = tokenData.data;
-        console.log("[Push] Expo token 발급:", cachedToken.slice(0, 30) + "...");
         return cachedToken;
     } catch (e) {
         console.warn("[Push] 토큰 발급 실패:", e instanceof Error ? e.message : String(e));
@@ -133,7 +130,6 @@ export async function registerPushTokenWithBackend(accessToken: string): Promise
             console.warn(`[Push] register 실패 ${res.status}: ${txt.slice(0, 200)}`);
             return false;
         }
-        console.log("[Push] 토큰 백엔드 등록 완료");
         return true;
     } catch (e) {
         console.warn("[Push] register 네트워크 오류:", e instanceof Error ? e.message : String(e));

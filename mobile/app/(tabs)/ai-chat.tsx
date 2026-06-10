@@ -556,12 +556,8 @@ export default function AiChatScreen() {
             // ===== SSE 파싱 =====
             const stream = response.body as ReadableStream<Uint8Array> | null;
             const useStream = !!(stream && typeof stream.getReader === "function");
-            // 디버그: stream vs text fallback 어느 경로 타는지 (RN의 fetch stream 미지원 시 text fallback)
-            console.log(`[Chat] useStream=${useStream} (RN fetch stream 지원 여부)`);
 
             const handleEvent = (event: any) => {
-                // 디버그: SSE 이벤트 도달 추적 (어떤 type이 오는지 + done 이벤트 누락 여부 진단)
-                console.log(`[Chat] event type=${event?.type} keys=${Object.keys(event ?? {}).join(",")}`);
                 if (event.type === "delta" && typeof event.content === "string") {
                     setMessages((prev) => prev.map((msg) =>
                         msg.id === petMessageId
@@ -592,11 +588,6 @@ export default function AiChatScreen() {
                     ));
 
                     if (typeof event.remaining === "number") setServerRemaining(event.remaining);
-                    // 디버그: suggestedQuestions 수신 여부 + 갯수 확인 (모바일에서 추천멘트 안 보이는 버그 추적)
-                    console.log(`[Chat] done event suggestedQuestions =`,
-                        Array.isArray(event.suggestedQuestions)
-                            ? `[${event.suggestedQuestions.length} items: ${event.suggestedQuestions.slice(0, 2).join(", ")}...]`
-                            : `${typeof event.suggestedQuestions} (not array)`);
                     if (Array.isArray(event.suggestedQuestions) && event.suggestedQuestions.length > 0) {
                         setSuggestions(event.suggestedQuestions);
                     }

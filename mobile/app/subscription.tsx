@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Linking, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
@@ -57,6 +57,7 @@ const PLANS: Plan[] = [
 ];
 
 export default function SubscriptionScreen() {
+    const router = useRouter();
     const { session, isPremium, profile, refreshProfile } = useAuth();
     const { isMemorialMode } = usePet();
     const { isDarkMode } = useDarkMode();
@@ -68,7 +69,10 @@ export default function SubscriptionScreen() {
 
     function handleCancel() {
         if (!session) {
-            Alert.alert("로그인 필요", "로그인이 필요합니다.");
+            Alert.alert("로그인 필요", "구독을 관리하려면 로그인이 필요해요. 무료로 시작할 수 있어요.", [
+                { text: "취소", style: "cancel" },
+                { text: "로그인", onPress: () => router.push("/(auth)/login") },
+            ]);
             return;
         }
         setCancelOpen(true);

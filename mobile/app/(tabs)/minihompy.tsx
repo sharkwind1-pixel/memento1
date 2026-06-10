@@ -156,8 +156,43 @@ export default function MinihompyScreen() {
         }, TOUCH_RESET_MS);
     }
 
+    // 맥락 가입후크 (post/[id].tsx promptLogin 패턴) — 게스트가 상호작용 시도 시 가치문구 + 로그인 경로
+    function promptLogin(message: string) {
+        Alert.alert("로그인 필요", message, [
+            { text: "취소", style: "cancel" },
+            { text: "로그인", onPress: () => router.push("/(auth)/login") },
+        ]);
+    }
+
+    function openUnifiedShop() {
+        if (!accessToken) { promptLogin("펫홈을 꾸미려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
+        setUnifiedShopOpen(true);
+    }
+
+    function openMinimiStorage() {
+        if (!accessToken) { promptLogin("꼬미 보관함을 이용하려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
+        setShopInitialFilter("owned");
+        setShopOpen(true);
+    }
+
+    function openBgShop() {
+        if (!accessToken) { promptLogin("배경을 꾸미려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
+        setBgShopOpen(true);
+    }
+
+    function openGuestbook() {
+        if (!accessToken) { promptLogin("방명록을 이용하려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
+        setGuestbookOpen(true);
+    }
+
+    function openGreeting() {
+        if (!accessToken) { promptLogin("인사말을 등록하려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
+        setGreetingOpen(true);
+    }
+
     async function togglePublic() {
-        if (!accessToken || !settings) return;
+        if (!accessToken) { promptLogin("펫홈 공개 설정을 바꾸려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
+        if (!settings) return;
         const next = !settings.isPublic;
         // 낙관적 업데이트
         setSettings({ ...settings, isPublic: next });
@@ -319,7 +354,7 @@ export default function MinihompyScreen() {
 
                         {/* 상점 CTA */}
                         <TouchableOpacity
-                            onPress={() => setUnifiedShopOpen(true)}
+                            onPress={openUnifiedShop}
                             style={[styles.shopCta, { borderColor: accentColor + "40", backgroundColor: isDarkMode ? COLORS.gray[900] : "#fff" }]}
                             activeOpacity={0.85}
                         >
@@ -346,28 +381,28 @@ export default function MinihompyScreen() {
                         label="상점"
                         color={COLORS.memento[500]}
                         bgColor={isDarkMode ? COLORS.gray[900] : COLORS.memento[50]}
-                        onPress={() => setUnifiedShopOpen(true)}
+                        onPress={openUnifiedShop}
                     />
                     <ActionCard
                         icon="library"
                         label={`꼬미${ownedMinimis.length > 0 ? ` ${ownedMinimis.length}` : ""}`}
                         color="#FB923C"
                         bgColor={isDarkMode ? COLORS.gray[900] : "#FFF7ED"}
-                        onPress={() => { setShopInitialFilter("owned"); setShopOpen(true); }}
+                        onPress={openMinimiStorage}
                     />
                     <ActionCard
                         icon="color-palette"
                         label="배경"
                         color="#8B5CF6"
                         bgColor={isDarkMode ? COLORS.gray[900] : "#F5F3FF"}
-                        onPress={() => setBgShopOpen(true)}
+                        onPress={openBgShop}
                     />
                     <ActionCard
                         icon="chatbubbles"
                         label="방명록"
                         color={COLORS.memorial[500]}
                         bgColor={isDarkMode ? COLORS.gray[900] : COLORS.memorial[50]}
-                        onPress={() => setGuestbookOpen(true)}
+                        onPress={openGuestbook}
                     />
                     <ActionCard
                         icon={settings?.isPublic ? "lock-open" : "lock-closed"}
@@ -380,7 +415,7 @@ export default function MinihompyScreen() {
 
                 {/* 인사말 편집 (탭하면 편집 모달) */}
                 <TouchableOpacity
-                    onPress={() => setGreetingOpen(true)}
+                    onPress={openGreeting}
                     activeOpacity={0.85}
                     style={styles.greetingHint}
                 >

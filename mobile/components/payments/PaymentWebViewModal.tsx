@@ -242,13 +242,11 @@ export default function PaymentWebViewModal({ visible, type, plan, method, packa
         const errors: string[] = [];
         for (const attempt of attempts) {
             try {
-                console.log(`[Payment] try open: ${attempt.label} → ${attempt.url.slice(0, 80)}`);
                 await Linking.openURL(attempt.url);
                 return; // 성공
             } catch (e) {
                 const msg = e instanceof Error ? e.message : String(e);
                 errors.push(`[${attempt.label}] ${msg}`);
-                console.log(`[Payment] failed ${attempt.label}: ${msg}`);
             }
         }
 
@@ -258,7 +256,8 @@ export default function PaymentWebViewModal({ visible, type, plan, method, packa
             `결제 앱을 실행할 수 없어요.\n\n시도한 URL: ${attempts[0]?.url.slice(0, 80) ?? url.slice(0, 80)}\n\n앱이 설치되어 있다면 한 번 더 시도하거나, 다른 결제 수단(예: 다른 카드)을 선택해주세요.`,
             [{ text: "확인" }],
         );
-        console.log(`[Payment] all attempts failed:\n${errors.join("\n")}`);
+        // 실제 실패 경로 진단용 — warn 레벨 유지
+        console.warn(`[Payment] all attempts failed:\n${errors.join("\n")}`);
     }
 
     function handleClose() {
