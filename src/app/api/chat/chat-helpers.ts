@@ -184,11 +184,12 @@ export function remindersToContext(reminders: ReminderInfo[], petName: string): 
     });
 
     // 현재 시간 확인해서 오늘 예정된 것 체크
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentDay = now.getDay(); // 0 = 일요일
-    const currentDate = now.getDate();
+    // KST 기준 (+9h trick): 서버(UTC) 로컬 시간 사용 시 한국 시간과 어긋남
+    const now = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    const currentHour = now.getUTCHours();
+    const currentMinute = now.getUTCMinutes();
+    const currentDay = now.getUTCDay(); // 0 = 일요일
+    const currentDate = now.getUTCDate();
 
     const upcomingToday = activeReminders.filter(r => {
         const [hour, minute] = (r.schedule.time || "00:00").split(":").map(Number);
@@ -563,19 +564,20 @@ export function filterMemorialSuggestions(suggestions: string[]): string[] {
 
 /** 특별한 날 체크 (생일, 추모일 등) */
 export function getSpecialDayContext(pet: PetInfo): string {
-    const today = new Date();
-    const todayStr = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    // KST 기준 (+9h trick): 서버(UTC) 로컬 날짜 사용 시 한국 날짜와 어긋남 → getUTC*로 KST 값 추출
+    const today = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    const todayStr = `${String(today.getUTCMonth() + 1).padStart(2, '0')}-${String(today.getUTCDate()).padStart(2, '0')}`;
     const messages: string[] = [];
 
     // 생일 체크
     if (pet.birthday) {
         const birthdayMMDD = pet.birthday.slice(5, 10); // "YYYY-MM-DD" -> "MM-DD"
         if (birthdayMMDD === todayStr) {
-            const age = today.getFullYear() - parseInt(pet.birthday.slice(0, 4));
+            const age = today.getUTCFullYear() - parseInt(pet.birthday.slice(0, 4));
             messages.push(`오늘은 ${pet.name}의 생일입니다! (${age}살)`);
         }
-        // 생일 일주일 전
-        const birthdayDate = new Date(today.getFullYear(), parseInt(pet.birthday.slice(5, 7)) - 1, parseInt(pet.birthday.slice(8, 10)));
+        // 생일 일주일 전 (UTC 자정 기준 — today가 +9h 시프트된 값이므로 같은 프레임에서 비교)
+        const birthdayDate = new Date(Date.UTC(today.getUTCFullYear(), parseInt(pet.birthday.slice(5, 7)) - 1, parseInt(pet.birthday.slice(8, 10))));
         const daysUntilBirthday = Math.ceil((birthdayDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         if (daysUntilBirthday > 0 && daysUntilBirthday <= 7) {
             messages.push(`${pet.name}의 생일이 ${daysUntilBirthday}일 남았습니다!`);
@@ -605,7 +607,7 @@ export function getSpecialDayContext(pet: PetInfo): string {
         const adoptedMMDD = pet.adoptedDate.slice(5, 10);
         if (adoptedMMDD === todayStr) {
             const adoptedDate = new Date(pet.adoptedDate);
-            const years = today.getFullYear() - adoptedDate.getFullYear();
+            const years = today.getUTCFullYear() - adoptedDate.getUTCFullYear();
             if (years > 0) {
                 messages.push(`오늘은 ${pet.name}과(와) 처음 만난 지 ${years}년이 되는 날입니다!`);
             }

@@ -61,8 +61,24 @@ export async function POST(request: NextRequest) {
                 start(controller) {
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "delta", content: fixedReply })}\n\n`));
                     const isMemorial = aiContext.isMemorialMode;
+                    // 추모 모드: 고정 3개(chat-prompts.ts 금지 패턴과 동일 문구) 대신
+                    // 대화체 추모 풀에서 Fisher-Yates 셔플 후 3개 pick
+                    // 주의: MEMORIAL_SUGGESTION_BLOCKLIST(chat-helpers.ts) 키워드("잘 자"/"산책" 등) 금지 —
+                    // 이 early-return 경로는 filterMemorialSuggestions를 거치지 않으므로 풀 자체가 안전해야 함
+                    const memorialOffTopicPool = [
+                        "그날 우리 어디 갔었는지 기억나?",
+                        "요즘 마음은 좀 어때?",
+                        "내 사진 중에 제일 좋아하는 거 뭐야?",
+                        "오늘 하루는 어땠어?",
+                        "우리 처음 만난 날 기억나?",
+                    ];
+                    const shuffledMemorial = [...memorialOffTopicPool];
+                    for (let i = shuffledMemorial.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffledMemorial[i], shuffledMemorial[j]] = [shuffledMemorial[j], shuffledMemorial[i]];
+                    }
                     const offTopicSuggestions = isMemorial
-                        ? ["좋았던 기억 얘기해줘", "너와 함께한 날들", "보고 싶은 마음"]
+                        ? shuffledMemorial.slice(0, 3)
                         : ["오늘 산책 갔어?", "뭐 하고 놀까?", "간식 뭐 줄까?"];
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                         type: "done",

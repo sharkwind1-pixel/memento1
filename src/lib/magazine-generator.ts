@@ -346,8 +346,13 @@ ${recentTitles.map((t) => `- ${t}`).join("\n")}
     const isExotic = isExoticSpecies(species);
 
     // 실질적 고민 주제 풀에서 랜덤 3개 추천
+    // Fisher-Yates shuffle — sort(() => Math.random() - 0.5)는 편향 셔플 (chat-pipeline.ts 동일 패턴)
     const topicPool = PRACTICAL_TOPICS[category] || [];
-    const shuffled = [...topicPool].sort(() => Math.random() - 0.5);
+    const shuffled = [...topicPool];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
     const suggestedTopics = shuffled.slice(0, 3);
 
     const topicSuggestionClause = suggestedTopics.length > 0

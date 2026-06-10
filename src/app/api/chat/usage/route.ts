@@ -35,7 +35,7 @@ export const GET = withAuth(async ({ user }) => {
         // 프리미엄 상태 확인
         const { data: profile } = await supabase
             .from("profiles")
-            .select("is_premium, premium_expires_at, subscription_tier")
+            .select("is_premium, premium_expires_at, subscription_tier, subscription_phase")
             .eq("id", user.id)
             .single();
 
@@ -51,7 +51,14 @@ export const GET = withAuth(async ({ user }) => {
         const tierLimits = getLimitsForTier(subscriptionTier);
 
         // 기본 일일 제한 (tier별)
-        const baseLimit = tierLimits.DAILY_CHATS;
+        let baseLimit: number = tierLimits.DAILY_CHATS;
+
+        // 라이프사이클 단계별 추가 제한 (chat-pipeline.ts checkSecurityLimits와 동일 로직)
+        // hidden / countdown: 일 3회로 강제 제한 (감정 의존 유저 보호 + 비용 통제)
+        const subscriptionPhase = profile?.subscription_phase || "active";
+        if (subscriptionPhase === "hidden" || subscriptionPhase === "countdown") {
+            baseLimit = 3;
+        }
 
         // KST 기준 오늘 날짜 계산
         const now = new Date();

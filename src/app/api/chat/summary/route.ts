@@ -8,6 +8,12 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, createServerSupabase } from "@/lib/supabase-server";
+import { checkRateLimitDB } from "@/lib/rate-limit";
+
+// 비용 가드 상수 (GPT 호출 입력 캡)
+const MAX_MESSAGES = 60;          // messages 배열 최대 개수 (최근 우선)
+const MAX_CONTENT_LENGTH = 1000;  // 항목당 content 최대 길이
+const MAX_TOTAL_CHARS = 8000;     // 전체 텍스트 절단 (끝부분 우선 보존 — 최근 대화가 중요)
 
 export async function POST(request: NextRequest) {
     try {
@@ -17,6 +23,15 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { error: "인증이 필요합니다." },
                 { status: 401 }
+            );
+        }
+
+        // 비용 가드: 분당 rate limit (DB 기반)
+        const rate = await checkRateLimitDB(user.id, "general");
+        if (!rate.allowed) {
+            return NextResponse.json(
+                { error: "요청이 너무 빠릅니다. 잠시 후 다시 시도해주세요." },
+                { status: 429 }
             );
         }
 
@@ -51,15 +66,37 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ saved: false, reason: "대화가 너무 짧습니다." });
         }
 
+        // 비용 가드: 최대 60개(최근 우선) + 항목당 content 1000자 캡 (초과분은 잘라서 진행)
+        const cappedMessages = (messages as Array<{ role?: unknown; content?: unknown }>)
+            .slice(-MAX_MESSAGES)
+            .map((msg) => ({
+                role: String(msg?.role ?? "user"),
+                content: String(msg?.content ?? "").slice(0, MAX_CONTENT_LENGTH),
+            }));
+
+        // 비용 가드: 전체 텍스트 8000자 절단 — 뒤(최근 대화)부터 채워서 끝부분 우선 보존
+        const trimmedMessages: Array<{ role: string; content: string }> = [];
+        let totalChars = 0;
+        for (let i = cappedMessages.length - 1; i >= 0; i--) {
+            const msg = cappedMessages[i];
+            if (totalChars + msg.content.length > MAX_TOTAL_CHARS) {
+                const remaining = MAX_TOTAL_CHARS - totalChars;
+                if (remaining > 0) {
+                    // 마지막으로 들어가는 (가장 오래된) 메시지는 뒷부분만 보존
+                    trimmedMessages.unshift({ role: msg.role, content: msg.content.slice(-remaining) });
+                }
+                break;
+            }
+            trimmedMessages.unshift(msg);
+            totalChars += msg.content.length;
+        }
+
         // agent 모듈 동적 import (빌드 시점 환경변수 에러 방지)
         const agent = await import("@/lib/agent");
 
         // 대화 요약 생성
         const summary = await agent.generateConversationSummary(
-            messages.map((msg: { role: string; content: string }) => ({
-                role: msg.role,
-                content: msg.content,
-            })),
+            trimmedMessages,
             petName,
             isMemorial ?? false
         );

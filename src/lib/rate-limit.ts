@@ -365,6 +365,10 @@ function getRateLimitSupabase(): SupabaseClient | null {
     if (!url || !key) return null;
     rateLimitSupabase = createClient(url, key, {
         auth: { autoRefreshToken: false, persistSession: false },
+        global: {
+            // Next.js 14 fetch 자동 캐싱 우회 (supabase-server.ts noStoreFetch와 동일 패턴)
+            fetch: (url, init) => fetch(url, { ...init, cache: "no-store" }),
+        },
     });
     return rateLimitSupabase;
 }

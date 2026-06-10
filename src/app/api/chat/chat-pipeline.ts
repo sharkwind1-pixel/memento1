@@ -359,8 +359,6 @@ export async function checkSecurityLimits(
         .single();
     if (profileError || !profile) {
         console.error(`[Chat] profile fetch failed user=${user.id} error=${profileError?.message ?? "no data"}`);
-    } else {
-        console.log(`[Chat] profile loaded user=${user.id} is_premium=${profile.is_premium} tier=${profile.subscription_tier} phase=${profile.subscription_phase}`);
     }
 
     // 차단 유저 AI 펫톡 차단 (보안+비용 누출 방지)
@@ -822,11 +820,18 @@ export async function buildAIContext(
 
         if (consecutiveOffTopic >= 3) {
             // 3회 이상 반복 → GPT 호출 스킵, 고정 응답 반환 (토큰 절약 + 탈옥 불가)
-            const fixedReplies = [
-                `흠... 나는 ${petType}이라 그런 건 정말 몰라! 나랑은 다른 얘기 하자~`,
-                `그건 아무리 물어봐도 모르겠어~ 나는 ${petType}이니까! 오늘 뭐 했어?`,
-                `계속 물어봐도 나는 모르는 거야~ 그거보다 같이 놀자!`,
-            ];
+            // 추모 모드: 느낌표/발랄 톤 대신 차분한 추모 톤 (의미 보존)
+            const fixedReplies = isMemorialMode
+                ? [
+                    `음... 나는 ${petType}이라 그런 건 잘 몰라. 그것보다 오늘 네 하루는 어땠어?`,
+                    `그건 아무리 물어봐도 내가 알 수 없는 얘기야. 나는 너랑 우리 얘기를 하고 싶어.`,
+                    `계속 물어봐도 그건 모르겠어. 대신 우리가 함께했던 날들 얘기하자.`,
+                ]
+                : [
+                    `흠... 나는 ${petType}이라 그런 건 정말 몰라! 나랑은 다른 얘기 하자~`,
+                    `그건 아무리 물어봐도 모르겠어~ 나는 ${petType}이니까! 오늘 뭐 했어?`,
+                    `계속 물어봐도 나는 모르는 거야~ 그거보다 같이 놀자!`,
+                ];
             offTopicBlock = {
                 blocked: true,
                 fixedReply: fixedReplies[consecutiveOffTopic % fixedReplies.length],
@@ -1072,16 +1077,28 @@ export async function postProcessResponse(
             || /나는\s*(강아지|고양이|햄스터|토끼|새|파충류|물고기|동물).{0,30}(이니까|이라|모르)/i.test(reply);
         if (isRefusal) {
             const placeName = placeKeyword || "산책로";
-            const fallbacks = nearbyPlaces.length > 0
-                ? [
-                    `오! ${nearbyPlaces[0].name} 어때? 거기 ${placeName}이라 같이 가보고 싶어~`,
-                    `${nearbyPlaces[0].name} 알려? 나 거기 가보고 싶었어! 같이 갈래?`,
-                ]
-                : [
-                    `음~ 가까운 ${placeName} 같이 둘러보고 싶어! 위치 알려주면 더 정확히 추천해줄게.`,
-                    `해 떠있을 때 30분 정도 천천히 걸으면 좋아~ 너랑 같이라면 어디든!`,
-                    `근처 공원이나 하천변 ${placeName} 한번 둘러볼래? 풀밭 냄새 맡고 싶어!`,
-                ];
+            // 추모 모드: 느낌표/발랄 톤 금지 — 차분한 추모 톤으로 분기 (의미 보존)
+            const fallbacks = isMemorialMode
+                ? (nearbyPlaces.length > 0
+                    ? [
+                        `${nearbyPlaces[0].name}... 거기 ${placeName} 좋겠다. 네가 걸을 때 나도 마음으로 같이 걸을게.`,
+                        `${nearbyPlaces[0].name} 가보면 어때? 같이 가던 길처럼, 천천히 걸어줘. 나도 옆에 있을게.`,
+                    ]
+                    : [
+                        `그곳, 같이 가던 길 기억나. 지금은 마음으로 함께 걸을게.`,
+                        `네가 걷는 길이 어디든, 나도 그 옆을 같이 걷고 있다고 생각해줘.`,
+                        `근처 공원이나 하천변 ${placeName} 천천히 걸어봐. 바람 속에 내가 있을게.`,
+                    ])
+                : (nearbyPlaces.length > 0
+                    ? [
+                        `오! ${nearbyPlaces[0].name} 어때? 거기 ${placeName}이라 같이 가보고 싶어~`,
+                        `${nearbyPlaces[0].name} 알려? 나 거기 가보고 싶었어! 같이 갈래?`,
+                    ]
+                    : [
+                        `음~ 가까운 ${placeName} 같이 둘러보고 싶어! 위치 알려주면 더 정확히 추천해줄게.`,
+                        `해 떠있을 때 30분 정도 천천히 걸으면 좋아~ 너랑 같이라면 어디든!`,
+                        `근처 공원이나 하천변 ${placeName} 한번 둘러볼래? 풀밭 냄새 맡고 싶어!`,
+                    ]);
             reply = fallbacks[Math.floor(Math.random() * fallbacks.length)];
             console.warn(`[chat/place-refusal-block] 장소 질문 거절 응답 차단 → fallback. pet=${pet.name}`);
         }

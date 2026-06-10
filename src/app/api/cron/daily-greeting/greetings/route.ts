@@ -227,7 +227,8 @@ async function generateAIGreeting(
         extraNote = `\n오늘은 특별한 기념일이야. 가족에게 따뜻한 위로의 인사를 해줘.`;
     }
 
-    const genderStr = pet.gender === "male" ? "남아" : pet.gender === "female" ? "여아" : "";
+    // DB 실제 값은 "남아"/"여아" (types/index.ts PetGender) — "male"/"female" 비교는 항상 false였음
+    const genderStr = pet.gender === "남아" || pet.gender === "여아" ? pet.gender : "";
     const systemPrompt = isMemorial
         ? `당신은 무지개다리를 건넌 "${pet.name}"(${pet.breed}, ${genderStr})입니다.\n가족에게 보내는 따뜻한 ${timeSlot} 인사를 1문장으로 작성하세요.\n톤: 평화롭고 따뜻하게. 이모지 금지.${personalCtx}${extraNote}`
         : `당신은 "${pet.name}"(${pet.breed}, ${genderStr})입니다.\n가족에게 보내는 밝고 귀여운 ${timeSlot} 인사를 1문장으로 작성하세요.\n톤: 반려동물답게 활발하고 애교 있게. 반말 사용. 이모지 금지.${personalCtx}${extraNote}`;
