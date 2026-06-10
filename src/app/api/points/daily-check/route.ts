@@ -6,7 +6,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { getClientIP, checkRateLimit, getRateLimitHeaders, checkVPN, getVPNBlockResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +39,8 @@ export async function POST() {
             );
         }
 
-        const supabase = await createServerSupabase();
+        // admin 클라 — daily_login_check는 service_role 전용 잠금 (위에서 getAuthUser로 본인 검증, 본인 id만 전달)
+        const supabase = createAdminSupabase();
 
         // RPC로 출석 체크 (원자적 처리)
         const { data, error } = await supabase.rpc("daily_login_check", {
@@ -51,11 +52,14 @@ export async function POST() {
             return NextResponse.json({ error: "포인트 처리 중 오류가 발생했습니다" }, { status: 500 });
         }
 
+        // daily_login_check는 SETOF(TABLE) 반환 → data가 단일 행 배열. 언랩 없이는 항상 success:false가 되어
+        // 출석 토스트/포인트 갱신이 사일런트 실패하던 잠복버그 (2026-06-10 재검증 발견).
+        const row = Array.isArray(data) ? data[0] : data;
         return NextResponse.json({
-            success: data?.success ?? false,
-            reason: data?.reason,
-            points: data?.points ?? 0,
-            earned: data?.earned ?? 0,
+            success: row?.success ?? false,
+            reason: row?.reason,
+            points: row?.points ?? 0,
+            earned: row?.earned ?? 0,
         });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });

@@ -157,14 +157,8 @@ export async function POST(request: NextRequest) {
                 const email = args[0];
                 const days = parseInt(args[1]) || 30;
                 if (!email) { await reply(chatId, "사용법: /premium [이메일] [일수]"); break; }
-                const { error } = await supabase.rpc("grant_premium", {
-                    p_user_id: null,
-                    p_plan: "premium",
-                    p_duration_days: days,
-                    p_granted_by: null,
-                    p_reason: `텔레그램 관리 명령 (${days}일)`,
-                });
-                // RPC가 user_id 필요하므로 이메일로 먼저 조회
+                // 이메일로 유저 조회 → RPC 호출 (과거엔 p_user_id:null 죽은 호출 + 수동 update라
+                // grant_premium이 세팅하는 subscription_tier 등과 불일치 위험이 있었음)
                 const { data: profile } = await supabase
                     .from("profiles")
                     .select("id")
@@ -174,13 +168,16 @@ export async function POST(request: NextRequest) {
                     await reply(chatId, "유저를 찾을 수 없습니다");
                     break;
                 }
+                const { error: grantError } = await supabase.rpc("grant_premium", {
+                    p_user_id: profile.id,
+                    p_plan: "premium",
+                    p_duration_days: days,
+                    p_granted_by: null,
+                    p_reason: `텔레그램 관리 명령 (${days}일)`,
+                });
                 const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-                const { error: updateError } = await supabase
-                    .from("profiles")
-                    .update({ is_premium: true, premium_plan: "premium", premium_expires_at: expiresAt })
-                    .eq("id", profile.id);
-                await reply(chatId, updateError
-                    ? `실패: ${updateError.message}`
+                await reply(chatId, grantError
+                    ? `실패: ${grantError.message}`
                     : `${email} 프리미엄 ${days}일 부여 완료 (만료: ${expiresAt.split("T")[0]})`
                 );
                 break;

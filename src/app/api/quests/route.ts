@@ -8,7 +8,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase, createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { DAILY_QUESTS, MEMORIAL_QUESTS, QuestId } from "@/config/constants";
 import { isAllQuestsCompleted, isEligibleForOpen100, tryAwardOpen100 } from "@/lib/open100";
 
@@ -81,18 +81,22 @@ export async function POST(request: Request) {
     }
 
     // 보너스 포인트 적립 (RPC 직접 호출 — 가변 금액 지원)
+    // admin 클라 + p_is_one_time 시그니처 — increment_user_points는 service_role 전용 잠금 (위에서 본인 인증됨)
+    const pointsAdmin = createAdminSupabase();
     let bonusEarned = 0;
     if (quest.bonusPoints > 0) {
         try {
-            const { data: rpcResult } = await supabase.rpc("increment_user_points", {
+            const { data: rpcResult } = await pointsAdmin.rpc("increment_user_points", {
                 p_user_id: user.id,
                 p_action_type: "admin_award",
                 p_points: quest.bonusPoints,
                 p_daily_cap: null,
-                p_one_time: false,
+                p_is_one_time: false,
                 p_metadata: { source: `quest_${questId}`, quest_id: questId },
             });
-            if (rpcResult?.success) bonusEarned = quest.bonusPoints;
+            // RETURNS TABLE → 단일 행 배열
+            const row = Array.isArray(rpcResult) ? rpcResult[0] : rpcResult;
+            if (row?.success) bonusEarned = quest.bonusPoints;
         } catch {
             // 보너스 실패해도 미션 완료는 유지
         }
@@ -108,8 +112,9 @@ export async function POST(request: Request) {
             alreadyAwarded: !!profile?.open100_awarded_at,
         });
         if (eligible) {
+            // award_open100도 service_role 전용 잠금 → admin 클라로 호출
             const awardResult = await tryAwardOpen100(
-                supabase,
+                pointsAdmin,
                 user.id,
                 profile?.email ?? user.email ?? null,
             );

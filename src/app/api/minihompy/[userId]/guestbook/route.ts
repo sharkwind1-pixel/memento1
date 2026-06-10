@@ -134,9 +134,11 @@ export async function POST(
         }
 
         // 포인트 적립 (작성자 +3P, 주인 +2P)
+        // admin 클라 필수 — increment_user_points는 service_role 전용 잠금 (특히 주인 적립은 타인 대상이라 세션으론 불가)
+        const pointsAdmin = createAdminSupabase();
         let pointAward: { earned: number; actionType: string } | null = null;
         try {
-            const result = await awardPoints(supabase, user.id, "write_guestbook");
+            const result = await awardPoints(pointsAdmin, user.id, "write_guestbook");
             if (result.success && result.earned && result.earned > 0) {
                 pointAward = { earned: result.earned, actionType: "write_guestbook" };
             }
@@ -144,7 +146,7 @@ export async function POST(
             // 무시
         }
         // 주인 받기는 fire-and-forget (Realtime으로 전파)
-        awardPoints(supabase, userId, "receive_guestbook").catch(() => {});
+        awardPoints(pointsAdmin, userId, "receive_guestbook").catch(() => {});
 
         // 작성자 닉네임 + 미니미
         const { data: profile } = await supabase

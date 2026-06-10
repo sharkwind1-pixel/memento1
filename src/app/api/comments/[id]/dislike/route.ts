@@ -83,12 +83,13 @@ export async function POST(
                     .eq("id", commentId)
                     .single();
                 if (comment && comment.user_id !== userId) {
+                    // p_is_one_time = 신규 오버로드(service_role 전용). 레거시 p_one_time은 auth.uid() 가드로 silent 실패했었음.
                     await supabase.rpc("increment_user_points", {
                         p_user_id: comment.user_id,
                         p_action_type: "receive_dislike",
                         p_points: -5,
                         p_daily_cap: null,
-                        p_one_time: false,
+                        p_is_one_time: false,
                         p_metadata: { commentId },
                     });
                 }
