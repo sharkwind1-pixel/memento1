@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-06-12 EAS 빌드 2종 + 베타 Play Console 출시
+- **preview APK**(build c13bf07d, 직접설치용) + **production AAB v8**(build 0473a162, versionCode 7→8 자동증가) EAS 빌드. production env(SUPABASE_URL/ANON_KEY)는 EAS 서버에 등록돼 있어 정상, preview엔 없음(직접설치 테스트용이라 무방).
+- **삽질 메모**: 첫 AAB 시도가 루트(memento1/)에서 돌아 `eas init` 미설정으로 실패+루트에 빈 eas.json/app.json 생성 → 정리(git rm --cached eas.json, rm app.json) 후 mobile/에서 재실행 성공. **EAS 빌드는 반드시 mobile/에서.** Bash 작업디렉토리가 세션 중 바뀌어 있을 수 있으니 명시적 cd 필요.
+- **출시**: 사용자가 AAB Play Console Closed 트랙 업로드+"출시 시작" 완료(2026-06-12). Google 검토통과 후 베타 12명 자동업데이트 → 한 달치 모바일 누적변경 풀림. **앱 빈펫홈 실기는 보류**(앱은 소셜로그인만이라 testmementoani 이메일계정 사용불가 + 기존계정 다 펫홈 채워짐 — 신규 베타가입자가 자연검증). 웹 3폭 L5 PASS로 동일 분기코드 신뢰도 높음.
+
+---
+
 ## 2026-06-11 펫홈 새 유저 빈 상태 온보딩 (웹+앱) — L2
 배경: 베타테스터 "정신산만/뭐부터 할지 모르겠다" 피드백 → 새 유저에게 명확한 첫 행동을 줌. **기존 미니홈피(펫홈) 구조 그대로 재사용, 빈 상태 온보딩만 얹음**(새 화면/재설계 아님). 핵심 프레임 재확인: 펫홈=싸이월드 톤앤무드 외피 / 핵심가치=AI펫톡+AI영상([[feedback_ai_positioning_error]]).
 - **웹**: `MinihompyStage`에 빈 펫홈 오버레이("펫홈을 꾸며보세요" + [펫홈 꾸미러 가기]) + 신규 `PethomeStartGuideModal`(3단계 설명: 꼬미 데려오기→배치→배경/인사말) → 상점. 노출 조건 = `placedMinimi 0 && 인사말 없음`. 새 유저 확인: prod 12명 포인트 0(OPEN100 미션 미완료)이라 빈 펫홈 다수 추정.
