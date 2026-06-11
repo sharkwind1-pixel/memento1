@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-11 전수감사 포인트부활 배포검증 — DB 정적교차 L3 PASS, 행위적 미완(활동 전무)
+배경: ⚠️미검증 "댓글작성→포인트 적립 확인"을 prod DB로 검증 시도(코드 안 읽고 데이터 대조).
+- **point_transactions 실측**: 구매(minimi/furniture)·daily_login은 6/10 이후 정상 적립. 그러나 audit가 되살렸다던 `ai_chat`(마지막 2/20)·`write_comment`/`receive_like`(행 0)는 6/10 이후 흔적 없음.
+- **단정 회피 → 활동 유무 구분**: chat_messages 마지막 6/02·6/10 이후 0 / post_comments 마지막 6/09·이후 0 / post_likes 6/10 이후 3건(전부 동일유저 18초내, 시각 16:17 KST = fix배포 16:11 KST의 ~경계, 자추 의심). → **배포 후 적격 활동이 거의 없어 "수정 실패"가 아니라 "테스트할 활동 부재"**.
+- **정적 교차검증(L3 PASS)**: increment_user_points 단일 올바른 오버로드 `(uuid,text,int,int,bool,jsonb)`·anon/auth EXECUTE=false·service_role=true·point_transactions insert 실측 / points.ts awardPoints가 정확히 6-arg로 호출(레거시 p_one_time 가드 제거 주석화) / posts/[id]/like/route.ts가 createAdminSupabase+자추가드(author≠liker)로 receive_like 적립. **코드↔prod RPC 완전 일치 → 배선은 올바름, 높은 확신.**
+- **결론**: "고쳐졌다" 단정 불가. 배선 검증 완료(L3), 행위적 L4/L5(실제 새 txn)는 실활동 또는 의도적 테스트(테스트계정 댓글 작성→PointsHistory 확인) 필요. [[audit-db-grounded-lesson]] [[feedback_lying_patterns]]
+
+---
+
 ## 2026-06-11 미실행 마이그 적용 — sell_minimi_item 4-param unequip dead 분기 교정 (prod 적용+검증)
 배경: RELAY 🟢 미실행 마이그(긴급도 Low). 직전 세션은 MCP 미연결로 미적용. 이번 세션 MCP 붙어 적용.
 - **적용 전 prod 대조**: `sell_minimi_item` 오버로드 2개 실측. 4-param `(uuid,text,text,integer)`이 live(웹 `api/minimi/sell` 두 호출부 모두 4-param, 모바일은 같은 API 경유). prod 4-param에 `IF v_equipped = p_minimi_id`(UUID=slug, 항상 FALSE) dead 분기 + 버그성 `v_remaining<=1` 게이트 그대로 → 마이그 미적용 확정.
