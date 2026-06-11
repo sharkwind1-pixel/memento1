@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-11 미실행 마이그 적용 — sell_minimi_item 4-param unequip dead 분기 교정 (prod 적용+검증)
+배경: RELAY 🟢 미실행 마이그(긴급도 Low). 직전 세션은 MCP 미연결로 미적용. 이번 세션 MCP 붙어 적용.
+- **적용 전 prod 대조**: `sell_minimi_item` 오버로드 2개 실측. 4-param `(uuid,text,text,integer)`이 live(웹 `api/minimi/sell` 두 호출부 모두 4-param, 모바일은 같은 API 경유). prod 4-param에 `IF v_equipped = p_minimi_id`(UUID=slug, 항상 FALSE) dead 분기 + 버그성 `v_remaining<=1` 게이트 그대로 → 마이그 미적용 확정.
+- **영향**: 모바일 판매경로(route.ts:51-87)엔 dangling-equip 폴백 없음(웹 레거시 경로 117-140에만 있음) → 장착중 미니미 판매 시 equip 미해제 가능. route.ts:119 주석은 이미 "교정됨"이라 적혀있었으나 prod 미반영이었음.
+- **적용**(MCP `apply_migration` `fix_sell_minimi_unequip_4param`): `v_equipped = v_delete_id::text`(UUID 비교)로 교정 + `v_remaining<=1` 제거. **CREATE OR REPLACE라 ACL 보존**(audit 교훈) — 실측: anon/auth EXECUTE=false, service_role=true 유지(`{postgres=X,service_role=X}`).
+- 검증: DB L4(정의 `has_fixed_compare=true`·게이트 제거·ACL 실측). L5(모바일 장착중 판매→해제 실동작)는 EAS 후 잔여. 코드 변경 없음(마이그 파일은 기존 존재). [[audit-db-grounded-lesson]]
+- 후순위: 3-param 오버로드는 현재 호출부 없음(잠재 orphan) — 차후 확인 후 정리 검토.
+
+---
+
 ## 2026-06-11 후순위① save_deleted_account "버그" → 죽은 레거시 제거 (prod 대조로 오진 정정)
 배경: RELAY가 [H] "탈퇴기록 0건·쿨다운 무동작"으로 적었던 항목. 인계문 교훈대로 코드 안 읽고 **prod DB 직접 대조** → 오진 판명.
 - **prod 진실**: 30일 재가입 쿨다운은 **정상 동작 중**. 실제 경로 = `withdrawn_users`(9행, 최근90일 4건) + `can_rejoin(email,ip)` RPC. 웹·앱 모두 `/api/auth/delete-account`가 service_role로 withdrawn_users에 기록(route.ts:58-78). `deleted_accounts`는 **0행 완전 사문화** — `save_deleted_account`(prod 5-param인데 코드 9-param 호출→404 no-op)·`check_deleted_account`(빈 조회)·`mark_account_rejoined`(prod 부재) 전부 죽은 평행 시스템.
