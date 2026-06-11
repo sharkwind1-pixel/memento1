@@ -55,7 +55,7 @@ const TABS: Array<{ id: TabType; label: string; icon: React.ComponentProps<typeo
 
 export default function RecordScreen() {
     const router = useRouter();
-    const params = useLocalSearchParams<{ openVideo?: string }>();
+    const params = useLocalSearchParams<{ openVideo?: string; openTab?: string }>();
     const { user } = useAuth();
     const { selectedPet, isLoading: petsLoading, isMemorialMode, refreshPets } = usePet();
     const { isDarkMode } = useDarkMode();
@@ -75,6 +75,15 @@ export default function RecordScreen() {
             router.setParams({ openVideo: undefined });
         }
     }, [params.openVideo, router]);
+
+    // openTab 파라미터 → 해당 서브탭 직행 (펫홈 섹션 칩에서 진입)
+    useEffect(() => {
+        const t = params.openTab;
+        if (t && TABS.some(tab => tab.id === t)) {
+            setActiveTab(t as TabType);
+            router.setParams({ openTab: undefined });
+        }
+    }, [params.openTab, router]);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const accentGradient: [string, string] = isMemorialMode

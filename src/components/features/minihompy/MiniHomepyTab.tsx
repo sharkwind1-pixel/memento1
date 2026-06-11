@@ -12,9 +12,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Loader2, MessageSquare, Trash2, ChevronDown, Archive, Plus, ShoppingBag } from "lucide-react";
+import { Loader2, MessageSquare, Trash2, ChevronDown, Archive, Plus, ShoppingBag, Camera, X, PawPrint, PlayCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useMemorialMode } from "@/contexts/PetContext";
+import { useMemorialMode, usePets } from "@/contexts/PetContext";
+import TimelineSection from "@/components/features/record/TimelineSection";
+import RemindersSection from "@/components/features/reminders/RemindersSection";
+import VideoGenerationSection from "@/components/features/video/VideoGenerationSection";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import type { MinihompySettings, GuestbookEntry, PlacedMinimi } from "@/types";
@@ -39,9 +42,13 @@ interface OwnedFurniture {
     imageUrl: string;
 }
 
+/** 펫홈 섹션 탭 — 싸이월드 미니홈피 메뉴(홈/사진첩/다이어리/방명록) + 메멘토 고유(AI영상/케어) */
+type PethomeSection = "home" | "photos" | "diary" | "video" | "guestbook" | "care";
+
 export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean }) {
-    const { user, minimiEquip } = useAuth();
+    const { user, minimiEquip, isPremiumUser } = useAuth();
     const { isMemorialMode } = useMemorialMode();
+    const { selectedPet } = usePets();
     const nickname = user?.user_metadata?.nickname || user?.email?.split("@")[0] || "익명";
 
     const [settings, setSettings] = useState<MinihompySettings | null>(null);
@@ -68,6 +75,9 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
 
     // 새 유저 빈 펫홈 시작 가이드 모달
     const [guideOpen, setGuideOpen] = useState(false);
+
+    // 펫홈 섹션 탭 (싸이월드식 메뉴) — 기존 프라이빗 기능들을 펫홈으로 집결
+    const [activeSection, setActiveSection] = useState<PethomeSection>("home");
 
     const openShop = useCallback((tab: "minimi" | "furniture" | "background" = "minimi") => {
         setShopInitialTab(tab);
@@ -325,19 +335,6 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 onStartDecorate={() => setGuideOpen(true)}
             />
 
-            {/* 스테이지 바로 아래 통합 상점 바로가기 (편집모드에선 숨김) */}
-            {!editMode && (
-                <button
-                    type="button"
-                    onClick={() => openShop("minimi")}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-white font-semibold shadow-md hover:shadow-lg active:scale-[0.99] transition-all"
-                >
-                    <ShoppingBag className="w-5 h-5" />
-                    <span>상점</span>
-                    <span className="text-white/80 text-xs font-normal">꼬미 · 가구 · 배경 구매</span>
-                </button>
-            )}
-
             {/* 편집모드: 인라인 보관함 트레이 (꼬미 + 가구 탭) */}
             {editMode && (
                 <StorageTray
@@ -350,15 +347,108 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 />
             )}
 
-            {/* 설정 섹션 */}
-            <MinihompySettingsSection
-                settings={currentSettings}
-                onUpdate={handleSettingsUpdate}
-                isActive={isActive}
-            />
+            {!editMode && (
+                <>
+                    {/* 펫 카운트 헤더 — 인스타 프로필 헤더 참고 (아바타 + 이름 + 카운트) */}
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg">
+                        <div className="w-11 h-11 rounded-full overflow-hidden bg-memento-100 dark:bg-memento-900/30 flex items-center justify-center flex-shrink-0">
+                            {selectedPet?.photos?.[0]?.url ? (
+                                <Image
+                                    src={selectedPet.photos[0].url}
+                                    alt={selectedPet.name}
+                                    width={44}
+                                    height={44}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <PawPrint className="w-5 h-5 text-memento-400" />
+                            )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-gray-800 dark:text-white truncate">
+                                {selectedPet ? selectedPet.name : nickname}
+                                {selectedPet && (
+                                    <span className="ml-2 text-[11px] font-normal text-gray-400 dark:text-gray-500">
+                                        {isMemorialMode ? "추억하는 중" : "함께하는 중"}
+                                    </span>
+                                )}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                사진 <span className="font-semibold text-gray-700 dark:text-gray-200">{selectedPet?.photos?.length ?? 0}</span>
+                                <span className="mx-1.5 text-gray-300 dark:text-gray-600">·</span>
+                                방명록 <span className="font-semibold text-gray-700 dark:text-gray-200">{guestbookTotal}</span>
+                                <span className="mx-1.5 text-gray-300 dark:text-gray-600">·</span>
+                                방문 <span className="font-semibold text-gray-700 dark:text-gray-200">{(currentSettings.totalVisitors ?? 0).toLocaleString()}</span>
+                            </p>
+                        </div>
+                    </div>
 
-            {/* 꼬미 도감 — 미보유 클릭 시 상점(꼬미 탭) 자동 오픈 */}
-            <MinimiCollection onOpenShop={() => openShop("minimi")} />
+                    {/* 섹션 칩 내비 — 싸이월드 미니홈피 메뉴(홈/사진첩/다이어리/방명록) 참고 */}
+                    <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+                        {SECTION_DEFS.filter(s => !(s.key === "care" && isMemorialMode)).map((s) => (
+                            <button
+                                key={s.key}
+                                onClick={() => setActiveSection(s.key)}
+                                className={cn(
+                                    "flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all",
+                                    activeSection === s.key
+                                        ? (isMemorialMode ? "bg-memorial-500 text-white shadow-sm" : "bg-memento-500 text-white shadow-sm")
+                                        : "bg-white/70 dark:bg-gray-800/70 text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800"
+                                )}
+                            >
+                                {s.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* 홈: 상점 + 설정 + 꼬미 도감 (기존 구성) */}
+                    {activeSection === "home" && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => openShop("minimi")}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-white font-semibold shadow-md hover:shadow-lg active:scale-[0.99] transition-all"
+                            >
+                                <ShoppingBag className="w-5 h-5" />
+                                <span>상점</span>
+                                <span className="text-white/80 text-xs font-normal">꼬미 · 가구 · 배경 구매</span>
+                            </button>
+                            <MinihompySettingsSection
+                                settings={currentSettings}
+                                onUpdate={handleSettingsUpdate}
+                                isActive={isActive}
+                            />
+                            <MinimiCollection onOpenShop={() => openShop("minimi")} />
+                        </>
+                    )}
+
+                    {/* 사진첩: 인스타식 3열 그리드 (selectedPet.photos 재사용) */}
+                    {activeSection === "photos" && (
+                        selectedPet ? <PethomePhotoGrid pet={selectedPet} /> : <NoPetCard />
+                    )}
+
+                    {/* 다이어리: 타임라인 일기 (기존 TimelineSection 재사용) */}
+                    {activeSection === "diary" && (
+                        selectedPet
+                            ? <TimelineSection petId={selectedPet.id} petName={selectedPet.name} />
+                            : <NoPetCard />
+                    )}
+
+                    {/* AI영상: 기존 VideoGenerationSection 재사용 */}
+                    {activeSection === "video" && (
+                        selectedPet
+                            ? <VideoGenerationSection pet={selectedPet} isPremium={isPremiumUser} />
+                            : <NoPetCard />
+                    )}
+
+                    {/* 케어: 리마인더 (일상 모드 전용, 본인만 보는 프라이빗) */}
+                    {activeSection === "care" && !isMemorialMode && (
+                        selectedPet
+                            ? <RemindersSection petId={selectedPet.id} petName={selectedPet.name} />
+                            : <NoPetCard />
+                    )}
+                </>
+            )}
 
             {/* 새 유저 빈 펫홈 시작 가이드 → 상점으로 안내 */}
             <PethomeStartGuideModal
@@ -380,7 +470,8 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 }}
             />
 
-            {/* 방명록 섹션 */}
+            {/* 방명록 섹션 (펫홈 섹션 탭) */}
+            {!editMode && activeSection === "guestbook" && (
             <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border-0 shadow-lg p-4">
                 <div className="flex items-center gap-2 mb-3">
                     <MessageSquare className="w-5 h-5 text-pink-500" />
@@ -437,7 +528,122 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                     </div>
                 )}
             </div>
+            )}
         </div>
+    );
+}
+
+// 펫홈 섹션 정의 (싸이월드 메뉴 참고: 홈/사진첩/다이어리/방명록 + 메멘토 고유: AI영상/케어)
+const SECTION_DEFS: { key: PethomeSection; label: string }[] = [
+    { key: "home", label: "홈" },
+    { key: "photos", label: "사진첩" },
+    { key: "diary", label: "다이어리" },
+    { key: "video", label: "AI영상" },
+    { key: "guestbook", label: "방명록" },
+    { key: "care", label: "케어" },
+];
+
+/** 펫 미등록 시 섹션 빈 상태 — 반려동물 서브탭으로 안내 */
+function NoPetCard() {
+    return (
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-8 text-center">
+            <PawPrint className="w-10 h-10 mx-auto mb-3 text-memento-300" />
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">반려동물을 먼저 등록해주세요</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">우리 아이를 등록하면 이곳에 기록이 모여요</p>
+            <button
+                onClick={() => window.dispatchEvent(new CustomEvent("navigateRecordSubTab", { detail: "pets" }))}
+                className="mt-4 px-5 py-2.5 rounded-xl bg-memento-500 hover:bg-memento-600 text-white text-sm font-semibold transition-colors"
+            >
+                반려동물 등록하기
+            </button>
+        </div>
+    );
+}
+
+/** 사진첩 — 인스타식 3열 그리드 (selectedPet.photos 재사용, 이미지/영상 뷰어 내장) */
+function PethomePhotoGrid({ pet }: { pet: { id: string; name: string; photos: Array<{ id: string; url: string; type: string }> } }) {
+    const [viewing, setViewing] = useState<{ url: string; type: string } | null>(null);
+    const photos = pet.photos ?? [];
+
+    if (photos.length === 0) {
+        return (
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-8 text-center">
+                <Camera className="w-10 h-10 mx-auto mb-3 text-memento-300" />
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">아직 사진이 없어요</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{pet.name}의 순간들을 담아보세요</p>
+                <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("navigateRecordSubTab", { detail: "pets" }))}
+                    className="mt-4 px-5 py-2.5 rounded-xl bg-memento-500 hover:bg-memento-600 text-white text-sm font-semibold transition-colors"
+                >
+                    사진 추가하러 가기
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <>
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-3">
+                <div className="flex items-center gap-2 px-1 pb-2">
+                    <Camera className="w-4 h-4 text-memento-500" />
+                    <span className="text-sm font-semibold text-gray-800 dark:text-white">{pet.name}의 사진첩</span>
+                    <span className="text-xs text-gray-400">({photos.length})</span>
+                </div>
+                <div className="grid grid-cols-3 gap-1">
+                    {photos.map((p) => (
+                        <button
+                            key={p.id}
+                            onClick={() => setViewing({ url: p.url, type: p.type })}
+                            className="relative aspect-square overflow-hidden rounded-md bg-gray-100 dark:bg-gray-700 group"
+                        >
+                            {p.type === "video" ? (
+                                <>
+                                    <video src={p.url} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                                    <PlayCircle className="absolute top-1.5 right-1.5 w-4 h-4 text-white drop-shadow" />
+                                </>
+                            ) : (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img src={p.url} alt="" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            )}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* 미니 뷰어 (이미지 + 영상) */}
+            {viewing && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4"
+                    onClick={() => setViewing(null)}
+                >
+                    <button
+                        onClick={() => setViewing(null)}
+                        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors"
+                        aria-label="닫기"
+                    >
+                        <X className="w-5 h-5 text-white" />
+                    </button>
+                    {viewing.type === "video" ? (
+                        <video
+                            src={viewing.url}
+                            controls
+                            autoPlay
+                            playsInline
+                            className="max-w-full max-h-[85vh] rounded-xl"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    ) : (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                            src={viewing.url}
+                            alt=""
+                            className="max-w-full max-h-[85vh] object-contain rounded-xl"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    )}
+                </div>
+            )}
+        </>
     );
 }
 

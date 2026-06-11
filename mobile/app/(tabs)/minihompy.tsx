@@ -310,6 +310,36 @@ export default function MinihompyScreen() {
 
                 <PetSwitcher accentColor={accentColor} onAddPet={() => router.push("/pet/new")} />
 
+                {/* 펫홈 섹션 칩 — 기존 프라이빗 기능으로 직행 (웹 펫홈 섹션 탭 패리티, record 서브탭 재사용) */}
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.sectionChips}
+                    contentContainerStyle={styles.sectionChipsContent}
+                >
+                    {([
+                        { label: "사진첩", icon: "images-outline" as const, tab: "gallery" },
+                        { label: "다이어리", icon: "time-outline" as const, tab: "timeline" },
+                        { label: "앨범", icon: "albums-outline" as const, tab: "albums" },
+                        { label: "AI영상", icon: "videocam-outline" as const, tab: "videos" },
+                    ]).map((c) => (
+                        <TouchableOpacity
+                            key={c.tab}
+                            activeOpacity={0.8}
+                            onPress={() => router.push(`/(tabs)/record?openTab=${c.tab}`)}
+                            style={[styles.sectionChip, {
+                                backgroundColor: isDarkMode ? COLORS.gray[900] : "#fff",
+                                borderColor: accentColor + "30",
+                            }]}
+                        >
+                            <Ionicons name={c.icon} size={14} color={accentColor} />
+                            <Text style={[styles.sectionChipText, { color: isDarkMode ? COLORS.gray[200] : COLORS.gray[700] }]}>
+                                {c.label}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+
                 {/* Stage — 자유 배치 꼬미가 있으면 StageEditor, 없으면 단일 장착 꼬미 */}
                 {(settings?.placedMinimi && settings.placedMinimi.length > 0) || ownedMinimis.length > 0 ? (
                     <View style={styles.stageWrap}>
@@ -590,6 +620,26 @@ const styles = StyleSheet.create({
     stageWrap: {
         marginHorizontal: 20,
         marginBottom: 16,
+    },
+    sectionChips: {
+        marginBottom: 12,
+    },
+    sectionChipsContent: {
+        paddingHorizontal: 20,
+        gap: 8,
+    },
+    sectionChip: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 14,
+        paddingVertical: 9,
+        borderRadius: 999,
+        borderWidth: 1,
+    },
+    sectionChipText: {
+        fontSize: 13,
+        fontWeight: "600",
     },
     stage: {
         height: STAGE_HEIGHT,
