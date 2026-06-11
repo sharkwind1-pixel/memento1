@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-06-11 /audit 스킬화 + 세션 핸드오버
+- **`.claude/skills/audit/SKILL.md` 생성**: 이번 전수감사 방법(DB-grounded 6영역 fan-out)을 재사용 스킬로 박제. 핵심 원칙=코드 읽기 리뷰가 아니라 **코드 vs live prod 강제 대조**(RPC ACL·죽은기능 실데이터·미실행 마이그·RLS·시그니처). 토큰 한도 회피 위해 3개씩 2배치. 발견→메인 취합→high-confidence만 수정→9번 재검증→영역별 커밋. **교훈: "전체 검수" 수백 번 시켰는데 RPC노출/포인트 4개월 사망/가격 잔존이 안 잡힌 건 이전 검수가 prod까지 안 내려간 코드 읽기였기 때문.** 주기적 `/audit` 권장.
+- 핸드오버: RELAY ✉️ 인계문 전면 갱신(다음=모두의창업 보완본), ⚠️미검증에 전수감사 5커밋+DB마이그 4건 추가.
+
+---
+
 ## 2026-06-11 전체 코드베이스 전수검수 배치2 (B:웹/D:AI·cron/F:컨벤션) — 수정 3커밋
 배경: 전수검수 후반부. 검수→수정 에이전트 3개 병렬→9번 묶음 재검증(SHIP WITH FIXES 1건 반영).
 - **B 웹**(`d4bc8fd`): plain fetch→authFetch 5곳(**차단한 유저 글이 차단 후에도 노출**·**매거진 좋아요 하트 새로고침 소실** 포함 — getAuthUser는 Bearer만 읽는 기지 패턴 재발) / **영상 진행 폴링 폭주**(deps에 active 객체→15초 간격 무력화·조기 타임아웃)→원시값 deps+ref / dismiss를 dismissed 분리(완료 토스트 복원) / StoryCreateModal 모달 스크롤 금지조합 교정 / 타이머·race·리스너 가드 4건 / chatUtils TimelineEntry 중앙타입화.
