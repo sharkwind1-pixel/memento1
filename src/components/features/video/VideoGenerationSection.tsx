@@ -51,6 +51,16 @@ export default function VideoGenerationSection({
     const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const pollCountRef = useRef(0);
     const videoScrollRef = useHorizontalScroll();
+    const sectionRef = useRef<HTMLDivElement>(null);
+
+    // 홈 허브 카드 [AI 영상 만들기] → record 탭 진입 후 이 섹션으로 스크롤
+    useEffect(() => {
+        const handler = () => {
+            sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        };
+        window.addEventListener("scrollToVideoSection", handler);
+        return () => window.removeEventListener("scrollToVideoSection", handler);
+    }, []);
 
     // ---- 데이터 패칭 ----
 
@@ -267,7 +277,7 @@ export default function VideoGenerationSection({
     // 로딩 스켈레톤
     if (isLoading) {
         return (
-            <Card className="mt-6">
+            <Card className="mt-6" ref={sectionRef}>
                 <CardContent className="p-5">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
@@ -297,7 +307,7 @@ export default function VideoGenerationSection({
 
     return (
         <>
-            <Card className="mt-6">
+            <Card className="mt-6" ref={sectionRef}>
                 <CardContent className="p-5">
                     {/* 헤더 */}
                     <div className="flex items-center justify-between mb-4">

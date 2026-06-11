@@ -85,7 +85,7 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
         return <OriginalHero isMemorialMode isDarkMode={isDarkMode} fontScale={fontScale} spacingScale={spacingScale} iconScale={iconScale} onCta={() => router.push("/(tabs)/ai-chat")} onSecondary={() => router.push("/(tabs)/community")} ctaText="지금 만나러 가기" />;
     }
 
-    // --- 로그인 + 꼬미 있음: 개인 펫홈 프리뷰 ---
+    // --- 로그인 + 꼬미 있음: 개인 펫홈 프리뷰 + 핵심 액션 허브 ---
     if (hasMinimi && hasPlacedMinimi) {
         const bg = findBackgroundOrDefault(settings?.backgroundSlug ?? "default_sky");
         return (
@@ -110,6 +110,14 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
                         </View>
                     )}
                 </TouchableOpacity>
+
+                {/* 핵심 액션 허브 — 펫홈은 톤, 핵심 가치는 AI펫톡 + AI영상 (웹 HubActions 1:1) */}
+                <HubActions
+                    isDarkMode={isDarkMode}
+                    onChat={() => router.push("/(tabs)/ai-chat")}
+                    onVideo={() => router.push("/(tabs)/record?openVideo=1")}
+                    onDecorate={() => router.push("/(tabs)/minihompy")}
+                />
             </View>
         );
     }
@@ -144,6 +152,15 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
                 </LinearGradient>
             </TouchableOpacity>
 
+            {/* 핵심 액션 허브 — AI펫톡/AI영상은 꼬미 없이도 핵심 가치.
+                펫홈 꾸미기 → 빈 펫홈의 시작 온보딩이 이어받음 (웹 HubActions 1:1) */}
+            <HubActions
+                isDarkMode={isDarkMode}
+                onChat={() => router.push("/(tabs)/ai-chat")}
+                onVideo={() => router.push("/(tabs)/record?openVideo=1")}
+                onDecorate={() => router.push("/(tabs)/minihompy")}
+            />
+
             {/* 펫홈 안내 가이드 모달 */}
             <MinihompyGuideModal
                 visible={guideOpen}
@@ -156,6 +173,94 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
         </View>
     );
 }
+
+// ============================================================================
+// 허브 핵심 액션 — [우리 아이와 대화하기(AI펫톡)] + [AI 영상 만들기][펫홈 꾸미기]
+// (웹 src/components/features/home/HeroSection.tsx HubActions 1:1)
+// ============================================================================
+
+function HubActions({ isDarkMode, onChat, onVideo, onDecorate }: {
+    isDarkMode: boolean;
+    onChat: () => void;
+    onVideo: () => void;
+    onDecorate: () => void;
+}) {
+    const subBg = isDarkMode ? COLORS.gray[900] : "rgba(255,255,255,0.85)";
+    const subBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[200];
+    const subText = isDarkMode ? COLORS.gray[200] : COLORS.gray[700];
+
+    return (
+        <View style={hubStyles.wrap}>
+            <TouchableOpacity activeOpacity={0.88} onPress={onChat} style={hubStyles.primaryWrap}>
+                <LinearGradient
+                    colors={[COLORS.memento[500], COLORS.memento[400]]}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                    style={hubStyles.primary}
+                >
+                    <Ionicons name="chatbubble-ellipses" size={24} color="#fff" />
+                    <View style={{ flex: 1 }}>
+                        <Text style={hubStyles.primaryTitle}>우리 아이와 대화하기</Text>
+                        <Text style={hubStyles.primarySub}>AI 펫톡</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.7)" />
+                </LinearGradient>
+            </TouchableOpacity>
+            <View style={hubStyles.row}>
+                <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={onVideo}
+                    style={[hubStyles.secondary, { backgroundColor: subBg, borderColor: subBorder }]}
+                >
+                    <Ionicons name="film-outline" size={18} color={COLORS.memento[500]} />
+                    <Text style={[hubStyles.secondaryText, { color: subText }]}>AI 영상 만들기</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={onDecorate}
+                    style={[hubStyles.secondary, { backgroundColor: subBg, borderColor: subBorder }]}
+                >
+                    <Ionicons name="color-palette-outline" size={18} color={COLORS.memento[500]} />
+                    <Text style={[hubStyles.secondaryText, { color: subText }]}>펫홈 꾸미기</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+}
+
+const hubStyles = StyleSheet.create({
+    wrap: { marginTop: 12, gap: 10 },
+    primaryWrap: {
+        borderRadius: 18,
+        elevation: 4,
+        shadowColor: COLORS.memento[500],
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+    },
+    primary: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderRadius: 18,
+    },
+    primaryTitle: { color: "#fff", fontSize: 15, fontWeight: "700" },
+    primarySub: { color: "rgba(255,255,255,0.8)", fontSize: 11, marginTop: 2 },
+    row: { flexDirection: "row", gap: 10 },
+    secondary: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 7,
+        paddingVertical: 14,
+        paddingHorizontal: 8,
+        borderRadius: 16,
+        borderWidth: 1,
+    },
+    secondaryText: { fontSize: 13, fontWeight: "600" },
+});
 
 // ============================================================================
 // 개인 펫홈 오버레이 (배치된 꼬미 표시 + 인사말)

@@ -11,7 +11,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Home, ChevronRight, X, PawPrint, Star, Palette, Users, Info } from "lucide-react";
+import { ArrowRight, Home, ChevronRight, X, PawPrint, Star, Palette, Users, Info, MessageCircle, Film } from "lucide-react";
 import { TabType, MinihompySettings, PlacedMinimi } from "@/types";
 import type { User } from "@supabase/supabase-js";
 import { authFetch } from "@/lib/auth-fetch";
@@ -71,6 +71,19 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
         }, 100);
     }, [setSelectedTab]);
 
+    // 허브 카드 핵심 액션 — AI 펫톡 / AI 영상 (펫홈은 톤, 핵심 가치는 이 둘)
+    const goAIChat = useCallback(() => setSelectedTab("ai-chat"), [setSelectedTab]);
+    const goAIVideo = useCallback(() => {
+        setSelectedTab("record");
+        setTimeout(() => {
+            window.dispatchEvent(new CustomEvent("navigateRecordSubTab", { detail: "pets" }));
+            // 섹션 마운트(데이터 로딩 스켈레톤 포함) 후 스크롤
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent("scrollToVideoSection"));
+            }, 350);
+        }, 100);
+    }, [setSelectedTab]);
+
     const [guideOpen, setGuideOpen] = useState(false);
 
     const hasMinimi = ownedMinimis.length > 0;
@@ -92,14 +105,15 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
         return <OriginalHero setSelectedTab={setSelectedTab} user={user} isMemorial />;
     }
 
-    // --- 로그인 + 꼬미 있음: 개인 펫홈 프리뷰 ---
+    // --- 로그인 + 꼬미 있음: 개인 펫홈 프리뷰 + 핵심 액션 허브 ---
     if (hasMinimi && hasPlacedMinimi) {
         const bg = findBackgroundOrDefault(settings?.backgroundSlug ?? "default_sky");
         return (
             <section className="px-4 pt-4 sm:pt-6" data-tutorial-id="home-hero">
+                <div className="max-w-md mx-auto space-y-3">
                 <button
                     onClick={goMinihompy}
-                    className="relative block w-full max-w-md mx-auto aspect-[4/3] overflow-hidden rounded-3xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer group text-left"
+                    className="relative block w-full aspect-[4/3] overflow-hidden rounded-3xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer group text-left"
                 >
                     {/* 배경 */}
                     {bg.imageUrl ? (
@@ -135,13 +149,17 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                         <ChevronRight className="w-4 h-4 text-white/70 group-hover:translate-x-1 transition-transform" />
                     </div>
                 </button>
+
+                {/* 핵심 액션 허브 — 펫홈은 톤, 핵심 가치는 AI펫톡 + AI영상 */}
+                <HubActions onChat={goAIChat} onVideo={goAIVideo} onDecorate={goMinihompy} />
+                </div>
             </section>
         );
     }
 
-    // --- 로그인 + 꼬미 없음: 쇼케이스 히어로 ---
+    // --- 로그인 + 꼬미 없음: 쇼케이스 히어로 + 핵심 액션 허브 ---
     return (
-        <section className="px-4 pt-4 sm:pt-6" data-tutorial-id="home-hero">
+        <section className="px-4 pt-4 sm:pt-6 space-y-3" data-tutorial-id="home-hero">
             <button
                 onClick={() => setGuideOpen(true)}
                 className="relative w-full overflow-hidden rounded-3xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer group text-left"
@@ -169,6 +187,10 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                 </div>
             </button>
 
+            {/* 핵심 액션 허브 — AI펫톡/AI영상은 꼬미 없이도 핵심 가치.
+                펫홈 꾸미기 → 빈 펫홈의 시작 온보딩(PethomeStartGuideModal)이 이어받음 */}
+            <HubActions onChat={goAIChat} onVideo={goAIVideo} onDecorate={goMinihompy} />
+
             {/* 펫홈 안내 가이드 */}
             <MinihompyGuideModal
                 open={guideOpen}
@@ -176,6 +198,46 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                 onStart={() => { setGuideOpen(false); goMinihompy(); }}
             />
         </section>
+    );
+}
+
+// ============================================================================
+// 허브 핵심 액션 — [우리 아이와 대화하기(AI펫톡)] + [AI 영상 만들기][펫홈 꾸미기]
+// ============================================================================
+
+function HubActions({ onChat, onVideo, onDecorate }: {
+    onChat: () => void; onVideo: () => void; onDecorate: () => void;
+}) {
+    return (
+        <div className="space-y-2.5">
+            <button
+                onClick={onChat}
+                className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 text-white shadow-[0_4px_16px_-4px_rgba(5,178,220,0.4)] hover:shadow-[0_6px_20px_-4px_rgba(5,178,220,0.5)] active:scale-[0.99] transition-all"
+            >
+                <MessageCircle className="w-6 h-6" />
+                <span className="flex-1 text-left">
+                    <span className="block text-[15px] font-bold">우리 아이와 대화하기</span>
+                    <span className="block text-xs text-white/80">AI 펫톡</span>
+                </span>
+                <ChevronRight className="w-4 h-4 text-white/70" />
+            </button>
+            <div className="grid grid-cols-2 gap-2.5">
+                <button
+                    onClick={onVideo}
+                    className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-2xl bg-white/80 dark:bg-gray-800/80 border border-gray-200/70 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800 active:scale-[0.98] transition-all"
+                >
+                    <Film className="w-[18px] h-[18px] text-memento-500" />
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">AI 영상 만들기</span>
+                </button>
+                <button
+                    onClick={onDecorate}
+                    className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-2xl bg-white/80 dark:bg-gray-800/80 border border-gray-200/70 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800 active:scale-[0.98] transition-all"
+                >
+                    <Palette className="w-[18px] h-[18px] text-memento-500" />
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">펫홈 꾸미기</span>
+                </button>
+            </div>
+        </div>
     );
 }
 
