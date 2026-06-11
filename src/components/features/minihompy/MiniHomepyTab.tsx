@@ -24,6 +24,7 @@ import MinihompyStage from "./MinihompyStage";
 import MinihompySettingsSection from "./MinihompySettingsSection";
 import MinimiCollection from "./MinimiCollection";
 import MinihompyShop from "./MinihompyShop";
+import PethomeStartGuideModal from "./PethomeStartGuideModal";
 import Image from "next/image";
 
 interface OwnedChar {
@@ -64,6 +65,9 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
     // 통합 상점 모달 (꼬미/가구/배경 탭)
     const [shopOpen, setShopOpen] = useState(false);
     const [shopInitialTab, setShopInitialTab] = useState<"minimi" | "furniture" | "background">("minimi");
+
+    // 새 유저 빈 펫홈 시작 가이드 모달
+    const [guideOpen, setGuideOpen] = useState(false);
 
     const openShop = useCallback((tab: "minimi" | "furniture" | "background" = "minimi") => {
         setShopInitialTab(tab);
@@ -294,6 +298,9 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
 
     const displayPlaced = editMode ? editPlaced : (currentSettings.placedMinimi || []);
 
+    // 새 유저 판단: 배치된 꼬미도 인사말도 없으면 빈 펫홈 → 시작 가이드 오버레이
+    const isEmptyPethome = (currentSettings.placedMinimi?.length ?? 0) === 0 && !currentSettings.greeting;
+
     return (
         <div className="space-y-4">
             {/* 펫홈 스테이지 */}
@@ -314,6 +321,8 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 onCancelEdit={cancelEditMode}
                 onSaveEdit={saveAndExitEditMode}
                 saving={saving}
+                showStartGuide={isEmptyPethome}
+                onStartDecorate={() => setGuideOpen(true)}
             />
 
             {/* 스테이지 바로 아래 통합 상점 바로가기 (편집모드에선 숨김) */}
@@ -350,6 +359,14 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
 
             {/* 꼬미 도감 — 미보유 클릭 시 상점(꼬미 탭) 자동 오픈 */}
             <MinimiCollection onOpenShop={() => openShop("minimi")} />
+
+            {/* 새 유저 빈 펫홈 시작 가이드 → 상점으로 안내 */}
+            <PethomeStartGuideModal
+                isOpen={guideOpen}
+                onClose={() => setGuideOpen(false)}
+                isMemorialMode={isMemorialMode}
+                onStart={() => { setGuideOpen(false); openShop("minimi"); }}
+            />
 
             {/* 통합 상점 모달 (꼬미/가구/배경) */}
             <MinihompyShop

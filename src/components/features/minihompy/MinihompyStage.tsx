@@ -13,7 +13,7 @@
 
 import React, { useRef, useCallback, useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Music, Eye, Pencil, Check, Loader2, ArrowDown, Trash2 } from "lucide-react";
+import { Music, Eye, Pencil, Check, Loader2, ArrowDown, Trash2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import type { MinimiEquipState, PlacedMinimi } from "@/types";
 import { findBackground, getDefaultBackground } from "@/data/minihompyBackgrounds";
@@ -58,6 +58,10 @@ interface MinihompyStageProps {
     onCancelEdit?: () => void;
     onSaveEdit?: () => void;
     saving?: boolean;
+    /** 새 유저 빈 펫홈 — "펫홈을 꾸며보세요" 시작 오버레이 표시 */
+    showStartGuide?: boolean;
+    /** 시작 오버레이의 "펫홈 꾸미러 가기" 클릭 핸들러 */
+    onStartDecorate?: () => void;
 }
 
 export default function MinihompyStage({
@@ -78,6 +82,8 @@ export default function MinihompyStage({
     onCancelEdit,
     onSaveEdit,
     saving = false,
+    showStartGuide = false,
+    onStartDecorate,
 }: MinihompyStageProps) {
     const bg = findBackground(backgroundSlug) || getDefaultBackground();
     const DARK_BACKGROUNDS = ["starry_night", "mystic_pond", "rooftop_glamping", "starfall_hill"];
@@ -572,8 +578,31 @@ export default function MinihompyStage({
                 </div>
             )}
 
+            {/* 새 유저 빈 펫홈: "펫홈을 꾸며보세요" 시작 오버레이 (소유자·비편집) */}
+            {showStartGuide && !editMode && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center px-6">
+                    <div className="flex flex-col items-center gap-2 text-center rounded-2xl px-5 py-4 shadow-lg max-w-[240px] bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
+                        <Sparkles className={cn("w-6 h-6", isMemorialMode ? "text-memorial-500" : "text-memento-500")} />
+                        <p className="text-sm font-bold text-gray-800 dark:text-white">펫홈을 꾸며보세요</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-300 leading-relaxed">
+                            우리 아이의 공간이에요.<br />꼬미를 데려와 예쁘게 꾸며줄 수 있어요
+                        </p>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onStartDecorate?.(); }}
+                            className={cn(
+                                "mt-1 flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-xs font-semibold transition-all active:scale-95",
+                                isMemorialMode ? "bg-memorial-500 hover:bg-memorial-600" : "bg-memento-500 hover:bg-memento-600"
+                            )}
+                        >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            펫홈 꾸미러 가기
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* 비편집모드: 배치 진입 버튼 (소유자만) - 우측 상단에 눈에 띄게 */}
-            {!editMode && isOwner && onEnterEdit && (
+            {!editMode && isOwner && onEnterEdit && !showStartGuide && (
                 <button
                     onClick={(e) => { e.stopPropagation(); onEnterEdit(); }}
                     className={cn(

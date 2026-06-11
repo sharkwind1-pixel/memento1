@@ -33,6 +33,7 @@ import PageBackground, { usePageBgColor } from "@/components/common/PageBackgrou
 import PetSwitcher from "@/components/common/PetSwitcher";
 import MinimiShopModal from "@/components/minihompy/MinimiShopModal";
 import MinihompyShopModal from "@/components/minihompy/MinihompyShopModal";
+import PethomeStartGuideModal from "@/components/minihompy/PethomeStartGuideModal";
 import BackgroundShopModal from "@/components/minihompy/BackgroundShopModal";
 import GuestbookModal from "@/components/minihompy/GuestbookModal";
 import GreetingEditModal from "@/components/minihompy/GreetingEditModal";
@@ -91,6 +92,7 @@ export default function MinihompyScreen() {
     const [greetingOpen, setGreetingOpen] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [visitorsOpen, setVisitorsOpen] = useState(false);
+    const [guideOpen, setGuideOpen] = useState(false); // 새 유저 시작 가이드
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const accessToken = session?.access_token ?? null;
@@ -167,6 +169,12 @@ export default function MinihompyScreen() {
     function openUnifiedShop() {
         if (!accessToken) { promptLogin("펫홈을 꾸미려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
         setUnifiedShopOpen(true);
+    }
+
+    // 새 유저 빈 펫홈: "펫홈 꾸미러 가기" → 3단계 설명 가이드 → 상점
+    function openStartGuide() {
+        if (!accessToken) { promptLogin("펫홈을 꾸미려면 로그인이 필요해요. 무료로 시작할 수 있어요."); return; }
+        setGuideOpen(true);
     }
 
     function openMinimiStorage() {
@@ -352,21 +360,21 @@ export default function MinihompyScreen() {
                             </StageBackground>
                         </TouchableOpacity>
 
-                        {/* 상점 CTA */}
+                        {/* 새 유저 시작 CTA → 3단계 설명 가이드 → 상점 */}
                         <TouchableOpacity
-                            onPress={openUnifiedShop}
+                            onPress={openStartGuide}
                             style={[styles.shopCta, { borderColor: accentColor + "40", backgroundColor: isDarkMode ? COLORS.gray[900] : "#fff" }]}
                             activeOpacity={0.85}
                         >
                             <View style={[styles.shopCtaIcon, { backgroundColor: accentColor + "15" }]}>
-                                <Ionicons name="paw" size={18} color={accentColor} />
+                                <Ionicons name="sparkles" size={18} color={accentColor} />
                             </View>
                             <View style={{ flex: 1 }}>
                                 <Text style={[styles.shopCtaTitle, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
-                                    상점 둘러보기
+                                    펫홈을 꾸며보세요
                                 </Text>
                                 <Text style={styles.shopCtaSub}>
-                                    꼬미·가구·배경을 사서 나만의 공간을 꾸며보세요
+                                    꼬미를 데려와 나만의 공간을 꾸며보세요
                                 </Text>
                             </View>
                             <Ionicons name="chevron-forward" size={16} color={accentColor} />
@@ -493,6 +501,13 @@ export default function MinihompyScreen() {
                         visible={visitorsOpen}
                         onClose={() => setVisitorsOpen(false)}
                         accentColor={accentColor}
+                    />
+                    <PethomeStartGuideModal
+                        visible={guideOpen}
+                        onClose={() => setGuideOpen(false)}
+                        onStart={() => { setGuideOpen(false); setUnifiedShopOpen(true); }}
+                        accentColor={accentColor}
+                        isDark={isDarkMode}
                     />
                 </>
             )}

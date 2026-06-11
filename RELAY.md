@@ -34,6 +34,7 @@
 
 ## ⚠️ 미검증 — 커밋ID / 검증레벨 / 남은 검증
 
+- **펫홈 새 유저 빈상태 온보딩 (L2→L5, 2026-06-11)**: 웹 `MinihompyStage` 오버레이 + `PethomeStartGuideModal` / 모바일 동일. **배포 후: 새 계정으로 펫홈 진입→"펫홈을 꾸며보세요" 오버레이·3단계 가이드·상점 연결 시각확인** / 모바일 EAS 후 동일. 기존 꾸민 유저엔 안 뜸 확인.
 - **auth 레거시 deleted_accounts 경로 제거 (L2→L5, 2026-06-11)**: AuthContext/DeleteAccountSection에서 죽은 `save_deleted_account`·`check_deleted_account`·`mark_account_rejoined` 호출 전면 제거(live=withdrawn_users/can_rejoin는 무손). typecheck+build exit0. **배포 후: 회원가입·로그인·탈퇴·OAuth 콜백 정상 동작 + 콘솔 에러 無 확인**.
 
 - **★전수감사 수정 배포 후 (L2/L3→L5, 2026-06-10~11)**: 보안 RPC잠금+포인트부활 `1cd5317` — **2026-06-11 prod 정적교차검증 완료(L3 PASS)**: `increment_user_points` 단일 올바른 오버로드·service_role 전용 잠금·txn insert 실측 + `awardPoints`(points.ts)가 6-arg로 호출 + 호출부 admin클라 주입·자추가드 확인. **행위적 L4/L5만 잔여** — 배포(6/10 16:11 KST) 후 적격 활동 거의 전무(point_transactions: 구매/로그인은 6/10 정상, 댓글 6/09 이후 0·채팅 6/02 이후 0·ai_chat 마지막 2/20)라 **댓글작성→+5P·출석토스트는 실활동/의도적 테스트 필요**. / 모바일 일괄 `7c51558`(EAS 후: 알림 읽음·게스트 가드) / 웹 차단필터·매거진하트·영상폴링 `d4bc8fd`(**차단 후 목록 갱신·하트 유지·영상 15초폴링 시각확인**) / AI·cron `890f082`(**vercel.json daily-greeting 제거 → 배포 후 pg_cron 단독발사 확인**, KST 경계 00~09시 생일/추모일) / 가격정합 `0cb4505`(구글 리치결과 리크롤 시간소요).
