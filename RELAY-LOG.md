@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-11 모두의창업 보완 ② 펫로스 완화 근거 작성 (9번 검증 통과)
+배경: 1기 탈락 심사의견 = ①BM 제시 ②펫로스 완화 근거. 사용자가 초기창업패키지 PDF 제시 → ①BM은 이미 그 PDF에 정직 버전 존재(LTV/CAC 7.4x 보수적) 확인 → 남은 진짜 작업은 ② 하나로 확정.
+- **작성물**: `docs/business/모두의창업_보완_펫로스근거.md`. 4기둥 — (1)필요성: Hyland 2026 PLOS One(N=975, 펫사별 7.5% ICD-11 PGD·전체 PGD의 8.1%·21% 최고통상실)+KB 2025(54.7% 펫로스·83.2% 우울·16.3% 1년+증후군) (2)continuing-bonds(Klass 1996)→메모리얼·AI추모펫톡 (3)의례(Frontiers 2021 scoping review)→분기점시스템 (4)disenfranchised grief(Doka 1989)+온라인또래지지(Robinson&Pond 2019/Finucane 2025)→조정된 치유커뮤니티. + AI griefbot은 신생영역 정직 고지.
+- **9번 적대검증 SHIP WITH FIXES → 전부 반영**: 🚨**Norton&Gino(2014) 의례 연구는 공저자 Gino 데이터조작 논란(2023 하버드)으로 의도적 제외**(논란없는 scoping review로 대체) / Hyland "1/12"→정확치 "8.1%" / KB 표본 정정(일반2000+반려1000)·"16.3%는 펫로스경험자 기준" 명확화 / 온라인리뷰 실명화. 인용 7개 전부 실재(환각 0), 1차출처(PLOS DOI·KB자체사이트) 대조.
+- **검증 메모**: KB 83.2%/16.3%·Hyland는 이제 출처검증 완료라 향후 사용 가능(이전 RELAY "KB 83.2% 사용금지" 해제). [[business_plan_writing_lessons]] [[fact_checker_always_on]]
+- 남은 일: ① BM골격을 초기창업 PDF에서 모두의창업 2기 폼으로 이식(AI인재/영상내재화 앵글 제외), 공고 7월초.
+
+---
+
 ## 2026-06-11 전수감사 포인트부활 배포검증 — DB 정적교차 L3 PASS, 행위적 미완(활동 전무)
 배경: ⚠️미검증 "댓글작성→포인트 적립 확인"을 prod DB로 검증 시도(코드 안 읽고 데이터 대조).
 - **point_transactions 실측**: 구매(minimi/furniture)·daily_login은 6/10 이후 정상 적립. 그러나 audit가 되살렸다던 `ai_chat`(마지막 2/20)·`write_comment`/`receive_like`(행 0)는 6/10 이후 흔적 없음.

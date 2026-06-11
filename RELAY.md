@@ -17,8 +17,8 @@
 ## 🔴 NEXT — 지금 이어서 (우선순위순)
 
 0. **★활성 — 모두의창업 재도전 보완본** (사용자 합의, 순차의 다음 차례). 목표=2기 가점 +3(심사의견 보완)+1(멘토링).
-   - ② **펫로스 완화 근거** 섹션: continuing-bonds 이론·disenfranchised grief → 메모리얼 기능과 1:1 매핑. **반드시 9번 통과 인용만**(미검증 통계 통째 삭제, 디스클레이머≠안전 — `business_plan_writing_lessons.md`). KB 83.2% 등 수치는 출처검증 전 사용 금지.
-   - ① **BM 보강**: 가격 9,900 정합(완료)·AI영상 단건 수익원·LTV/CAC 22.3x·**"이미 결제 발생 중인 런칭 서비스"**(아이디어 단계 아님). 자산=`docs/business/*붙여넣기용.md`(이번 세션 가격 재검산 완료, `fd20c81`).
+   - ② **펫로스 완화 근거** — ✅ **완료(2026-06-11)**: `docs/business/모두의창업_보완_펫로스근거.md`. continuing-bonds(Klass 1996)·disenfranchised grief(Doka 1989)·의례(Frontiers 2021 scoping review)·온라인 또래지지(Robinson&Pond 2019/Finucane 2025) + 필요성(Hyland 2026 PLOS One 7.5% PGD·8.1% PAR / KB 54.7%·83.2%·16.3%) → 기능 1:1 매핑. **9번 적대검증 SHIP WITH FIXES 전부 반영**(Norton&Gino는 Gino 데이터조작 논란으로 의도적 제외, 수치 정밀화). KB 83.2%/16.3%·Hyland는 이제 **출처검증 완료**라 사용 가능.
+   - ① **BM** — **이미 초기창업패키지 PDF(`~/Downloads/안승빈 2026년도 초기창업패키지…pdf`)에 정직 버전 존재**: 4층 수익(구독 9,900/88,800·AI영상 4,900~34,900·B2B제휴·굿즈) + Unit Economics **LTV/CAC 7.4x(보수적 6개월, "확정값" 아님)**. 낡은 `*붙여넣기용.md`의 22.3x·"확정값"은 폐기. payments 실측=1명 8회 79,200원(활발한 매출 아님 → "결제 인프라 구축+실결제 검증"으로만 정직 표기). **남은 일=초기창업 PDF의 AI인재/영상내재화 앵글 빼고 BM골격만 모두의창업 2기 폼에 이식**(공고 7월초).
    - 멘토링 신청=**사용자 직접**(6/12 오프라인·6/22 온라인, 가점+1). 서울유니콘(6/30)에도 보완본 재활용.
 0.3. **펫홈 Phase 0+1 완료 ✅ — 배포검증만 남음** (`8151cd7`/`ee71101`/`fdb5602`/`3264a9b`/`d736856`, 단일진실 `docs/PETHOME-SPEC.md`). Phase 0 ①가입후크 ②진짜목소리 ③게스트펫톡 ④퍼널 + Phase 1 공개펫홈 `/u/{nickname}`. 검증은 ⚠️미검증 참조. **보류**: 이웃(팔로우) 그래프 / N2(is_minihompy_private 1비트 오라클, 비노출 스키마 이전) / N3(비공개 펫홈 쓰기 가드) / 모바일 게스트 방명록 패리티 / 튜토리얼 라벨 전수.
 0.5. **전수검수(2026-06-10~11) 잔여 후순위** (상세: RELAY-LOG 배치1·2 항목): ②펫톡 일일횟수 선차감 후 거절(실패에도 횟수 소모) ③스트리밍 delta에 sanitize 미적용(done만) ④subscription-renewal 멱등성(merchant_uid 랜덤 — 결제라 전용 작업) ⑤고아 파일 23건 삭제(AIChatLoginPrompt·logger·chat-context-builders 등, F 보고 목록) ⑥aiChat_rpm 행 무한 누적 정리 ⑦SubscriptionSection API 상수 일탈 ⑧increment_field RPC 부재 죽은 폴백 제거 ⑨N2(is_minihompy_private 1비트 오라클)·N3(비공개 펫홈 쓰기 가드). **재발방지 메모: RPC DROP+CREATE 시 PUBLIC EXECUTE 부활(CREATE OR REPLACE는 ACL 보존) / 20260225 pg_cron 마이그 파일은 auth 헤더 없는 구버전(라이브와 다름 — 재실행 금지).**
