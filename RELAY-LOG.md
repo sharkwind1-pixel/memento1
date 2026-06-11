@@ -7,7 +7,7 @@
 ## 2026-06-11 전수감사 포인트부활 배포검증 — DB 정적교차 L3 PASS, 행위적 미완(활동 전무)
 배경: ⚠️미검증 "댓글작성→포인트 적립 확인"을 prod DB로 검증 시도(코드 안 읽고 데이터 대조).
 - **point_transactions 실측**: 구매(minimi/furniture)·daily_login은 6/10 이후 정상 적립. 그러나 audit가 되살렸다던 `ai_chat`(마지막 2/20)·`write_comment`/`receive_like`(행 0)는 6/10 이후 흔적 없음.
-- **단정 회피 → 활동 유무 구분**: chat_messages 마지막 6/02·6/10 이후 0 / post_comments 마지막 6/09·이후 0 / post_likes 6/10 이후 3건(전부 동일유저 18초내, 시각 16:17 KST = fix배포 16:11 KST의 ~경계, 자추 의심). → **배포 후 적격 활동이 거의 없어 "수정 실패"가 아니라 "테스트할 활동 부재"**.
+- **단정 회피 → 활동 유무 구분**: chat_messages 마지막 6/02·6/10 이후 0 / post_comments 마지막 6/09·이후 0 / post_likes 6/10 이후 3건(시각 07:17 UTC=16:17 KST, fix커밋 07:11 UTC=16:11 KST의 6분 후). **9번 정정**: 당초 "자추(author=liker)라 receive_like 미발생"으로 적었으나 prod 조인 결과 3건 다 `is_self_like=false`(진짜 타인글 좋아요) — receive_like 0의 실제 사유는 자추가 아니라 **좋아요가 커밋 6분 후라 배포 전 구버전이 처리했을 개연**(배포시각 git만으로 확정 불가). → **여전히 inconclusive("수정 실패"가 아니라 시점·활동상 단정 불가)**.
 - **정적 교차검증(L3 PASS)**: increment_user_points 단일 올바른 오버로드 `(uuid,text,int,int,bool,jsonb)`·anon/auth EXECUTE=false·service_role=true·point_transactions insert 실측 / points.ts awardPoints가 정확히 6-arg로 호출(레거시 p_one_time 가드 제거 주석화) / posts/[id]/like/route.ts가 createAdminSupabase+자추가드(author≠liker)로 receive_like 적립. **코드↔prod RPC 완전 일치 → 배선은 올바름, 높은 확신.**
 - **결론**: "고쳐졌다" 단정 불가. 배선 검증 완료(L3), 행위적 L4/L5(실제 새 txn)는 실활동 또는 의도적 테스트(테스트계정 댓글 작성→PointsHistory 확인) 필요. [[audit-db-grounded-lesson]] [[feedback_lying_patterns]]
 

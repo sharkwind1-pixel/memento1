@@ -593,7 +593,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     try {
                         // 1. 탈퇴 계정 체크 (withdrawn_users — can_rejoin RPC)
                         const email = session.user.email;
-                        let isBlocked = false;
                         let rejoinData: { can_join: boolean; block_reason: string | null; wait_until: string | null; has_record?: boolean }[] | null = null;
 
                         if (email) {
@@ -603,7 +602,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             });
                             rejoinData = _rejoinData;
                             if (rejoinData && rejoinData.length > 0 && !rejoinData[0].can_join) {
-                                isBlocked = true;
                                 const reason = rejoinData[0].block_reason;
                                 toast.error(reason || "이용이 제한된 계정입니다.");
                                 try {
