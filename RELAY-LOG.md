@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-12 펫홈 허브화 — 홈 히어로에 핵심 액션 탑재 (웹+앱) — 웹 L5
+배경: 사용자 "펫홈 구조 다 만든 거 아님" 지적 → 홈 재편(스펙 §4.2) 착수. 분석: 펫홈 히어로(프리뷰/쇼케이스)는 기존 존재하나 **단순 링크 카드**라 핵심 가치(AI펫톡·AI영상)가 안 실림 → "허브 카드"로 승격이 1단계.
+- **웹**(`90a72cb`): HeroSection 두 분기(프리뷰/쇼케이스) 모두 아래 `HubActions` — [우리 아이와 대화하기(AI펫톡)] 주버튼 + [AI 영상 만들기][펫홈 꾸미기] 반반. 영상 진입=record+pets 서브탭+신규 `scrollToVideoSection` CustomEvent(VideoGenerationSection 수신, 스켈레톤 포함). 추모 모드는 기존 추모 히어로 유지(꼬미 비노출, §8).
+- **앱**: 동일 HubActions 1:1 (영상→`record?openVideo=1` 기존 community FAB 패턴 재사용). 다크모드 대응.
+- **웹 L5 PASS**(prod 시각검증): ①대화하기→AI펫톡 탭 ②영상 만들기→내기록+**AI영상 섹션 자동 스크롤**(신규 배선 동작 확인) ③꾸미기→펫홈 서브탭→**빈 펫홈이면 시작 온보딩이 이어받음**(두 기능 체인 확인). 모바일 L2(tsc)·EAS 후 실기.
+- 남은 홈 재편 후속(보류): 이웃 소식 피드(이웃 기능 자체가 미구현)·펫홈 탐험(마실가기)·홈 섹션 순서 재정렬. 이웃은 카카오 초대행사 일정 잡히면.
+
+---
+
 ## 2026-06-12 EAS 빌드 2종 + 베타 Play Console 출시
 - **preview APK**(build c13bf07d, 직접설치용) + **production AAB v8**(build 0473a162, versionCode 7→8 자동증가) EAS 빌드. production env(SUPABASE_URL/ANON_KEY)는 EAS 서버에 등록돼 있어 정상, preview엔 없음(직접설치 테스트용이라 무방).
 - **삽질 메모**: 첫 AAB 시도가 루트(memento1/)에서 돌아 `eas init` 미설정으로 실패+루트에 빈 eas.json/app.json 생성 → 정리(git rm --cached eas.json, rm app.json) 후 mobile/에서 재실행 성공. **EAS 빌드는 반드시 mobile/에서.** Bash 작업디렉토리가 세션 중 바뀌어 있을 수 있으니 명시적 cd 필요.
