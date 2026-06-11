@@ -15,7 +15,7 @@ import { Trash2, AlertTriangle } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { toast } from "sonner";
 import { API } from "@/config/apiEndpoints";
-import { safeGetItem, safeRemoveItem } from "@/lib/safe-storage";
+import { safeRemoveItem } from "@/lib/safe-storage";
 
 interface DeleteAccountSectionProps {
     userId: string;
@@ -47,49 +47,10 @@ export default function DeleteAccountSection({
         setDeleteError(null);
 
         try {
-            // 0. 사용량 통계 수집 (재가입 악용 방지용)
-            const [petsResult, photosResult, profileResult] = await Promise.all(
-                [
-                    supabase
-                        .from("pets")
-                        .select("id", { count: "exact" })
-                        .eq("user_id", userId),
-                    supabase
-                        .from("pet_photos")
-                        .select("id", { count: "exact" })
-                        .eq("user_id", userId),
-                    supabase
-                        .from("profiles")
-                        .select("is_premium")
-                        .eq("id", userId)
-                        .single(),
-                ],
-            );
-
-            // AI 사용량은 localStorage에서 가져오기
-            const aiUsageData = safeGetItem(STORAGE_KEYS.CHAT_USAGE);
-            let totalAiUsage = 0;
-            if (aiUsageData) {
-                try {
-                    const parsed = JSON.parse(aiUsageData);
-                    totalAiUsage = parsed.count || 0;
-                } catch {
-                    // ignore
-                }
-            }
-
-            // 1. 삭제 계정 정보 보관 (30일 재가입 제한)
-            await supabase.rpc("save_deleted_account", {
-                p_user_id: userId,
-                p_email: userEmail || "",
-                p_nickname: currentNickname,
-                p_ai_usage: totalAiUsage,
-                p_pets_count: petsResult.count || 0,
-                p_photos_count: photosResult.count || 0,
-                p_was_premium: profileResult.data?.is_premium || false,
-                p_reason: null,
-                p_cooldown_days: 30,
-            });
+            // 탈퇴 기록(30일 재가입 쿨다운)은 아래 AUTH_DELETE_ACCOUNT API가
+            // service_role로 withdrawn_users에 직접 기록한다(can_rejoin RPC가 읽는 단일 진실).
+            // 과거 클라 save_deleted_account(deleted_accounts) 경로는 prod 시그니처 불일치로
+            // 줄곧 404 no-op였고 deleted_accounts는 0행이라 제거함.
 
             // 2. Auth 사용자 삭제 (service_role로 auth.users 완전 삭제)
             // auth.users 삭제 시 CASCADE로 profiles도 삭제됨

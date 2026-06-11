@@ -26,14 +26,6 @@ import { toast } from "sonner";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import { safeGetItem, safeSetItem, safeRemoveItem, safeSessionGetItem, safeSessionSetItem } from "@/lib/safe-storage";
 
-// 삭제 계정 체크 결과 타입 (기존 호환성)
-interface DeletedAccountCheck {
-    canRejoin: boolean;
-    daysUntilRejoin: number;
-    previousAiUsage: number;
-    wasPremium: boolean;
-}
-
 // 새로운 탈퇴자 재가입 체크 결과 타입
 interface RejoinCheck {
     canJoin: boolean;
@@ -68,7 +60,6 @@ interface AuthContextType {
     minimiEquip: MinimiEquipState;
     refreshMinimi: () => Promise<void>;
     // 인증 메서드
-    checkDeletedAccount: (email: string) => Promise<DeletedAccountCheck | null>;
     checkCanRejoin: (email: string) => Promise<RejoinCheck>;
     signUp: (
         email: string,
@@ -628,26 +619,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                 // signOut이 SIGNED_OUT 이벤트를 발생시켜 상태 초기화됨
                                 return;
                             }
-
-                            // 1-2. 기존 deleted_accounts도 체크 (호환성)
-                            const { data: deletedData } = await supabase.rpc("check_deleted_account", {
-                                check_email: email,
-                            });
-                            if (deletedData && deletedData.length > 0 && !deletedData[0].can_rejoin) {
-                                isBlocked = true;
-                                toast.error(`탈퇴 후 ${deletedData[0].days_until_rejoin}일 후에 재가입 가능합니다.`);
-                                try {
-                                    const token = session.access_token;
-                                    if (token) {
-                                        await fetch(API.AUTH_CLEANUP_BLOCKED, {
-                                            method: "POST",
-                                            headers: { Authorization: `Bearer ${token}` },
-                                        });
-                                    }
-                                } catch { /* 정리 실패해도 signOut 진행 */ }
-                                await supabase.auth.signOut();
-                                return;
-                            }
                         }
 
                         // 2. is_banned + 온보딩 상태 체크 (프로필에서 1회 조회)
@@ -942,31 +913,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => { supabase.removeChannel(channel); };
     }, [user?.id, refreshProfile]);
 
-    // 삭제된 계정 체크 (재가입 쿨다운 확인) - 기존 호환성 유지
-    const checkDeletedAccount = useCallback(async (email: string): Promise<DeletedAccountCheck | null> => {
-        try {
-            const { data, error } = await supabase.rpc("check_deleted_account", {
-                check_email: email,
-            });
-
-            if (error || !data || data.length === 0) {
-                return null; // 삭제된 계정 없음
-            }
-
-            const record = data[0];
-            return {
-                canRejoin: record.can_rejoin,
-                daysUntilRejoin: record.days_until_rejoin,
-                previousAiUsage: record.previous_ai_usage,
-                wasPremium: record.was_premium,
-            };
-        } catch (err) {
-            console.error("[AuthContext] checkDeletedAccount failed:", err instanceof Error ? err.message : err);
-            return null;
-        }
-    }, []);
-
-    // 새로운 탈퇴 유형별 재가입 가능 여부 체크
+    // 탈퇴 유형별 재가입 가능 여부 체크 (withdrawn_users — 단일 진실)
     const checkCanRejoin = useCallback(async (email: string): Promise<RejoinCheck> => {
         try {
             const { data, error } = await supabase.rpc("can_rejoin", {
@@ -1020,17 +967,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return { error: new Error(errorMessage) };
             }
 
-            // 2. 기존 삭제된 계정 체크 (deleted_accounts 테이블 - 호환성)
-            const deletedCheck = await checkDeletedAccount(email);
-            if (deletedCheck && !deletedCheck.canRejoin) {
-                return {
-                    error: new Error(
-                        `탈퇴 후 ${deletedCheck.daysUntilRejoin}일 후에 재가입 가능합니다.`
-                    ),
-                };
-            }
-
-            const { data, error } = await supabase.auth.signUp({
+            const { error } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
@@ -1040,19 +977,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 },
             });
 
-            // 재가입인 경우 기록 업데이트
-            if (!error && data.user && deletedCheck) {
-                await supabase.rpc("mark_account_rejoined", {
-                    p_email: email,
-                    p_new_user_id: data.user.id,
-                });
-            }
-
             return { error };
         } catch (error) {
             return { error: error as Error };
         }
-    }, [checkCanRejoin, checkDeletedAccount]);
+    }, [checkCanRejoin]);
 
     // 이메일 로그인
     const signIn = useCallback(async (email: string, password: string) => {
@@ -1199,7 +1128,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshPoints,
         minimiEquip,
         refreshMinimi,
-        checkDeletedAccount,
         checkCanRejoin,
         signUp,
         signIn,
@@ -1219,7 +1147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user, session, loading, isAdminUser, isPremiumUser, refreshProfile,
         profileLoaded, userPetType, onboardingData, points, pointsLoaded,
         refreshPoints, minimiEquip, refreshMinimi,
-        checkDeletedAccount, checkCanRejoin, signUp, signIn,
+        checkCanRejoin, signUp, signIn,
         signOut, signInWithGoogle, signInWithKakao, signInWithNaver, updateProfile, checkNickname,
         isSimpleMode, toggleSimpleMode, subscriptionTier,
         subscriptionPhase, subscriptionCancelledAt, dataResetAt,

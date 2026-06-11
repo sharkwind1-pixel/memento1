@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-11 후순위① save_deleted_account "버그" → 죽은 레거시 제거 (prod 대조로 오진 정정)
+배경: RELAY가 [H] "탈퇴기록 0건·쿨다운 무동작"으로 적었던 항목. 인계문 교훈대로 코드 안 읽고 **prod DB 직접 대조** → 오진 판명.
+- **prod 진실**: 30일 재가입 쿨다운은 **정상 동작 중**. 실제 경로 = `withdrawn_users`(9행, 최근90일 4건) + `can_rejoin(email,ip)` RPC. 웹·앱 모두 `/api/auth/delete-account`가 service_role로 withdrawn_users에 기록(route.ts:58-78). `deleted_accounts`는 **0행 완전 사문화** — `save_deleted_account`(prod 5-param인데 코드 9-param 호출→404 no-op)·`check_deleted_account`(빈 조회)·`mark_account_rejoined`(prod 부재) 전부 죽은 평행 시스템.
+- **수정 = 제거**(고치는 게 아님): AuthContext.tsx에서 `checkDeletedAccount` helper·인터페이스·context value·signUp 레거시 체크·`mark_account_rejoined`·콜백 호환성 블록 / DeleteAccountSection.tsx에서 `save_deleted_account` + 그 전용 통계수집(pets/photos/profile 쿼리 3건·localStorage) 전부 제거. live can_rejoin/withdrawn_users 경로는 일절 무손. callback 주석 정정. `safeGetItem` 고아 import 정리.
+- **교훈**: 코드만 읽었으면 "9-param 마이그 적용"이라는 **틀린 수술**을 했을 것. prod 0행+withdrawn_users 9행 대조가 막음. [[audit-db-grounded-lesson]]
+- **잔존(후순위 메모)**: orphan DB 객체 — `deleted_accounts` 테이블(0행)·`save_deleted_account`/`check_deleted_account` 함수(anon EXECUTE 잔존, 무해)·schema.sql 9-param 정의 드리프트. 무해하나 차후 REVOKE+DROP 정리 대상. 모바일은 이 RPC 미사용(API 경유)이라 패리티 영향 없음.
+- 검증: 웹 L2(tsc+build exit0). 배포 후 L5: 가입/로그인/탈퇴/OAuth 콜백 정상 + 콘솔 에러 無.
+
+---
+
 ## 2026-06-11 /audit 스킬화 + 세션 핸드오버
 - **`.claude/skills/audit/SKILL.md` 생성**: 이번 전수감사 방법(DB-grounded 6영역 fan-out)을 재사용 스킬로 박제. 핵심 원칙=코드 읽기 리뷰가 아니라 **코드 vs live prod 강제 대조**(RPC ACL·죽은기능 실데이터·미실행 마이그·RLS·시그니처). 토큰 한도 회피 위해 3개씩 2배치. 발견→메인 취합→high-confidence만 수정→9번 재검증→영역별 커밋. **교훈: "전체 검수" 수백 번 시켰는데 RPC노출/포인트 4개월 사망/가격 잔존이 안 잡힌 건 이전 검수가 prod까지 안 내려간 코드 읽기였기 때문.** 주기적 `/audit` 권장.
 - 핸드오버: RELAY ✉️ 인계문 전면 갱신(다음=모두의창업 보완본), ⚠️미검증에 전수감사 5커밋+DB마이그 4건 추가.

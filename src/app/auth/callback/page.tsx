@@ -11,7 +11,7 @@
  * Web Locks API 충돌(AbortError)이 발생하므로,
  * 클라이언트 사이드에서 단일 인스턴스로 처리한다.
  *
- * 세션 교환 후 withdrawn_users/deleted_accounts 체크:
+ * 세션 교환 후 withdrawn_users(can_rejoin RPC) 체크:
  * 탈퇴/차단된 계정이면 강제 로그아웃 후 에러 메시지 표시.
  */
 "use client";

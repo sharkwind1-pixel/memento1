@@ -21,7 +21,7 @@
    - ① **BM 보강**: 가격 9,900 정합(완료)·AI영상 단건 수익원·LTV/CAC 22.3x·**"이미 결제 발생 중인 런칭 서비스"**(아이디어 단계 아님). 자산=`docs/business/*붙여넣기용.md`(이번 세션 가격 재검산 완료, `fd20c81`).
    - 멘토링 신청=**사용자 직접**(6/12 오프라인·6/22 온라인, 가점+1). 서울유니콘(6/30)에도 보완본 재활용.
 0.3. **펫홈 Phase 0+1 완료 ✅ — 배포검증만 남음** (`8151cd7`/`ee71101`/`fdb5602`/`3264a9b`/`d736856`, 단일진실 `docs/PETHOME-SPEC.md`). Phase 0 ①가입후크 ②진짜목소리 ③게스트펫톡 ④퍼널 + Phase 1 공개펫홈 `/u/{nickname}`. 검증은 ⚠️미검증 참조. **보류**: 이웃(팔로우) 그래프 / N2(is_minihompy_private 1비트 오라클, 비노출 스키마 이전) / N3(비공개 펫홈 쓰기 가드) / 모바일 게스트 방명록 패리티 / 튜토리얼 라벨 전수.
-0.5. **전수검수(2026-06-10~11) 잔여 후순위** (상세: RELAY-LOG 배치1·2 항목): ①**[H] save_deleted_account 시그니처 불일치**(20260209 마이그 일부 미실행 — 탈퇴기록 0건·쿨다운 안내 무동작, mark_account_rejoined도 부재) ②펫톡 일일횟수 선차감 후 거절(실패에도 횟수 소모) ③스트리밍 delta에 sanitize 미적용(done만) ④subscription-renewal 멱등성(merchant_uid 랜덤 — 결제라 전용 작업) ⑤고아 파일 23건 삭제(AIChatLoginPrompt·logger·chat-context-builders 등, F 보고 목록) ⑥aiChat_rpm 행 무한 누적 정리 ⑦SubscriptionSection API 상수 일탈 ⑧increment_field RPC 부재 죽은 폴백 제거 ⑨N2(is_minihompy_private 1비트 오라클)·N3(비공개 펫홈 쓰기 가드). **재발방지 메모: RPC DROP+CREATE 시 PUBLIC EXECUTE 부활(CREATE OR REPLACE는 ACL 보존) / 20260225 pg_cron 마이그 파일은 auth 헤더 없는 구버전(라이브와 다름 — 재실행 금지).**
+0.5. **전수검수(2026-06-10~11) 잔여 후순위** (상세: RELAY-LOG 배치1·2 항목): ②펫톡 일일횟수 선차감 후 거절(실패에도 횟수 소모) ③스트리밍 delta에 sanitize 미적용(done만) ④subscription-renewal 멱등성(merchant_uid 랜덤 — 결제라 전용 작업) ⑤고아 파일 23건 삭제(AIChatLoginPrompt·logger·chat-context-builders 등, F 보고 목록) ⑥aiChat_rpm 행 무한 누적 정리 ⑦SubscriptionSection API 상수 일탈 ⑧increment_field RPC 부재 죽은 폴백 제거 ⑨N2(is_minihompy_private 1비트 오라클)·N3(비공개 펫홈 쓰기 가드). **재발방지 메모: RPC DROP+CREATE 시 PUBLIC EXECUTE 부활(CREATE OR REPLACE는 ACL 보존) / 20260225 pg_cron 마이그 파일은 auth 헤더 없는 구버전(라이브와 다름 — 재실행 금지).**
 1. **EAS 빌드 → 베타 12명 신규 배포** (사용자 액션 필요): 5/19~5/20 모바일 11+커밋(웹1:1 패리티/PKCE/사진첩/펫 사진 히어로/추천멘트 정화/PawLoading/추천칩/감정글로우/스트리밍커서/채팅 회귀 fix 등)이 옛 AAB에 미반영. 사용자가 EAS 빌드 + Closed 트랙 AAB 업로드 + "출시 시작" 클릭. 그 후 베타 시각 검증으로 ⚠️미검증 모바일 묶음 해소.
 2. **앱 AI펫톡 남은 갭**: (사이드바 `4be8fa9` · 내보내기 `a9e621f` L2완료 EAS실기대기 · 푸시배너=모바일 Expo Push 이미 구현, 이식 불필요)
 3. **서울 유니콘 챌린지 신청** (마감 6/30): 농식품 사업계획서 자산 변형. 메모리얼 카테고리. constants.ts 가격/한도 동일 인용. 폐업이력 PR-B(2017~2024 스마트스토어) 약점 보강 필수.
@@ -33,6 +33,8 @@
 9. **[후순위] visit_logs 보관정책(retention)**: 방문 비콘(`4b91649` 이후)이 행 무제한 증가 → 오래된 행(예: 90일↑) 정리 필요. **단 Vercel Hobby cron 1일 1회 제약**(`session_20260420_21.md`)이라 기존 크론에 정리 쿼리 끼워넣거나 비콘에서 가끔 prune. 현재 저트래픽이라 긴급도 낮음. (인덱스는 생성됨)
 
 ## ⚠️ 미검증 — 커밋ID / 검증레벨 / 남은 검증
+
+- **auth 레거시 deleted_accounts 경로 제거 (L2→L5, 2026-06-11)**: AuthContext/DeleteAccountSection에서 죽은 `save_deleted_account`·`check_deleted_account`·`mark_account_rejoined` 호출 전면 제거(live=withdrawn_users/can_rejoin는 무손). typecheck+build exit0. **배포 후: 회원가입·로그인·탈퇴·OAuth 콜백 정상 동작 + 콘솔 에러 無 확인**.
 
 - **★전수감사 수정 배포 후 (L2/L3→L5, 2026-06-10~11)**: 보안 RPC잠금+포인트부활 `1cd5317`(DB마이그 적용, **댓글작성→+5P 적립·출석토스트 실동작 확인 필요**) / 모바일 일괄 `7c51558`(EAS 후: 알림 읽음·게스트 가드) / 웹 차단필터·매거진하트·영상폴링 `d4bc8fd`(**차단 후 목록 갱신·하트 유지·영상 15초폴링 시각확인**) / AI·cron `890f082`(**vercel.json daily-greeting 제거 → 배포 후 pg_cron 단독발사 확인**, KST 경계 00~09시 생일/추모일) / 가격정합 `0cb4505`(구글 리치결과 리크롤 시간소요).
 - **펫홈 Phase 0+1 배포 후 (L2/L3→L5)**: `/u/{닉네임}` 게스트 열람+OG / ③게스트펫톡 curl L4 / ④퍼널 데이터누적 후 대시보드 / ②③+공개펫홈 게스트 앱은 EAS 후.
