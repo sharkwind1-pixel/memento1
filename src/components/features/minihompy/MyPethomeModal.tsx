@@ -22,15 +22,17 @@ export default function MyPethomeModal({ isOpen, onClose }: { isOpen: boolean; o
 
     return (
         <div
-            className="fixed inset-0 z-40 overflow-y-auto bg-black/25 flex justify-center pt-5 pb-12 px-3 sm:px-4"
+            className="fixed inset-0 z-40 overflow-y-auto bg-black/25 flex justify-center pt-5 pb-12 px-3 sm:px-4 sm:items-center sm:overflow-hidden sm:py-6"
             onClick={onClose}
         >
+            {/* 데스크탑(sm+): 화면을 다 덮지 않는 "떠있는 창" — 폭 max-w-2xl, 높이 88vh 캡 + 본문 내부 스크롤.
+                모바일(<sm): backdrop이 스크롤 컨테이너(useBodyScrollLock 미사용 — 모바일 모달 스크롤 교훈) 그대로. */}
             <div
-                className="relative w-full max-w-3xl h-fit"
+                className="relative w-full max-w-2xl h-fit sm:max-h-[88vh] sm:flex sm:flex-col sm:overflow-hidden sm:rounded-2xl sm:shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* 창 헤더 (스크롤해도 상단 고정) */}
-                <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-memento-500 rounded-t-2xl shadow-sm">
+                {/* 창 헤더 (모바일: 스크롤해도 상단 고정 / 데스크탑: 본문만 스크롤되도록 고정) */}
+                <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-memento-500 rounded-t-2xl shadow-sm sm:flex-shrink-0">
                     <span className="text-sm font-semibold text-white flex items-center gap-1.5">
                         <Home className="w-4 h-4" /> 내 펫홈
                     </span>
@@ -43,8 +45,8 @@ export default function MyPethomeModal({ isOpen, onClose }: { isOpen: boolean; o
                     </button>
                 </div>
 
-                {/* 본문 — 기존 MiniHomepyTab 그대로(꾸미기·섹션 전부) */}
-                <div className="bg-memento-50/60 dark:bg-gray-900 rounded-b-2xl p-3 sm:p-4">
+                {/* 본문 — 기존 MiniHomepyTab 그대로(꾸미기·섹션 전부). 데스크탑은 여기서 내부 스크롤. */}
+                <div className="bg-memento-50/60 dark:bg-gray-900 rounded-b-2xl p-3 sm:p-4 sm:flex-1 sm:min-h-0 sm:overflow-y-auto">
                     <MiniHomepyTab />
                 </div>
             </div>
