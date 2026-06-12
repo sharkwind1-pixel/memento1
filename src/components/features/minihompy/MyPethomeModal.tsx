@@ -22,11 +22,11 @@ export default function MyPethomeModal({ isOpen, onClose }: { isOpen: boolean; o
 
     return (
         <div
-            className="fixed inset-0 z-40 overflow-y-auto bg-black/45 flex justify-center pt-5 pb-12 px-3 sm:px-4"
+            className="fixed inset-0 z-40 overflow-y-auto bg-black/25 flex justify-center pt-5 pb-12 px-3 sm:px-4"
             onClick={onClose}
         >
             <div
-                className="relative w-full max-w-4xl h-fit"
+                className="relative w-full max-w-3xl h-fit"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* 창 헤더 (스크롤해도 상단 고정) */}
