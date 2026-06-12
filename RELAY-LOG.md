@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-06-12 싸이월드/버디버디 "광장" 피벗 — 홈=콘텐츠 피드, 펫홈=가벼운 작은 창
+배경: 사용자 정정 "메인페이지는 다른 유저 글/정보글/AI영상 구경·참여·팔로우·결제하는 곳(광장), 내 미니홈피는 전체창 덮지 말고 작은 창으로 가볍게 떠서 운영. 모바일은 풀스크린이 직관적." 피드 구성=커뮤니티 글+AI영상+매거진+맨아래 추모(HomePage 기존 섹션 그대로 활용).
+- `9429b0a` 펫홈 팝업 경량화: MyPethomeModal backdrop dim 45%→25%(뒤 광장 비침) + max-w-4xl→3xl. "작은 창으로 가볍게".
+- `04c5a06` 홈 히어로 강등(웹): 로그인 시 큰 펫홈 프리뷰/쇼케이스 히어로 2분기 → `CompactPethomeBar`([○○네 펫홈 열기][펫톡][AI영상] 한 줄) 단일. 비운 자리 아래 커뮤니티/AI영상(쇼케이스)/매거진/추모 피드가 메인. 미사용 import 정리(findBackgroundOrDefault·PlacedMinimi). HubActions는 미사용 잔존(주석). 웹 L1 빌드 PASS(36/36).
+- `f4cf63e` 모바일 패리티: 동일 강등. RN CompactPethomeBar(home/chat/film). 탭 시 펫홈 풀스크린 `/(tabs)/minihompy`(작은 창 X). components/는 tsconfig exclude라 tsc 비대상·Metro 번들만(L0 구문확인). HubActions/PersonalOverlay 미사용 잔존.
+- 잔여: L5 시각확인 / 죽은코드(HubActions·PersonalOverlay) 정리 / 펫홈 창 내부 핵심버튼 갭.
+
 ## 2026-06-12 내 펫홈 싸이월드식 "창(팝업)" 전환 — 웹 완료 (5단계)
 배경: 사용자 "타인 펫홈은 팝업인데 내 펫홈만 인라인이라 비대칭, 싸이월드처럼 창으로 떠야". 싸이 미니홈피 리서치(별도 팝업창+좌 미니룸/우 메뉴·콘텐츠+투데이/투탈 — 나무위키/Wikipedia) 후 2단 합의.
 - `3023318` 팝업화: `MyPethomeModal`(전역 `openMyPethome`, z-40, backdrop 스크롤)이 MiniHomepyTab을 창으로. 사이드바/히어로/허브 → record 서브탭 대신 팝업.
