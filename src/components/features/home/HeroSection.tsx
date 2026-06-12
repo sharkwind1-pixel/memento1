@@ -66,11 +66,9 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
     }, [user]);
 
     const goMinihompy = useCallback(() => {
-        // pending 플래그(record 탭 lazy 마운트 레이스 무관) + 이벤트(이미 활성 시 즉시 전환) 병행
-        setPendingRecordSub("minihompy");
-        setSelectedTab("record");
-        window.dispatchEvent(new CustomEvent("navigateRecordSubTab", { detail: "minihompy" }));
-    }, [setSelectedTab]);
+        // 내 펫홈을 팝업(창)으로 — 싸이월드 미니홈피 감성 (인라인 진입 폐기)
+        window.dispatchEvent(new CustomEvent("openMyPethome"));
+    }, []);
 
     // 허브 카드 핵심 액션 — AI 펫톡 / AI 영상 (펫홈은 톤, 핵심 가치는 이 둘)
     const goAIChat = useCallback(() => setSelectedTab("ai-chat"), [setSelectedTab]);

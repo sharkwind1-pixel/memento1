@@ -83,6 +83,7 @@ import OnboardingModal from "@/components/features/onboarding/OnboardingModal";
 import TutorialTour from "@/components/features/onboarding/TutorialTour";
 import PostOnboardingGuide from "@/components/features/onboarding/PostOnboardingGuide";
 import VideoPurchaseModal from "@/components/modals/VideoPurchaseModal";
+import MyPethomeModal from "@/components/features/minihompy/MyPethomeModal";
 import PremiumModal from "@/components/modals/PremiumModal";
 import { safeGetItem, safeSetItem, safeRemoveItem } from "@/lib/safe-storage";
 import { toast } from "sonner";
@@ -138,16 +139,20 @@ function HomeContent() {
     // 전역 결제 모달 상태 (어떤 탭에서든 접근 가능)
     const [isVideoPurchaseOpen, setIsVideoPurchaseOpen] = useState(false);
     const [isGlobalPremiumOpen, setIsGlobalPremiumOpen] = useState(false);
+    const [isMyPethomeOpen, setIsMyPethomeOpen] = useState(false);
 
-    // openVideoPurchaseModal / openPremiumModal 이벤트 전역 수신
+    // openVideoPurchaseModal / openPremiumModal / openMyPethome 이벤트 전역 수신
     useEffect(() => {
         const handleVideoPurchase = () => setIsVideoPurchaseOpen(true);
         const handlePremium = () => setIsGlobalPremiumOpen(true);
+        const handleMyPethome = () => setIsMyPethomeOpen(true);
         window.addEventListener("openVideoPurchaseModal", handleVideoPurchase);
         window.addEventListener("openPremiumModal", handlePremium);
+        window.addEventListener("openMyPethome", handleMyPethome);
         return () => {
             window.removeEventListener("openVideoPurchaseModal", handleVideoPurchase);
             window.removeEventListener("openPremiumModal", handlePremium);
+            window.removeEventListener("openMyPethome", handleMyPethome);
         };
     }, []);
 
@@ -691,6 +696,9 @@ function HomeContent() {
                 onNavigate={(tab) => handleTabChange(tab as TabType)}
                 userId={user?.id}
             />
+
+            {/* 내 펫홈 팝업 (싸이월드식 창) — 사이드바/히어로 "내 펫홈"이 엶 */}
+            <MyPethomeModal isOpen={isMyPethomeOpen} onClose={() => setIsMyPethomeOpen(false)} />
 
             {/* 전역 영상 단건 결제 모달 */}
             <VideoPurchaseModal

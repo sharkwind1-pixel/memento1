@@ -8,7 +8,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { setPendingRecordSub } from "@/lib/record-nav";
 import {
     Home,
     Camera,
@@ -430,10 +429,8 @@ export default function Sidebar({
                             </button>
                             <button
                                 onClick={() => {
-                                    // pending 플래그(마운트 레이스 무관) + 이벤트(이미 활성 시 즉시 전환) 병행
-                                    setPendingRecordSub("minihompy");
-                                    onTabChange("record");
-                                    window.dispatchEvent(new CustomEvent("navigateRecordSubTab", { detail: "minihompy" }));
+                                    // 내 펫홈을 팝업(창)으로 — 싸이월드 미니홈피 감성
+                                    window.dispatchEvent(new CustomEvent("openMyPethome"));
                                     if (isMobile) onClose();
                                 }}
                                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-memento-600 dark:text-memento-400 hover:bg-memento-50 dark:hover:bg-memento-900/20 transition-all"
