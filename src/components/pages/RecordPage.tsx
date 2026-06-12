@@ -22,7 +22,6 @@ import {
     Home,
     User,
 } from "lucide-react";
-import MiniHomepyTab from "@/components/features/minihompy/MiniHomepyTab";
 
 import { TabType } from "@/types";
 import { FREE_LIMITS, getLimitsForTier } from "@/config/constants";
@@ -403,18 +402,16 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                         <span className="hidden sm:inline">내 정보</span>
                         <span className="sm:hidden">정보</span>
                     </button>
+                    {/* 펫홈은 팝업(MyPethomeModal)으로 일원화 — 사이드바/히어로에서 창으로 엶.
+                        기록 탭에서도 바로 열 수 있게 진입 버튼만 유지 */}
                     <button
-                        onClick={() => setActiveTab("minihompy")}
+                        onClick={() => window.dispatchEvent(new CustomEvent("openMyPethome"))}
                         data-tutorial-id="minihompy-tab"
-                        className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-medium transition-all text-sm sm:text-base ${
-                            activeTab === "minihompy"
-                                ? `bg-gradient-to-r ${isMemorialMode ? "from-memorial-500 to-orange-400" : "from-memento-500 to-memento-400"} text-white shadow-lg`
-                                : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                        }`}
+                        className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-medium transition-all text-sm sm:text-base bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                         <Home className="w-4 h-4" />
-                        <span className="hidden sm:inline">펫홈</span>
-                        <span className="sm:hidden">홈피</span>
+                        <span className="hidden sm:inline">펫홈 열기</span>
+                        <span className="sm:hidden">펫홈</span>
                     </button>
                     <div className="flex-1" />
                     {activeTab === "pets" && (
@@ -452,10 +449,6 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                     />
                 )}
 
-                {/* 펫홈 탭 */}
-                {activeTab === "minihompy" && (
-                    <MiniHomepyTab isActive={isActive} />
-                )}
 
                 {/* 반려동물 탭 */}
                 {activeTab === "pets" && (
