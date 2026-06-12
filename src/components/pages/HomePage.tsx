@@ -20,6 +20,7 @@ import {
     QuizSection,
 } from "@/components/features/home";
 import AnnouncementBanner from "@/components/features/home/AnnouncementBanner";
+import NeighborNewsSection from "@/components/features/home/NeighborNewsSection";
 import QuestCard from "@/components/features/quests/QuestCard";
 import Lightbox from "@/components/features/home/Lightbox";
 import MemorialDetailModal from "@/components/features/home/MemorialDetailModal";
@@ -149,6 +150,9 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
 
                 {/* 공지 */}
                 <AnnouncementBanner setSelectedTab={setSelectedTab} />
+
+                {/* 이웃 새소식 — 이웃들의 최근 글 (이웃 0명/새글 0건이면 자동 숨김) */}
+                <NeighborNewsSection user={user} isMemorial={isMemorialMode} onOpenPost={onOpenCommunityPost} />
 
                 {/* 인기 이야기(좌) + 함께 보기(우) 2컬럼 */}
                 {(isLoadingCommunity || isLoadingShowcase) ? (

@@ -29,6 +29,7 @@ import { COLORS } from "@/lib/theme";
 import AppDrawer from "@/components/common/AppDrawer";
 import HeroSection from "@/components/home/HeroSection";
 import CommunityPreview from "@/components/home/CommunityPreview";
+import NeighborNewsSection from "@/components/home/NeighborNewsSection";
 import MagazinePreview from "@/components/home/MagazinePreview";
 import AnnouncementBanner from "@/components/home/AnnouncementBanner";
 import QuestCard from "@/components/home/QuestCard";
@@ -148,6 +149,7 @@ export default function HomeScreen() {
                     onAddPet={() => router.push("/pet/new")}
                 />
                 <QuestCard />
+                <NeighborNewsSection session={session} isMemorialMode={isMemorialMode} />
                 <CommunityPreview session={session} isMemorialMode={isMemorialMode} />
                 <ShowcaseSection />
                 <QuizSection />

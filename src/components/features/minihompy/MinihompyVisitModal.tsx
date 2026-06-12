@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
     X, Heart, Loader2, MessageSquare,
-    Trash2, ChevronDown, Send, UserPlus, UserCheck,
+    Trash2, ChevronDown, Send, UserPlus, UserCheck, Waves,
 } from "lucide-react";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { useOptimisticToggle } from "@/hooks";
@@ -34,10 +34,16 @@ interface MinihompyVisitModalProps {
 export default function MinihompyVisitModal({
     isOpen,
     onClose,
-    userId,
+    userId: initialUserId,
 }: MinihompyVisitModalProps) {
     const { user } = useAuth();
     const runToggle = useOptimisticToggle();
+    // 파도타기: 모달 안에서 이웃집으로 연쇄 이동 — userId를 내부 상태로 승격.
+    // 이하 코드는 전부 surfUserId(=userId)를 보므로, 이동 시 loadData/recordVisit/loadNeighbor가
+    // useCallback 의존성으로 자동 재실행돼 새 집 데이터·방문기록·이웃상태가 갱신된다.
+    const [surfUserId, setSurfUserId] = useState(initialUserId);
+    useEffect(() => { if (isOpen) setSurfUserId(initialUserId); }, [isOpen, initialUserId]);
+    const userId = surfUserId;
     const [data, setData] = useState<MinihompyViewData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -55,6 +61,8 @@ export default function MinihompyVisitModal({
     const [mutual, setMutual] = useState(false);
     const [followerCount, setFollowerCount] = useState(0);
     const [neighborBusy, setNeighborBusy] = useState(false);
+    // 파도타기: 이 집이 이웃 맺은 집들 (로그인 시에만 — list API가 게스트 401)
+    const [surfList, setSurfList] = useState<Array<{ userId: string; nickname: string; mutual: boolean }>>([]);
 
     // 데이터 로드
     const loadData = useCallback(async () => {
@@ -91,17 +99,19 @@ export default function MinihompyVisitModal({
         }
     }, [userId]);
 
-    // 이웃 상태 로드
+    // 이웃 상태 로드 (+로그인 시 파도타기용 이 집의 이웃 목록 — 같은 API가 한 호출로 반환)
     const loadNeighbor = useCallback(async () => {
         try {
-            const res = await authFetch(API.NEIGHBORS(userId));
+            const url = user ? `${API.NEIGHBORS(userId)}?list=following` : API.NEIGHBORS(userId);
+            const res = await authFetch(url);
             if (!res.ok) return;
             const d = await res.json();
             setFollowerCount(d.followerCount ?? 0);
             setIFollow(d.relation?.iFollow ?? false);
             setMutual(d.relation?.mutual ?? false);
+            setSurfList(Array.isArray(d.items) ? d.items : []);
         } catch { /* 무시 */ }
-    }, [userId]);
+    }, [userId, user]);
 
     useEffect(() => {
         if (isOpen) {
@@ -350,6 +360,35 @@ export default function MinihompyVisitModal({
                                     </button>
                                 )}
                             </div>
+
+                            {/* 파도타기 — 이 집의 이웃들 타고 구경 (싸이월드 파도타기) */}
+                            {user && surfList.filter((n) => n.userId !== user.id && n.userId !== userId).length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <Waves className="w-4 h-4 text-memento-500" />
+                                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">파도타기</span>
+                                        <span className="text-xs text-gray-400">이 집의 이웃집 구경가기</span>
+                                    </div>
+                                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                                        {surfList
+                                            .filter((n) => n.userId !== user.id && n.userId !== userId)
+                                            .map((n) => (
+                                                <button
+                                                    key={n.userId}
+                                                    onClick={() => setSurfUserId(n.userId)}
+                                                    className="flex-shrink-0 flex flex-col items-center gap-1 w-16 group"
+                                                >
+                                                    <span className="w-11 h-11 rounded-full bg-memento-50 dark:bg-memento-900/20 border border-memento-100 dark:border-gray-700 flex items-center justify-center text-sm font-bold text-memento-600 dark:text-memento-300 group-hover:scale-105 transition-transform">
+                                                        {n.nickname.slice(0, 1)}
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate w-full text-center">
+                                                        {n.nickname}
+                                                    </span>
+                                                </button>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* 방명록 */}
                             <div className="space-y-3">

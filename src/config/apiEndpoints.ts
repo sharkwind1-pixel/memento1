@@ -66,6 +66,7 @@ export const API = {
     MINIHOMPY_BG_CATALOG: "/api/minihompy/backgrounds",
     MINIHOMPY_BG_PURCHASE: "/api/minihompy/backgrounds/purchase",
     NEIGHBORS: (userId: string) => `/api/neighbors/${userId}`,
+    NEIGHBORS_FEED: "/api/neighbors/feed",
 
     // 알림
     NOTIFICATIONS: "/api/notifications",

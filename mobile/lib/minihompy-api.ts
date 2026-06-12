@@ -306,6 +306,18 @@ export async function getNeighborStatus(
     return await callApi<NeighborStatus>(`/api/neighbors/${userId}`, { accessToken });
 }
 
+/** 파도타기용 — 그 유저가 이웃 맺은 집 목록 (로그인 필수, 웹 ?list=following 동일) */
+export async function getNeighborList(
+    accessToken: string,
+    userId: string,
+): Promise<Array<{ userId: string; nickname: string; mutual: boolean }>> {
+    const d = await callApi<NeighborStatus & { items?: Array<{ userId: string; nickname: string; mutual: boolean }> }>(
+        `/api/neighbors/${userId}?list=following`,
+        { accessToken },
+    );
+    return Array.isArray(d.items) ? d.items : [];
+}
+
 /** 이웃 추가/해제 토글 */
 export async function toggleNeighbor(
     accessToken: string,

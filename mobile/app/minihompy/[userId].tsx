@@ -23,7 +23,7 @@ import { COLORS } from "@/lib/theme";
 import { findMinimi, findBackgroundOrDefault } from "@/data/minihompyData";
 import {
     visitMinihompy, postMinihompyVisit, toggleMinihompyLike,
-    getNeighborStatus, toggleNeighbor,
+    getNeighborStatus, getNeighborList, toggleNeighbor,
     type VisitedMinihompy,
 } from "@/lib/minihompy-api";
 import AppHeader from "@/components/common/AppHeader";
@@ -49,6 +49,8 @@ export default function VisitMinihompyScreen() {
     const [iFollow, setIFollow] = useState(false);
     const [mutual, setMutual] = useState(false);
     const [neighborBusy, setNeighborBusy] = useState(false);
+    // 파도타기: 이 집이 이웃 맺은 집들 (로그인 시에만)
+    const [surfList, setSurfList] = useState<Array<{ userId: string; nickname: string; mutual: boolean }>>([]);
 
     const accessToken = session?.access_token ?? null;
     const isOwnHompy = user?.id === userId;
@@ -84,7 +86,7 @@ export default function VisitMinihompyScreen() {
         load();
     }, [load]);
 
-    // 이웃 상태 로드
+    // 이웃 상태 로드 (+로그인 시 파도타기 목록)
     useEffect(() => {
         if (!userId || isOwnHompy) return;
         let cancelled = false;
@@ -95,6 +97,11 @@ export default function VisitMinihompyScreen() {
                 setMutual(s.relation?.mutual ?? false);
             })
             .catch(() => {});
+        if (accessToken) {
+            getNeighborList(accessToken, userId)
+                .then((items) => { if (!cancelled) setSurfList(items); })
+                .catch(() => {});
+        }
         return () => { cancelled = true; };
     }, [accessToken, userId, isOwnHompy]);
 
@@ -377,6 +384,42 @@ export default function VisitMinihompyScreen() {
                         <Text style={[styles.actionText, { color: COLORS.gray[700] }]}>방명록</Text>
                     </TouchableOpacity>
                 </View>
+
+                {/* 파도타기 — 이 집의 이웃들 타고 구경 (웹 MinihompyVisitModal 1:1, 모바일은 스택 push라 뒤로가기 자연) */}
+                {accessToken && surfList.filter((n) => n.userId !== user?.id && n.userId !== userId).length > 0 && (
+                    <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                            <Ionicons name="water-outline" size={16} color={COLORS.memento[500]} />
+                            <Text style={{ fontSize: 14, fontWeight: "700", color: isDarkMode ? COLORS.gray[200] : COLORS.gray[700] }}>파도타기</Text>
+                            <Text style={{ fontSize: 11, color: COLORS.gray[400] }}>이 집의 이웃집 구경가기</Text>
+                        </View>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+                            {surfList
+                                .filter((n) => n.userId !== user?.id && n.userId !== userId)
+                                .map((n) => (
+                                    <TouchableOpacity
+                                        key={n.userId}
+                                        activeOpacity={0.8}
+                                        onPress={() => router.push(`/minihompy/${n.userId}`)}
+                                        style={{ alignItems: "center", width: 60 }}
+                                    >
+                                        <View style={{
+                                            width: 44, height: 44, borderRadius: 22,
+                                            backgroundColor: "#E0F7FF", borderWidth: 1, borderColor: "#CBEBF0",
+                                            alignItems: "center", justifyContent: "center",
+                                        }}>
+                                            <Text style={{ fontSize: 15, fontWeight: "700", color: COLORS.memento[600] }}>
+                                                {n.nickname.slice(0, 1)}
+                                            </Text>
+                                        </View>
+                                        <Text numberOfLines={1} style={{ fontSize: 10, color: COLORS.gray[500], marginTop: 4, maxWidth: 56, textAlign: "center" }}>
+                                            {n.nickname}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                        </ScrollView>
+                    </View>
+                )}
 
                 <View style={{ height: 32 }} />
             </ScrollView>
