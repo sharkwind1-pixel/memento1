@@ -334,7 +334,9 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
     const isEmptyPethome = (currentSettings.placedMinimi?.length ?? 0) === 0 && !currentSettings.greeting;
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-5 lg:items-start">
+            {/* 좌: 미니룸(스테이지) — 데스크탑 좌측, 모바일은 위 */}
+            <div className="space-y-4 lg:sticky lg:top-2 lg:self-start">
             {/* 펫홈 스테이지 */}
             <MinihompyStage
                 backgroundSlug={currentSettings.backgroundSlug}
@@ -368,7 +370,10 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                     onSelectFurniture={(slug) => handleAddItem(slug, "furniture")}
                 />
             )}
+            </div>
 
+            {/* 우: 메뉴 + 콘텐츠(섹션) — 데스크탑 우측 */}
+            <div className="space-y-4 lg:min-w-0">
             {!editMode && (
                 <>
                     {/* 펫 카운트 헤더 — 인스타 프로필 헤더 참고 (아바타 + 이름 + 카운트) */}
@@ -583,6 +588,7 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 )}
             </div>
             )}
+            </div>
         </div>
     );
 }

@@ -26,7 +26,7 @@ export default function MyPethomeModal({ isOpen, onClose }: { isOpen: boolean; o
             onClick={onClose}
         >
             <div
-                className="relative w-full max-w-2xl h-fit"
+                className="relative w-full max-w-4xl h-fit"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* 창 헤더 (스크롤해도 상단 고정) */}
