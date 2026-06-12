@@ -83,6 +83,9 @@ export default function MinihompyVisitModal({
             setTotalLikes(viewData.settings.totalLikes);
             setGuestbook(viewData.guestbook);
             setGuestbookTotal(viewData.guestbookTotal);
+            // 파도타기로 집을 갈아탈 때 작성 중이던 방명록 텍스트가 다음 집으로 따라가
+            // 엉뚱한 집에 제출되는 것 방지 (9번 검증 발견)
+            setGuestbookText("");
         } catch {
             setError("펫홈을 불러올 수 없습니다");
         } finally {

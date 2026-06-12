@@ -259,7 +259,8 @@ export async function PATCH(
         // null/빈문자 = 별명 해제
         let nickname: string | null = null;
         if (typeof raw === "string" && raw.trim()) {
-            nickname = raw.trim().slice(0, 20);
+            // 코드포인트 기준 절단 — slice(0,20)은 20번째가 이모지(surrogate pair)면 깨진 문자가 돼 DB가 거부
+            nickname = Array.from(raw.trim()).slice(0, 20).join("");
         }
 
         const supabase = await createServerSupabase();
