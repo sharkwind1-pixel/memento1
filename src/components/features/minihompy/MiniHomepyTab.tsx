@@ -12,7 +12,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Loader2, MessageSquare, Trash2, ChevronDown, Archive, Plus, ShoppingBag, Camera, X, PawPrint, PlayCircle } from "lucide-react";
+import { Loader2, MessageSquare, Trash2, ChevronDown, Archive, Plus, ShoppingBag, Camera, X, PawPrint, PlayCircle, Users, BookOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMemorialMode, usePets } from "@/contexts/PetContext";
 import TimelineSection from "@/components/features/record/TimelineSection";
@@ -587,6 +587,25 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                     </div>
                 )}
             </div>
+            )}
+
+            {/* 광장 출구 — 펫홈에서 커뮤니티·매거진으로 자연 연결 (펫홈↔광장 흐름) */}
+            {!editMode && (
+                <div className="flex items-center gap-2 pt-1">
+                    <span className="text-xs text-gray-400 flex-shrink-0">광장으로</span>
+                    <button
+                        onClick={() => window.dispatchEvent(new CustomEvent("navigateMainTab", { detail: "community" }))}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-memento-50 dark:bg-memento-900/20 text-memento-600 dark:text-memento-300 text-sm font-medium hover:bg-memento-100 dark:hover:bg-memento-900/30 transition-colors"
+                    >
+                        <Users className="w-4 h-4" /> 커뮤니티
+                    </button>
+                    <button
+                        onClick={() => window.dispatchEvent(new CustomEvent("navigateMainTab", { detail: "magazine" }))}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-memento-50 dark:bg-memento-900/20 text-memento-600 dark:text-memento-300 text-sm font-medium hover:bg-memento-100 dark:hover:bg-memento-900/30 transition-colors"
+                    >
+                        <BookOpen className="w-4 h-4" /> 매거진
+                    </button>
+                </div>
             )}
             </div>
         </div>

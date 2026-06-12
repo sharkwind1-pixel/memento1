@@ -146,13 +146,23 @@ function HomeContent() {
         const handleVideoPurchase = () => setIsVideoPurchaseOpen(true);
         const handlePremium = () => setIsGlobalPremiumOpen(true);
         const handleMyPethome = () => setIsMyPethomeOpen(true);
+        // 펫홈 팝업 → 광장(커뮤니티/매거진) 출구: 팝업 닫고 메인 탭 전환
+        const handleNavMain = (e: Event) => {
+            const tab = (e as CustomEvent).detail;
+            if (typeof tab === "string") {
+                setIsMyPethomeOpen(false);
+                setSelectedTab(tab as TabType);
+            }
+        };
         window.addEventListener("openVideoPurchaseModal", handleVideoPurchase);
         window.addEventListener("openPremiumModal", handlePremium);
         window.addEventListener("openMyPethome", handleMyPethome);
+        window.addEventListener("navigateMainTab", handleNavMain);
         return () => {
             window.removeEventListener("openVideoPurchaseModal", handleVideoPurchase);
             window.removeEventListener("openPremiumModal", handlePremium);
             window.removeEventListener("openMyPethome", handleMyPethome);
+            window.removeEventListener("navigateMainTab", handleNavMain);
         };
     }, []);
 
