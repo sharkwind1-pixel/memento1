@@ -166,6 +166,20 @@ function HomeContent() {
         };
     }, []);
 
+    // 로그인 직후 1회: 내 펫홈 창을 광장 위로 자동 오픈 (싸이월드 미니홈피 감성 — 로그인하면 내 미니홈피가 반겨줌).
+    // sessionStorage로 세션당 1회만 — 탭 이동/새로고침마다 반복 오픈 방지. 닫으면 광장(피드)을 자유롭게 둘러봄.
+    useEffect(() => {
+        if (!user) return;
+        try {
+            const KEY = "pethome_greeted";
+            if (sessionStorage.getItem(KEY)) return;
+            sessionStorage.setItem(KEY, "1");
+            setIsMyPethomeOpen(true);
+        } catch {
+            // sessionStorage 불가(시크릿 모드 등) — 자동 오픈 생략, 수동 진입은 정상
+        }
+    }, [user]);
+
     // (방문 비콘은 전역 컴포넌트 VisitBeacon으로 이동 — 모든 라우트 커버 + 쿠키 동의 반영)
 
     // 로딩 안전장치: AuthContext가 실패하더라도 5초 후 강제 표시

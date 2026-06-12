@@ -66,18 +66,13 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
 
     const [guideOpen, setGuideOpen] = useState(false);
 
-    const hasMinimi = ownedMinimis.length > 0;
-    const hasPlacedMinimi = (settings?.placedMinimi?.length ?? 0) > 0;
-
     // --- 비로그인: 기존 히어로 ---
     if (!session) {
         return <OriginalHero isMemorialMode={isMemorialMode} isDarkMode={isDarkMode} fontScale={fontScale} spacingScale={spacingScale} iconScale={iconScale} onCta={() => router.push("/(auth)/login")} onSecondary={() => router.push("/(tabs)/community")} />;
     }
 
-    // 로딩 중이면 기존 히어로 잠깐 보여줌 (깜빡임 방지)
-    if (!loaded) {
-        return <OriginalHero isMemorialMode={isMemorialMode} isDarkMode={isDarkMode} fontScale={fontScale} spacingScale={spacingScale} iconScale={iconScale} onCta={() => router.push("/(tabs)/ai-chat")} onSecondary={() => router.push("/(tabs)/community")} ctaText="지금 만나러 가기" />;
-    }
+    // 깜빡임 제거: 컴팩트 바는 settings/inventory가 필요 없으므로 loaded 대기 안 함
+    // (이전엔 !loaded 동안 옛 마케팅 히어로 → 로그인 직후 큰 히어로가 깜빡였다 바뀜)
 
     // --- 추모 모드: 펫홈/꼬미를 히어로에 노출하지 않음 (추모 정서 보호) ---
     // 꼬미·펫홈은 일상(꾸미기) 요소라 추모 모드에선 추모 전용 히어로만 보여준다. (웹 HeroSection과 동일)
