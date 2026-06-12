@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-06-12 내 펫홈 싸이월드식 "창(팝업)" 전환 — 웹 완료 (5단계)
+배경: 사용자 "타인 펫홈은 팝업인데 내 펫홈만 인라인이라 비대칭, 싸이월드처럼 창으로 떠야". 싸이 미니홈피 리서치(별도 팝업창+좌 미니룸/우 메뉴·콘텐츠+투데이/투탈 — 나무위키/Wikipedia) 후 2단 합의.
+- `3023318` 팝업화: `MyPethomeModal`(전역 `openMyPethome`, z-40, backdrop 스크롤)이 MiniHomepyTab을 창으로. 사이드바/히어로/허브 → record 서브탭 대신 팝업.
+- `f262a75` 데스크탑 좌우 2단: MiniHomepyTab을 lg그리드(좌 미니룸 sticky / 우 섹션·방명록), 모바일은 세로 유지. MyPethomeModal max-w-4xl.
+- `ba0ddc5` 일원화: 기록 탭 펫홈 인라인 서브탭 제거 → "펫홈 열기" 버튼이 팝업 엶. 펫홈 단일 인스턴스(팝업).
+- `839d1f8` 광장 출구: 펫홈 우측 하단 [커뮤니티][매거진] → navigateMainTab(page.tsx가 팝업닫고 탭전환). AI영상→자랑하기는 **기존 VideoResultModal에 존재**(API.POSTS badge"자랑") — 확인만.
+- 펫톡 버튼 라벨 "우리 아이와 대화하기"→"펫톡 시작"(`1b29f0b`, 펫홈 안 "우리 아이" 중복 어색 해소).
+- **앱 패리티 N/A**(모바일 펫홈=네이티브 전용탭, 광장=하단탭). 검증: 웹 L2(tsc+build 전 단계 exit0). **L5 미완**(검증 브라우저 frozen — 다음 세션/사용자 시각확인).
+- 토큰 절약 지적 반영: Vercel 전체리스트 금지·screenshot 대신 curl/DOM-JS·파일 부분읽기.
+
+---
+
 ## 2026-06-12 이웃 기능 (인스타식 팔로우, 맞팔=서로이웃) — DB L4 + 웹 부분 L5
 배경: 카카오 친구초대 행사 대비 소셜 그래프(§13-B). 펫홈 그릇 완성 후 착수(사용자 합의 순서).
 - **DB**(마이그 `neighbors_follow_graph` prod 적용): neighbors 테이블+UNIQUE쌍+self CHECK(23514 실측)+인덱스2+RLS(TO authenticated·initplan 패턴·쓰기=본인 follower 행만).
