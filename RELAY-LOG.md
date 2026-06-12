@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-06-12 이웃 기능 (인스타식 팔로우, 맞팔=서로이웃) — DB L4 + 웹 부분 L5
+배경: 카카오 친구초대 행사 대비 소셜 그래프(§13-B). 펫홈 그릇 완성 후 착수(사용자 합의 순서).
+- **DB**(마이그 `neighbors_follow_graph` prod 적용): neighbors 테이블+UNIQUE쌍+self CHECK(23514 실측)+인덱스2+RLS(TO authenticated·initplan 패턴·쓰기=본인 follower 행만).
+- **API** `/api/neighbors/[userId]`: GET 카운트(게스트 가능)+관계+목록(서로이웃 판정) / POST 팔로우+알림 / DELETE. like 라우트 패턴 동일.
+- **웹**: VisitModal [이웃 맺기/이웃/서로이웃] 버튼(공개펫홈 자동 반영) + 내 펫홈 헤더 이웃 카운트 + NeighborListModal(나를/내가 탭·서로이웃 배지·**빈 상태 fallback §14**·이웃 펫홈 방문 연결). **앱**: minihompy-api 헬퍼 + [userId] 화면 버튼(promptLogin·햅틱).
+- **🐛 E2E가 잡은 prod 버그**: 팔로우 알림이 0건 — `notifications_type_check` CHECK가 구독/admin 타입만 허용해 `neighbor_follow` insert silent 실패. **DB 직접 대조로만 잡히는 류**([[audit-db-grounded-lesson]]). 마이그 `notifications_allow_neighbor_follow`로 타입 추가, INSERT dry-run(BEGIN/RETURNING/ROLLBACK) 통과 실측.
+- **검증**: DB L4(정책·CHECK·dry-run 실측) / **POST 실 E2E**(testmementoani→꼼지네형 행 prod 생성, UI 버튼 경유) / GET curl 200+카운트 정확. 웹 L2+모바일 L2. **잔여**: DELETE·알림 행위적 확인+UI 상태 표시는 건강한 브라우저에서 재확인 필요(검증 브라우저가 세션 중 완전 퇴화 — 탭 frozen·fetch 행잉. supabase Web Locks 멀티탭 경합 의심. 서버측은 curl/SQL로 전부 정상 입증).
+- 앱 내 펫홈 이웃 카운트는 웹 선행(후속 패리티 메모). 다음: 이웃 소식 피드·카카오 초대행사 연계.
+
+---
+
 ## 2026-06-12 펫홈 = 풀 미니홈피 — 프라이빗 기능 전부 섹션 탭 집결 (웹+앱) — 웹 L5
 배경: 사용자 "기존 프라이빗 기능 다 펫홈에 + 싸이월드/인스타 서치 참고 + 그다음 이웃". 리서치: 싸이=홈/사진첩/다이어리/방명록 메뉴+미니룸+투데이([나무위키](https://namu.wiki/w/싸이월드/서비스)) / 인스타=카운트 헤더+하이라이트 내비+3열 그리드.
 - **웹**(`b493236`): MiniHomepyTab 재조립 — 스테이지 아래 ①인스타식 카운트 헤더(펫 아바타·사진/방명록/방문) ②섹션 칩 6종(홈·사진첩·다이어리·AI영상·방명록·케어) ③섹션 스위치. 전부 기존 컴포넌트 재사용(TimelineSection/VideoGenerationSection/RemindersSection/방명록), 신규는 인스타식 3열 사진그리드+미니뷰어(이미지·영상)와 NoPetCard뿐. 추모 모드=케어 숨김+memorial 칩색. 게스트 공개 범위 무변경(공개펫홈엔 비노출 유지).
