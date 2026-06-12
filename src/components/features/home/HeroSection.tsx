@@ -18,6 +18,7 @@ import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import { findBackgroundOrDefault } from "@/data/minihompyBackgrounds";
+import { setPendingRecordSub } from "@/lib/record-nav";
 
 interface HeroSectionProps {
     setSelectedTab: (tab: TabType) => void;
@@ -65,23 +66,22 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
     }, [user]);
 
     const goMinihompy = useCallback(() => {
+        // pending 플래그(record 탭 lazy 마운트 레이스 무관) + 이벤트(이미 활성 시 즉시 전환) 병행
+        setPendingRecordSub("minihompy");
         setSelectedTab("record");
-        setTimeout(() => {
-            window.dispatchEvent(new CustomEvent("navigateRecordSubTab", { detail: "minihompy" }));
-        }, 100);
+        window.dispatchEvent(new CustomEvent("navigateRecordSubTab", { detail: "minihompy" }));
     }, [setSelectedTab]);
 
     // 허브 카드 핵심 액션 — AI 펫톡 / AI 영상 (펫홈은 톤, 핵심 가치는 이 둘)
     const goAIChat = useCallback(() => setSelectedTab("ai-chat"), [setSelectedTab]);
     const goAIVideo = useCallback(() => {
+        setPendingRecordSub("pets");
         setSelectedTab("record");
+        window.dispatchEvent(new CustomEvent("navigateRecordSubTab", { detail: "pets" }));
+        // 섹션 마운트(데이터 로딩 스켈레톤 포함) 후 스크롤
         setTimeout(() => {
-            window.dispatchEvent(new CustomEvent("navigateRecordSubTab", { detail: "pets" }));
-            // 섹션 마운트(데이터 로딩 스켈레톤 포함) 후 스크롤
-            setTimeout(() => {
-                window.dispatchEvent(new CustomEvent("scrollToVideoSection"));
-            }, 350);
-        }, 100);
+            window.dispatchEvent(new CustomEvent("scrollToVideoSection"));
+        }, 450);
     }, [setSelectedTab]);
 
     const [guideOpen, setGuideOpen] = useState(false);

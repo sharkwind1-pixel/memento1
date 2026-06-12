@@ -10,6 +10,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { consumePendingRecordSub } from "@/lib/record-nav";
 import { usePets, Pet, PetPhoto, useMemorialMode } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -79,17 +80,21 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
     const [photoViewerAutoPlay, setPhotoViewerAutoPlay] = useState(true);
     const [petToDelete, setPetToDelete] = useState<Pet | null>(null);
 
-    // 마이페이지 상태 — hydration 후 localStorage에서 복원
-    const [activeTab, setActiveTab] = useState<"pets" | "profile" | "minihompy">("pets");
+    // 마이페이지 상태 — 외부 진입(사이드바/히어로) pending 서브탭이 있으면 그걸로 시작
+    const [activeTab, setActiveTab] = useState<"pets" | "profile" | "minihompy">(
+        () => consumePendingRecordSub() ?? "pets"
+    );
     const [isEditingNickname, setIsEditingNickname] = useState(false);
     const [nickname, setNickname] = useState("");
     const [isSavingProfile, setIsSavingProfile] = useState(false);
 
-    // 메인 탭 진입 시(isActive false→true) 서브탭을 "pets"로 리셋
+    // 메인 탭 진입 시(isActive false→true): pending 서브탭(예: 펫홈)이 있으면 그곳으로, 없으면 "pets".
+    // 최초 마운트가 active인 경우는 위 useState initializer가 pending을 이미 소비하므로,
+    // wasActiveRef를 isActive로 시작해 이 effect가 중복 소비(→null→pets 덮어쓰기)하지 않게 한다.
     const wasActiveRef = useRef(isActive);
     useEffect(() => {
         if (isActive && !wasActiveRef.current) {
-            setActiveTab("pets");
+            setActiveTab(consumePendingRecordSub() ?? "pets");
         }
         wasActiveRef.current = isActive;
     }, [isActive]);
