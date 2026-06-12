@@ -199,7 +199,7 @@ function HubActions({ isDarkMode, onChat, onVideo, onDecorate }: {
                 >
                     <Ionicons name="chatbubble-ellipses" size={24} color="#fff" />
                     <View style={{ flex: 1 }}>
-                        <Text style={hubStyles.primaryTitle}>우리 아이와 대화하기</Text>
+                        <Text style={hubStyles.primaryTitle}>펫톡 시작</Text>
                         <Text style={hubStyles.primarySub}>AI 펫톡</Text>
                     </View>
                     <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.7)" />

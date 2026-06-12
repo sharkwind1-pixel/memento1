@@ -216,7 +216,7 @@ function HubActions({ onChat, onVideo, onDecorate }: {
             >
                 <MessageCircle className="w-6 h-6" />
                 <span className="flex-1 text-left">
-                    <span className="block text-[15px] font-bold">우리 아이와 대화하기</span>
+                    <span className="block text-[15px] font-bold">펫톡 시작</span>
                     <span className="block text-xs text-white/80">AI 펫톡</span>
                 </span>
                 <ChevronRight className="w-4 h-4 text-white/70" />
