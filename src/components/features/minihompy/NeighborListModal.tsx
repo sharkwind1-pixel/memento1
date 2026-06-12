@@ -12,6 +12,7 @@ import { X, Users, Loader2, UserCheck, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NeighborItem {
     userId: string;
@@ -30,24 +31,26 @@ interface NeighborListModalProps {
 type ListTab = "followers" | "following";
 
 export default function NeighborListModal({ isOpen, onClose, userId, onVisit }: NeighborListModalProps) {
+    const { user } = useAuth();
     const [tab, setTab] = useState<ListTab>("followers");
     const [items, setItems] = useState<NeighborItem[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
 
-    const load = useCallback(async (which: ListTab) => {
-        setLoading(true);
+    const load = useCallback(async (which: ListTab, offset = 0, append = false) => {
+        if (append) setLoadingMore(true); else setLoading(true);
         try {
-            const res = await authFetch(`${API.NEIGHBORS(userId)}?list=${which}`);
+            const res = await authFetch(`${API.NEIGHBORS(userId)}?list=${which}&offset=${offset}`);
             if (!res.ok) throw new Error();
             const d = await res.json();
-            setItems(d.items ?? []);
+            setItems((prev) => append ? [...prev, ...(d.items ?? [])] : (d.items ?? []));
             setTotal(d.total ?? 0);
         } catch {
-            setItems([]);
-            setTotal(0);
+            if (!append) { setItems([]); setTotal(0); }
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
     }, [userId]);
 
@@ -56,9 +59,14 @@ export default function NeighborListModal({ isOpen, onClose, userId, onVisit }: 
     }, [isOpen, tab, load]);
 
     const handleShare = async () => {
+        // 내 공개 펫홈 주소(/u/{닉네임}) 공유 — 닉네임 없으면 루트 폴백
+        const nickname = user?.user_metadata?.nickname as string | undefined;
+        const shareUrl = nickname
+            ? `${window.location.origin}/u/${encodeURIComponent(nickname)}`
+            : window.location.origin;
         try {
-            await navigator.clipboard.writeText(window.location.origin);
-            toast.success("주소를 복사했어요. 친구에게 펫홈을 공유해보세요!");
+            await navigator.clipboard.writeText(shareUrl);
+            toast.success("내 펫홈 주소를 복사했어요. 친구에게 공유해보세요!");
         } catch {
             toast.error("주소 복사에 실패했습니다");
         }
@@ -148,6 +156,16 @@ export default function NeighborListModal({ isOpen, onClose, userId, onVisit }: 
                                     )}
                                 </button>
                             ))}
+
+                            {items.length < total && (
+                                <button
+                                    onClick={() => load(tab, items.length, true)}
+                                    disabled={loadingMore}
+                                    className="w-full py-2.5 rounded-xl text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                >
+                                    {loadingMore ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : `더보기 (${items.length}/${total})`}
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>

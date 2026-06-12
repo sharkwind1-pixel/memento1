@@ -134,6 +134,8 @@ export default function MinihompyVisitModal({
             if (d.following) {
                 toast.success(d.mutual ? "서로 이웃이 되었어요!" : "이웃을 추가했어요");
             }
+            // 서버 기준 카운트 재동기화 (낙관적 ±1과 동시 변경 어긋남 보정 — 9번 #11)
+            loadNeighbor();
         } catch {
             // 롤백
             setIFollow(wasFollowing);

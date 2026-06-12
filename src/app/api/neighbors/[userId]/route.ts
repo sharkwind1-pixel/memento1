@@ -29,15 +29,34 @@ export async function GET(
         const offset = Math.max(0, parseInt(url.searchParams.get("offset") || "0", 10) || 0);
 
         const admin = createAdminSupabase();
+        const user = await getAuthUser();
 
-        // 카운트 (게스트도 조회 가능 — 공개 펫홈 노출용)
+        // 비공개 펫홈 게이트 (9번 #1/#2): 소유자 외엔 카운트·목록 모두 차단
+        // — minihompy GET 403 패턴 동일. 부분 리크(목록만 막고 숫자 노출) 방지 위해 카운트도 게이트.
+        if (user?.id !== userId) {
+            const { data: vis } = await admin
+                .from("minihompy_settings")
+                .select("is_public")
+                .eq("user_id", userId)
+                .maybeSingle();
+            if (vis && vis.is_public === false) {
+                return NextResponse.json({ error: "비공개 펫홈입니다" }, { status: 403 });
+            }
+        }
+
+        // 목록은 로그인 필수 (9번 #1: 게스트에게 팔로워/팔로잉 목록+닉네임 노출 차단.
+        // 카운트는 공개 펫홈 한정 게스트 허용 — 공개 펫홈 노출용)
+        if (list && !user) {
+            return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
+        }
+
+        // 카운트
         const [{ count: followerCount }, { count: followingCount }] = await Promise.all([
             admin.from("neighbors").select("id", { count: "exact", head: true }).eq("following_id", userId),
             admin.from("neighbors").select("id", { count: "exact", head: true }).eq("follower_id", userId),
         ]);
 
         // 내 관계 (로그인 시에만)
-        const user = await getAuthUser();
         let relation: { iFollow: boolean; followsMe: boolean; mutual: boolean } | null = null;
         if (user && user.id !== userId) {
             const [{ data: iFollowRow }, { data: followsMeRow }] = await Promise.all([
@@ -194,6 +213,15 @@ export async function DELETE(
     { params }: { params: Promise<{ userId: string }> }
 ) {
     try {
+        const clientIP = await getClientIP();
+        const rateLimit = checkRateLimit(clientIP, "general");
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: "요청이 너무 많습니다." },
+                { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
+            );
+        }
+
         const user = await getAuthUser();
         if (!user) {
             return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
