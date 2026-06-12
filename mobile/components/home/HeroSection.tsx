@@ -85,97 +85,124 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
         return <OriginalHero isMemorialMode isDarkMode={isDarkMode} fontScale={fontScale} spacingScale={spacingScale} iconScale={iconScale} onCta={() => router.push("/(tabs)/ai-chat")} onSecondary={() => router.push("/(tabs)/community")} ctaText="지금 만나러 가기" />;
     }
 
-    // --- 로그인 + 꼬미 있음: 개인 펫홈 프리뷰 + 핵심 액션 허브 ---
-    if (hasMinimi && hasPlacedMinimi) {
-        const bg = findBackgroundOrDefault(settings?.backgroundSlug ?? "default_sky");
-        return (
-            <View style={styles.section}>
-                <TouchableOpacity
-                    activeOpacity={0.92}
-                    onPress={() => router.push("/(tabs)/minihompy")}
-                    style={styles.card}
-                >
-                    {bg.imageUrl ? (
-                        <ImageBackground
-                            source={{ uri: bg.imageUrl }}
-                            style={[styles.personalStage, { height: HERO_STAGE_HEIGHT }]}
-                            imageStyle={{ borderRadius: 24 }}
-                            resizeMode="cover"
-                        >
-                            <PersonalOverlay settings={settings} isMemorialMode={isMemorialMode} isDarkMode={isDarkMode} />
-                        </ImageBackground>
-                    ) : (
-                        <View style={[styles.personalStage, { height: HERO_STAGE_HEIGHT, backgroundColor: bg.cssBackground, borderRadius: 24 }]}>
-                            <PersonalOverlay settings={settings} isMemorialMode={isMemorialMode} isDarkMode={isDarkMode} />
-                        </View>
-                    )}
-                </TouchableOpacity>
-
-                {/* 핵심 액션 허브 — 펫홈은 톤, 핵심 가치는 AI펫톡 + AI영상 (웹 HubActions 1:1) */}
-                <HubActions
-                    isDarkMode={isDarkMode}
-                    onChat={() => router.push("/(tabs)/ai-chat")}
-                    onVideo={() => router.push("/(tabs)/record?openVideo=1")}
-                    onDecorate={() => router.push("/(tabs)/minihompy")}
-                />
-            </View>
-        );
-    }
-
-    // --- 로그인 + 꼬미 없음: 쇼케이스 히어로 ---
+    // --- 로그인(일상): 홈 = 콘텐츠 피드(광장) 중심. 펫홈은 작은 진입점(컴팩트 바)으로 강등. (웹 HeroSection 1:1)
+    //     모바일은 탭 시 펫홈을 풀스크린(/(tabs)/minihompy)으로 — 작은 창 대신 직관적 전체화면.
+    //     히어로가 비운 자리에서 아래 커뮤니티/AI영상/매거진/추모 피드가 메인이 된다.
+    const nick = (session?.user?.user_metadata?.nickname as string) || session?.user?.email?.split("@")[0] || "나";
     return (
         <View style={styles.section}>
-            <TouchableOpacity
-                activeOpacity={0.92}
-                onPress={() => setGuideOpen(true)}
-                style={styles.card}
-            >
-                <Image
-                    source={require("@/assets/hero-showcase.jpg")}
-                    style={[styles.showcaseImage, { height: HERO_STAGE_HEIGHT }]}
-                    resizeMode="cover"
-                />
-                {/* 하단 오버레이 — CTA */}
-                <LinearGradient
-                    colors={["transparent", "rgba(0,0,0,0.65)"]}
-                    style={styles.showcaseOverlay}
-                >
-                    <View style={styles.showcaseCtaRow}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.showcaseTitle}>나만의 펫홈</Text>
-                            <Text style={styles.showcaseSub}>꼬미를 모으고, 내 공간을 꾸며보세요</Text>
-                        </View>
-                        <View style={styles.showcaseArrow}>
-                            <Ionicons name="arrow-forward" size={18} color="#fff" />
-                        </View>
-                    </View>
-                </LinearGradient>
-            </TouchableOpacity>
-
-            {/* 핵심 액션 허브 — AI펫톡/AI영상은 꼬미 없이도 핵심 가치.
-                펫홈 꾸미기 → 빈 펫홈의 시작 온보딩이 이어받음 (웹 HubActions 1:1) */}
-            <HubActions
+            <CompactPethomeBar
+                nickname={nick}
                 isDarkMode={isDarkMode}
+                onPethome={() => router.push("/(tabs)/minihompy")}
                 onChat={() => router.push("/(tabs)/ai-chat")}
                 onVideo={() => router.push("/(tabs)/record?openVideo=1")}
-                onDecorate={() => router.push("/(tabs)/minihompy")}
             />
-
-            {/* 펫홈 안내 가이드 모달 */}
+            {/* 펫홈 안내 가이드(꼬미 처음인 유저용 — 진입 시 펫홈 화면의 온보딩이 이어받음) */}
             <MinihompyGuideModal
                 visible={guideOpen}
                 onClose={() => setGuideOpen(false)}
-                onStart={() => {
-                    setGuideOpen(false);
-                    router.push("/(tabs)/minihompy");
-                }}
+                onStart={() => { setGuideOpen(false); router.push("/(tabs)/minihompy"); }}
             />
         </View>
     );
 }
 
 // ============================================================================
+// 컴팩트 펫홈 진입 바 — 홈(광장) 상단의 작은 진입점. (웹 CompactPethomeBar 1:1)
+// 모바일은 탭 시 펫홈을 풀스크린(/(tabs)/minihompy)으로 — 작은 창 대신 직관적 전체화면.
+// ============================================================================
+
+function CompactPethomeBar({ nickname, isDarkMode, onPethome, onChat, onVideo }: {
+    nickname: string;
+    isDarkMode: boolean;
+    onPethome: () => void;
+    onChat: () => void;
+    onVideo: () => void;
+}) {
+    const barBg = isDarkMode ? COLORS.gray[800] : "rgba(255,255,255,0.9)";
+    const barBorder = isDarkMode ? COLORS.gray[700] : "#CBEBF0";
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[800];
+
+    return (
+        <View style={compactStyles.row}>
+            <TouchableOpacity
+                activeOpacity={0.88}
+                onPress={onPethome}
+                style={[compactStyles.entry, { backgroundColor: barBg, borderColor: barBorder }]}
+            >
+                <View style={compactStyles.iconCircle}>
+                    <Ionicons name="home" size={18} color={COLORS.memento[500]} />
+                </View>
+                <View style={{ flex: 1 }}>
+                    <Text style={[compactStyles.entryTitle, { color: titleColor }]} numberOfLines={1}>{nickname}네 펫홈</Text>
+                    <Text style={compactStyles.entrySub} numberOfLines={1}>꾸미기 · 기록 · 방명록</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
+            </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.85} onPress={onChat} style={compactStyles.chatBtn}>
+                <LinearGradient
+                    colors={[COLORS.memento[500], COLORS.memento[400]]}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                    style={compactStyles.chatInner}
+                >
+                    <Ionicons name="chatbubble-ellipses" size={18} color="#fff" />
+                </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={onVideo}
+                style={[compactStyles.videoBtn, { backgroundColor: barBg, borderColor: barBorder }]}
+            >
+                <Ionicons name="film-outline" size={18} color={COLORS.memento[500]} />
+            </TouchableOpacity>
+        </View>
+    );
+}
+
+const compactStyles = StyleSheet.create({
+    row: { flexDirection: "row", alignItems: "center", gap: 8 },
+    entry: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 16,
+        borderWidth: 1,
+        elevation: 1,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+    },
+    iconCircle: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: "#E0F7FF",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    entryTitle: { fontSize: 14, fontWeight: "700" },
+    entrySub: { fontSize: 11, color: COLORS.gray[400], marginTop: 1 },
+    chatBtn: { borderRadius: 16, overflow: "hidden" },
+    chatInner: {
+        width: 44, height: 44,
+        alignItems: "center", justifyContent: "center",
+        borderRadius: 16,
+    },
+    videoBtn: {
+        width: 44, height: 44,
+        alignItems: "center", justifyContent: "center",
+        borderRadius: 16, borderWidth: 1,
+    },
+});
+
+// ============================================================================
 // 허브 핵심 액션 — [우리 아이와 대화하기(AI펫톡)] + [AI 영상 만들기][펫홈 꾸미기]
+// (현재 미사용 — 펫홈 화면 내부 액션으로 이전 예정. 강등 후 홈에선 CompactPethomeBar 사용)
 // (웹 src/components/features/home/HeroSection.tsx HubActions 1:1)
 // ============================================================================
 
