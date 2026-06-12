@@ -65,6 +65,7 @@ export const API = {
     MINIHOMPY_PLACED_MINIMI: "/api/minihompy/settings/placed-minimi",
     MINIHOMPY_BG_CATALOG: "/api/minihompy/backgrounds",
     MINIHOMPY_BG_PURCHASE: "/api/minihompy/backgrounds/purchase",
+    NEIGHBORS: (userId: string) => `/api/neighbors/${userId}`,
 
     // 알림
     NOTIFICATIONS: "/api/notifications",

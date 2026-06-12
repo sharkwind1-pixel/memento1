@@ -289,6 +289,36 @@ export async function toggleMinihompyLike(
 }
 
 // ============================================================================
+// 이웃 (팔로우 — 단방향, 맞팔=서로이웃)
+// ============================================================================
+
+export interface NeighborStatus {
+    followerCount: number;
+    followingCount: number;
+    relation: { iFollow: boolean; followsMe: boolean; mutual: boolean } | null;
+}
+
+/** 이웃 카운트 + (로그인 시) 내 관계. 게스트(token null)도 카운트 조회 가능. */
+export async function getNeighborStatus(
+    accessToken: string | null,
+    userId: string,
+): Promise<NeighborStatus> {
+    return await callApi<NeighborStatus>(`/api/neighbors/${userId}`, { accessToken });
+}
+
+/** 이웃 추가/해제 토글 */
+export async function toggleNeighbor(
+    accessToken: string,
+    userId: string,
+    follow: boolean,
+): Promise<{ following: boolean; mutual: boolean }> {
+    return await callApi<{ following: boolean; mutual: boolean }>(
+        `/api/neighbors/${userId}`,
+        { accessToken, method: follow ? "POST" : "DELETE" },
+    );
+}
+
+// ============================================================================
 // 방명록
 // ============================================================================
 

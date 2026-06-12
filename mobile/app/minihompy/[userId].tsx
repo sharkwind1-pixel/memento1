@@ -23,6 +23,7 @@ import { COLORS } from "@/lib/theme";
 import { findMinimi, findBackgroundOrDefault } from "@/data/minihompyData";
 import {
     visitMinihompy, postMinihompyVisit, toggleMinihompyLike,
+    getNeighborStatus, toggleNeighbor,
     type VisitedMinihompy,
 } from "@/lib/minihompy-api";
 import AppHeader from "@/components/common/AppHeader";
@@ -43,6 +44,11 @@ export default function VisitMinihompyScreen() {
     const [liking, setLiking] = useState(false);
     const [guestbookOpen, setGuestbookOpen] = useState(false);
     const visitPostedRef = useRef(false);
+
+    // 이웃(팔로우) 상태
+    const [iFollow, setIFollow] = useState(false);
+    const [mutual, setMutual] = useState(false);
+    const [neighborBusy, setNeighborBusy] = useState(false);
 
     const accessToken = session?.access_token ?? null;
     const isOwnHompy = user?.id === userId;
@@ -77,6 +83,44 @@ export default function VisitMinihompyScreen() {
     useEffect(() => {
         load();
     }, [load]);
+
+    // 이웃 상태 로드
+    useEffect(() => {
+        if (!userId || isOwnHompy) return;
+        let cancelled = false;
+        getNeighborStatus(accessToken, userId)
+            .then((s) => {
+                if (cancelled) return;
+                setIFollow(s.relation?.iFollow ?? false);
+                setMutual(s.relation?.mutual ?? false);
+            })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, [accessToken, userId, isOwnHompy]);
+
+    // 이웃 추가/해제 토글
+    async function handleNeighbor() {
+        if (!userId || neighborBusy || isOwnHompy) return;
+        if (!accessToken) {
+            promptLogin("이웃을 맺고 소식을 받으려면 로그인이 필요해요. 무료로 시작할 수 있어요.");
+            return;
+        }
+        setNeighborBusy(true);
+        const wasFollowing = iFollow;
+        setIFollow(!wasFollowing);
+        if (wasFollowing) setMutual(false);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+        try {
+            const result = await toggleNeighbor(accessToken, userId, !wasFollowing);
+            setIFollow(result.following);
+            setMutual(result.mutual);
+        } catch (e) {
+            setIFollow(wasFollowing);
+            Alert.alert("실패", e instanceof Error ? e.message : "이웃 처리에 실패했어요.");
+        } finally {
+            setNeighborBusy(false);
+        }
+    }
 
     // 맥락 가입후크 (① 패턴) — 게스트가 상호작용 시도 시 가치문구 + 로그인 경로
     function promptLogin(message: string) {
@@ -282,6 +326,32 @@ export default function VisitMinihompyScreen() {
                                 { color: data.isLiked ? "#B91C1C" : COLORS.gray[700] },
                             ]}>
                                 {data.isLiked ? "좋아요 취소" : "좋아요"}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                    {!isOwnHompy && (
+                        <TouchableOpacity
+                            onPress={handleNeighbor}
+                            disabled={neighborBusy}
+                            style={[
+                                styles.actionBtn,
+                                {
+                                    backgroundColor: iFollow ? COLORS.memento[50] : (isDarkMode ? COLORS.gray[900] : "#fff"),
+                                    borderColor: iFollow ? COLORS.memento[300] : COLORS.gray[200],
+                                },
+                            ]}
+                            activeOpacity={0.85}
+                        >
+                            <Ionicons
+                                name={iFollow ? "person-circle" : "person-add-outline"}
+                                size={20}
+                                color={iFollow ? COLORS.memento[600] : COLORS.gray[600]}
+                            />
+                            <Text style={[
+                                styles.actionText,
+                                { color: iFollow ? COLORS.memento[600] : COLORS.gray[700] },
+                            ]}>
+                                {mutual ? "서로이웃" : iFollow ? "이웃" : "이웃 맺기"}
                             </Text>
                         </TouchableOpacity>
                     )}

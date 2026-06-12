@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
     X, Heart, Loader2, MessageSquare,
-    Trash2, ChevronDown, Send,
+    Trash2, ChevronDown, Send, UserPlus, UserCheck,
 } from "lucide-react";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { useOptimisticToggle } from "@/hooks";
@@ -50,6 +50,12 @@ export default function MinihompyVisitModal({
     const [loadingMore, setLoadingMore] = useState(false);
     const [liking, setLiking] = useState(false);
 
+    // 이웃(팔로우) 상태
+    const [iFollow, setIFollow] = useState(false);
+    const [mutual, setMutual] = useState(false);
+    const [followerCount, setFollowerCount] = useState(0);
+    const [neighborBusy, setNeighborBusy] = useState(false);
+
     // 데이터 로드
     const loadData = useCallback(async () => {
         try {
@@ -85,12 +91,58 @@ export default function MinihompyVisitModal({
         }
     }, [userId]);
 
+    // 이웃 상태 로드
+    const loadNeighbor = useCallback(async () => {
+        try {
+            const res = await authFetch(API.NEIGHBORS(userId));
+            if (!res.ok) return;
+            const d = await res.json();
+            setFollowerCount(d.followerCount ?? 0);
+            setIFollow(d.relation?.iFollow ?? false);
+            setMutual(d.relation?.mutual ?? false);
+        } catch { /* 무시 */ }
+    }, [userId]);
+
     useEffect(() => {
         if (isOpen) {
             loadData();
             recordVisit();
+            loadNeighbor();
         }
-    }, [isOpen, loadData, recordVisit]);
+    }, [isOpen, loadData, recordVisit, loadNeighbor]);
+
+    // 이웃 추가/해제 토글
+    const handleNeighbor = async () => {
+        if (!user) {
+            window.dispatchEvent(new CustomEvent("openAuthModal", { detail: { message: "이웃을 맺고 소식을 받으려면 회원가입이 필요해요. 무료로 시작할 수 있어요." } }));
+            return;
+        }
+        if (user.id === userId || neighborBusy) return;
+
+        setNeighborBusy(true);
+        const wasFollowing = iFollow;
+        // 낙관적 반영
+        setIFollow(!wasFollowing);
+        setFollowerCount((c) => Math.max(0, c + (wasFollowing ? -1 : 1)));
+        if (wasFollowing) setMutual(false);
+        try {
+            const res = await authFetch(API.NEIGHBORS(userId), { method: wasFollowing ? "DELETE" : "POST" });
+            if (!res.ok) throw new Error("neighbor toggle failed");
+            const d = await res.json();
+            setIFollow(d.following);
+            setMutual(d.mutual ?? false);
+            if (d.following) {
+                toast.success(d.mutual ? "서로 이웃이 되었어요!" : "이웃을 추가했어요");
+            }
+        } catch {
+            // 롤백
+            setIFollow(wasFollowing);
+            setFollowerCount((c) => Math.max(0, c + (wasFollowing ? 1 : -1)));
+            toast.error("이웃 처리에 실패했습니다");
+        } finally {
+            setNeighborBusy(false);
+        }
+    };
 
     // 좋아요 토글 — 공용 낙관적 토글 훅으로 연타 가드 + 즉시 반영 + 실패 롤백 표준화
     const handleLike = async () => {
@@ -256,8 +308,8 @@ export default function MinihompyVisitModal({
                                 compact
                             />
 
-                            {/* 좋아요 */}
-                            <div className="flex items-center justify-center">
+                            {/* 좋아요 + 이웃 */}
+                            <div className="flex items-center justify-center gap-2">
                                 {/* 게스트도 클릭 가능 — handleLike가 맥락 가입후크(openAuthModal)로 분기 (Phase 1 퍼널) */}
                                 <button
                                     onClick={handleLike}
@@ -275,6 +327,26 @@ export default function MinihompyVisitModal({
                                     )} />
                                     <span className="text-sm font-medium">{totalLikes}</span>
                                 </button>
+
+                                {/* 이웃 추가/해제 — 게스트는 가입후크, 서로이웃이면 표시 */}
+                                {user?.id !== userId && (
+                                    <button
+                                        onClick={handleNeighbor}
+                                        disabled={neighborBusy}
+                                        className={cn(
+                                            "flex items-center gap-2 px-4 py-2 rounded-full transition-all",
+                                            iFollow
+                                                ? "bg-memento-100 dark:bg-memento-900/30 text-memento-600 dark:text-memento-400"
+                                                : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-memento-50 dark:hover:bg-memento-900/20"
+                                        )}
+                                    >
+                                        {iFollow ? <UserCheck className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                                        <span className="text-sm font-medium">
+                                            {mutual ? "서로이웃" : iFollow ? "이웃" : "이웃 맺기"}
+                                        </span>
+                                        <span className="text-xs opacity-70">{followerCount}</span>
+                                    </button>
+                                )}
                             </div>
 
                             {/* 방명록 */}

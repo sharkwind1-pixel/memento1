@@ -28,6 +28,8 @@ import MinihompySettingsSection from "./MinihompySettingsSection";
 import MinimiCollection from "./MinimiCollection";
 import MinihompyShop from "./MinihompyShop";
 import PethomeStartGuideModal from "./PethomeStartGuideModal";
+import NeighborListModal from "./NeighborListModal";
+import MinihompyVisitModal from "./MinihompyVisitModal";
 import Image from "next/image";
 
 interface OwnedChar {
@@ -78,6 +80,26 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
 
     // 펫홈 섹션 탭 (싸이월드식 메뉴) — 기존 프라이빗 기능들을 펫홈으로 집결
     const [activeSection, setActiveSection] = useState<PethomeSection>("home");
+
+    // 이웃 카운트 + 목록 모달 + 이웃 펫홈 방문
+    const [neighborCount, setNeighborCount] = useState(0);
+    const [neighborModalOpen, setNeighborModalOpen] = useState(false);
+    const [visitingUserId, setVisitingUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!user) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await authFetch(API.NEIGHBORS(user.id));
+                if (!res.ok || cancelled) return;
+                const d = await res.json();
+                // 헤더 노출 카운트 = 나를 이웃으로 추가한 수 (인스타 팔로워 격)
+                setNeighborCount(d.followerCount ?? 0);
+            } catch { /* 무시 */ }
+        })();
+        return () => { cancelled = true; };
+    }, [user]);
 
     const openShop = useCallback((tab: "minimi" | "furniture" | "background" = "minimi") => {
         setShopInitialTab(tab);
@@ -381,6 +403,21 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                                 방문 <span className="font-semibold text-gray-700 dark:text-gray-200">{(currentSettings.totalVisitors ?? 0).toLocaleString()}</span>
                             </p>
                         </div>
+                        {/* 이웃 카운트 → 목록 모달 (싸이 일촌 격) */}
+                        <button
+                            onClick={() => setNeighborModalOpen(true)}
+                            className={cn(
+                                "flex flex-col items-center px-3 py-1.5 rounded-xl transition-colors flex-shrink-0",
+                                isMemorialMode
+                                    ? "bg-memorial-50 dark:bg-memorial-900/20 hover:bg-memorial-100"
+                                    : "bg-memento-50 dark:bg-memento-900/20 hover:bg-memento-100"
+                            )}
+                        >
+                            <span className={cn("text-sm font-bold", isMemorialMode ? "text-memorial-600" : "text-memento-600")}>
+                                {neighborCount}
+                            </span>
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400">이웃</span>
+                        </button>
                     </div>
 
                     {/* 섹션 칩 내비 — 싸이월드 미니홈피 메뉴(홈/사진첩/다이어리/방명록) 참고 */}
@@ -448,6 +485,23 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                             : <NoPetCard />
                     )}
                 </>
+            )}
+
+            {/* 이웃 목록 모달 (탭: 나를/내가 이웃으로, 서로이웃 배지, 빈 상태 fallback) */}
+            <NeighborListModal
+                isOpen={neighborModalOpen}
+                onClose={() => setNeighborModalOpen(false)}
+                userId={user.id}
+                onVisit={(uid) => { setNeighborModalOpen(false); setVisitingUserId(uid); }}
+            />
+
+            {/* 이웃 펫홈 방문 (목록에서 클릭 시) */}
+            {visitingUserId && (
+                <MinihompyVisitModal
+                    isOpen={!!visitingUserId}
+                    onClose={() => setVisitingUserId(null)}
+                    userId={visitingUserId}
+                />
             )}
 
             {/* 새 유저 빈 펫홈 시작 가이드 → 상점으로 안내 */}
