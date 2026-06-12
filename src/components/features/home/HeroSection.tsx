@@ -8,15 +8,12 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Home, ChevronRight, X, PawPrint, Star, Palette, Users, Info, MessageCircle, Film } from "lucide-react";
-import { TabType, MinihompySettings } from "@/types";
+import { TabType } from "@/types";
 import type { User } from "@supabase/supabase-js";
-import { authFetch } from "@/lib/auth-fetch";
-import { API } from "@/config/apiEndpoints";
-import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import { setPendingRecordSub } from "@/lib/record-nav";
 
 interface HeroSectionProps {
@@ -25,44 +22,9 @@ interface HeroSectionProps {
     isMemorial?: boolean;
 }
 
-interface OwnedChar { slug: string; name: string; imageUrl: string; }
-
 export default function HeroSection({ setSelectedTab, user, isMemorial = false }: HeroSectionProps) {
-    const [settings, setSettings] = useState<MinihompySettings | null>(null);
-    const [ownedMinimis, setOwnedMinimis] = useState<OwnedChar[]>([]);
-    const [loaded, setLoaded] = useState(false);
-
-    useEffect(() => {
-        if (!user) { setLoaded(true); return; }
-        let cancelled = false;
-        (async () => {
-            try {
-                const [settingsRes, invRes] = await Promise.all([
-                    authFetch(API.MINIHOMPY_SETTINGS).catch(() => null),
-                    authFetch(API.MINIMI_INVENTORY).catch(() => null),
-                ]);
-                if (cancelled) return;
-                if (settingsRes?.ok) {
-                    const data = await settingsRes.json();
-                    setSettings(data.settings ?? null);
-                }
-                if (invRes?.ok) {
-                    const data = await invRes.json();
-                    const chars: OwnedChar[] = (data.characters || [])
-                        .map((c: { minimi_id: string }) => {
-                            const cat = CHARACTER_CATALOG.find(x => x.slug === c.minimi_id);
-                            if (!cat) return null;
-                            return { slug: cat.slug, name: cat.name, imageUrl: cat.imageUrl };
-                        })
-                        .filter(Boolean) as OwnedChar[];
-                    setOwnedMinimis(chars);
-                }
-            } finally {
-                if (!cancelled) setLoaded(true);
-            }
-        })();
-        return () => { cancelled = true; };
-    }, [user]);
+    // (강등 후 정리) 펫홈 프리뷰용 settings/inventory fetch 제거 — 컴팩트 바는 데이터 불필요.
+    // 매 홈 렌더마다 API 2회 낭비되던 죽은 fetch였음.
 
     const goMinihompy = useCallback(() => {
         // 내 펫홈을 팝업(창)으로 — 싸이월드 미니홈피 감성 (인라인 진입 폐기)
@@ -155,47 +117,6 @@ function CompactPethomeBar({ nickname, onPethome, onChat, onVideo }: {
                 </button>
             </div>
         </section>
-    );
-}
-
-// ============================================================================
-// 허브 핵심 액션 — [우리 아이와 대화하기(AI펫톡)] + [AI 영상 만들기][펫홈 꾸미기]
-// (현재 미사용 — 펫홈 창 내부 액션으로 이전 예정. 강등 후 홈에선 CompactPethomeBar 사용)
-// ============================================================================
-
-function HubActions({ onChat, onVideo, onDecorate }: {
-    onChat: () => void; onVideo: () => void; onDecorate: () => void;
-}) {
-    return (
-        <div className="space-y-2.5">
-            <button
-                onClick={onChat}
-                className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 text-white shadow-[0_4px_16px_-4px_rgba(5,178,220,0.4)] hover:shadow-[0_6px_20px_-4px_rgba(5,178,220,0.5)] active:scale-[0.99] transition-all"
-            >
-                <MessageCircle className="w-6 h-6" />
-                <span className="flex-1 text-left">
-                    <span className="block text-[15px] font-bold">펫톡 시작</span>
-                    <span className="block text-xs text-white/80">AI 펫톡</span>
-                </span>
-                <ChevronRight className="w-4 h-4 text-white/70" />
-            </button>
-            <div className="grid grid-cols-2 gap-2.5">
-                <button
-                    onClick={onVideo}
-                    className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-2xl bg-white/80 dark:bg-gray-800/80 border border-gray-200/70 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800 active:scale-[0.98] transition-all"
-                >
-                    <Film className="w-[18px] h-[18px] text-memento-500" />
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">AI 영상 만들기</span>
-                </button>
-                <button
-                    onClick={onDecorate}
-                    className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-2xl bg-white/80 dark:bg-gray-800/80 border border-gray-200/70 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800 active:scale-[0.98] transition-all"
-                >
-                    <Palette className="w-[18px] h-[18px] text-memento-500" />
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">펫홈 꾸미기</span>
-                </button>
-            </div>
-        </div>
     );
 }
 

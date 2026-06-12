@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { X, Users, Loader2, UserCheck, Share2 } from "lucide-react";
+import { X, Users, Loader2, UserCheck, Share2, Pencil, Check } from "lucide-react";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
@@ -18,6 +18,8 @@ interface NeighborItem {
     userId: string;
     nickname: string;
     mutual: boolean;
+    /** 내가 붙인 별명 (일촌명) — 본인 목록 조회 시에만 내려옴 */
+    customNickname?: string;
 }
 
 interface NeighborListModalProps {
@@ -37,6 +39,34 @@ export default function NeighborListModal({ isOpen, onClose, userId, onVisit }: 
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
+
+    // 서로이웃 별명(일촌명) 인라인 편집 — 본인 목록 + mutual 행에만
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editText, setEditText] = useState("");
+    const [savingNick, setSavingNick] = useState(false);
+
+    const saveNickname = async (targetId: string) => {
+        if (savingNick) return;
+        setSavingNick(true);
+        try {
+            const res = await authFetch(API.NEIGHBORS(targetId), {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nickname: editText.trim() || null }),
+            });
+            if (!res.ok) throw new Error();
+            const d = await res.json();
+            setItems((prev) => prev.map((it) =>
+                it.userId === targetId ? { ...it, customNickname: d.nickname ?? undefined } : it
+            ));
+            toast.success(d.nickname ? "별명을 저장했어요" : "별명을 지웠어요");
+            setEditingId(null);
+        } catch {
+            toast.error("별명 저장에 실패했습니다");
+        } finally {
+            setSavingNick(false);
+        }
+    };
 
     const load = useCallback(async (which: ListTab, offset = 0, append = false) => {
         if (append) setLoadingMore(true); else setLoading(true);
@@ -135,26 +165,69 @@ export default function NeighborListModal({ isOpen, onClose, userId, onVisit }: 
                         <div className="space-y-2">
                             <p className="text-[11px] text-gray-400 px-1">{total}명</p>
                             {items.map((n) => (
-                                <button
+                                <div
                                     key={n.userId}
-                                    onClick={() => onVisit?.(n.userId)}
-                                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/40 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
+                                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/40 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                 >
-                                    <div className="w-9 h-9 rounded-full bg-memento-100 dark:bg-memento-900/30 flex items-center justify-center flex-shrink-0">
-                                        <span className="text-xs font-bold text-memento-600 dark:text-memento-400">
-                                            {n.nickname.charAt(0)}
+                                    <button
+                                        onClick={() => onVisit?.(n.userId)}
+                                        className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                                    >
+                                        <div className="w-9 h-9 rounded-full bg-memento-100 dark:bg-memento-900/30 flex items-center justify-center flex-shrink-0">
+                                            <span className="text-xs font-bold text-memento-600 dark:text-memento-400">
+                                                {n.nickname.charAt(0)}
+                                            </span>
+                                        </div>
+                                        <span className="flex-1 min-w-0 text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
+                                            {n.customNickname ? (
+                                                <>
+                                                    {n.customNickname}
+                                                    <span className="ml-1.5 text-[11px] font-normal text-gray-400">{n.nickname}</span>
+                                                </>
+                                            ) : n.nickname}
                                         </span>
-                                    </div>
-                                    <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
-                                        {n.nickname}
-                                    </span>
-                                    {n.mutual && (
-                                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-memento-500 bg-memento-50 dark:bg-memento-900/30 rounded-full px-2 py-0.5">
-                                            <UserCheck className="w-3 h-3" />
-                                            서로이웃
+                                    </button>
+                                    {editingId === n.userId ? (
+                                        <span className="flex items-center gap-1 flex-shrink-0">
+                                            <input
+                                                value={editText}
+                                                onChange={(e) => setEditText(e.target.value)}
+                                                onKeyDown={(e) => { if (e.key === "Enter") saveNickname(n.userId); if (e.key === "Escape") setEditingId(null); }}
+                                                maxLength={20}
+                                                placeholder="별명"
+                                                autoFocus
+                                                className="w-24 px-2 py-1 text-xs rounded-lg border border-memento-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-memento-400"
+                                            />
+                                            <button
+                                                onClick={() => saveNickname(n.userId)}
+                                                disabled={savingNick}
+                                                aria-label="별명 저장"
+                                                className="p-1.5 rounded-lg bg-memento-500 text-white hover:bg-memento-600 transition-colors"
+                                            >
+                                                {savingNick ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                            </button>
                                         </span>
+                                    ) : (
+                                        <>
+                                            {n.mutual && (
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-memento-500 bg-memento-50 dark:bg-memento-900/30 rounded-full px-2 py-0.5 flex-shrink-0">
+                                                    <UserCheck className="w-3 h-3" />
+                                                    서로이웃
+                                                </span>
+                                            )}
+                                            {/* 별명(일촌명) 연필 — 내 목록의 서로이웃에만 */}
+                                            {user?.id === userId && n.mutual && (
+                                                <button
+                                                    onClick={() => { setEditingId(n.userId); setEditText(n.customNickname ?? ""); }}
+                                                    aria-label="별명 설정"
+                                                    className="p-1.5 rounded-lg text-gray-400 hover:text-memento-500 hover:bg-memento-50 dark:hover:bg-memento-900/20 transition-colors flex-shrink-0"
+                                                >
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </>
                                     )}
-                                </button>
+                                </div>
                             ))}
 
                             {items.length < total && (

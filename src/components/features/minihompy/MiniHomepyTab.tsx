@@ -12,7 +12,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Loader2, MessageSquare, Trash2, ChevronDown, Archive, Plus, ShoppingBag, Camera, X, PawPrint, PlayCircle, Users, BookOpen } from "lucide-react";
+import { Loader2, MessageSquare, Trash2, ChevronDown, Archive, Plus, ShoppingBag, Camera, X, PawPrint, PlayCircle, Users, BookOpen, MessageCircle, Film, Share2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMemorialMode, usePets } from "@/contexts/PetContext";
 import TimelineSection from "@/components/features/record/TimelineSection";
@@ -370,6 +370,27 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                     onSelectFurniture={(slug) => handleAddItem(slug, "furniture")}
                 />
             )}
+
+            {/* 미니룸 아래: 내 펫홈 공유 (꾸미기는 스테이지 자체 편집 버튼이 담당) */}
+            {!editMode && (
+                <button
+                    onClick={async () => {
+                        const shareUrl = nickname
+                            ? `${window.location.origin}/u/${encodeURIComponent(nickname)}`
+                            : window.location.origin;
+                        try {
+                            await navigator.clipboard.writeText(shareUrl);
+                            toast.success("내 펫홈 주소를 복사했어요. 친구에게 공유해보세요!");
+                        } catch {
+                            toast.error("주소 복사에 실패했습니다");
+                        }
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-gray-500 dark:text-gray-400 bg-white/70 dark:bg-gray-800/70 border border-gray-100 dark:border-gray-700 hover:text-memento-500 hover:border-memento-200 transition-colors"
+                >
+                    <Share2 className="w-3.5 h-3.5" />
+                    내 펫홈 공유
+                </button>
+            )}
             </div>
 
             {/* 우: 메뉴 + 콘텐츠(섹션) — 데스크탑 우측 */}
@@ -422,6 +443,34 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                                 {neighborCount}
                             </span>
                             <span className="text-[10px] text-gray-500 dark:text-gray-400">이웃</span>
+                        </button>
+                    </div>
+
+                    {/* 핵심 가치 액션 — 펫홈은 톤, 심장은 AI펫톡+AI영상. 창 안에서 바로 진입 */}
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => window.dispatchEvent(new CustomEvent("navigateMainTab", { detail: "ai-chat" }))}
+                            className={cn(
+                                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white shadow-sm active:scale-[0.99] transition-all",
+                                isMemorialMode
+                                    ? "bg-gradient-to-r from-memorial-500 to-orange-400 hover:from-memorial-600 hover:to-orange-500"
+                                    : "bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500"
+                            )}
+                        >
+                            <MessageCircle className="w-4 h-4" />
+                            펫톡 시작
+                        </button>
+                        <button
+                            onClick={() => setActiveSection("video")}
+                            className={cn(
+                                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold border transition-all active:scale-[0.99]",
+                                isMemorialMode
+                                    ? "text-memorial-600 border-memorial-200 bg-memorial-50/60 hover:bg-memorial-50 dark:bg-memorial-900/10 dark:border-memorial-800"
+                                    : "text-memento-600 border-memento-200 bg-memento-50/60 hover:bg-memento-50 dark:bg-memento-900/10 dark:border-memento-800"
+                            )}
+                        >
+                            <Film className="w-4 h-4" />
+                            AI 영상
                         </button>
                     </div>
 

@@ -7,10 +7,10 @@
  *  3. 로그인 + 꼬미 있음: 개인 펫홈 미리보기 + 탭 → 펫홈 탭으로 이동
  */
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import {
     View, Text, Image, TouchableOpacity, StyleSheet,
-    ImageBackground, Dimensions, Modal, ScrollView, Pressable,
+    Modal, ScrollView, Pressable,
 } from "react-native";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { useSimpleMode } from "@/contexts/SimpleModeContext";
@@ -19,12 +19,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Session } from "@supabase/supabase-js";
 import { COLORS } from "@/lib/theme";
-import { getMyMinihompySettings, getMinimiInventory } from "@/lib/minihompy-api";
-import { findMinimiOrFallback, findBackgroundOrDefault } from "@/data/minihompyData";
-import type { MinihompySettings, UserMinimiRow } from "@/types";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const HERO_STAGE_HEIGHT = 260;
 
 interface Props {
     session: Session | null;
@@ -35,35 +29,9 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
     const { isDarkMode } = useDarkMode();
     const { fontScale, spacingScale, iconScale } = useSimpleMode();
     const router = useRouter();
-    const accessToken = session?.access_token ?? null;
 
-    // 펫홈 데이터 (로그인 유저만)
-    const [settings, setSettings] = useState<MinihompySettings | null>(null);
-    const [ownedMinimis, setOwnedMinimis] = useState<UserMinimiRow[]>([]);
-    const [loaded, setLoaded] = useState(false);
-
-    useEffect(() => {
-        if (!accessToken) {
-            setLoaded(true);
-            return;
-        }
-        let cancelled = false;
-        (async () => {
-            try {
-                const [s, inv] = await Promise.all([
-                    getMyMinihompySettings(accessToken).catch(() => null),
-                    getMinimiInventory(accessToken).catch(() => ({ owned: [], equippedSlug: null })),
-                ]);
-                if (cancelled) return;
-                if (s) setSettings(s);
-                setOwnedMinimis(inv.owned);
-            } finally {
-                if (!cancelled) setLoaded(true);
-            }
-        })();
-        return () => { cancelled = true; };
-    }, [accessToken]);
-
+    // (강등 후 정리) 펫홈 프리뷰용 settings/inventory fetch 제거 — 컴팩트 바는 데이터 불필요.
+    // 매 홈 렌더마다 API 2회 낭비되던 죽은 fetch였음. (웹 HeroSection 동일 정리)
     const [guideOpen, setGuideOpen] = useState(false);
 
     // --- 비로그인: 기존 히어로 ---
@@ -194,149 +162,6 @@ const compactStyles = StyleSheet.create({
         borderRadius: 16, borderWidth: 1,
     },
 });
-
-// ============================================================================
-// 허브 핵심 액션 — [우리 아이와 대화하기(AI펫톡)] + [AI 영상 만들기][펫홈 꾸미기]
-// (현재 미사용 — 펫홈 화면 내부 액션으로 이전 예정. 강등 후 홈에선 CompactPethomeBar 사용)
-// (웹 src/components/features/home/HeroSection.tsx HubActions 1:1)
-// ============================================================================
-
-function HubActions({ isDarkMode, onChat, onVideo, onDecorate }: {
-    isDarkMode: boolean;
-    onChat: () => void;
-    onVideo: () => void;
-    onDecorate: () => void;
-}) {
-    const subBg = isDarkMode ? COLORS.gray[900] : "rgba(255,255,255,0.85)";
-    const subBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[200];
-    const subText = isDarkMode ? COLORS.gray[200] : COLORS.gray[700];
-
-    return (
-        <View style={hubStyles.wrap}>
-            <TouchableOpacity activeOpacity={0.88} onPress={onChat} style={hubStyles.primaryWrap}>
-                <LinearGradient
-                    colors={[COLORS.memento[500], COLORS.memento[400]]}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                    style={hubStyles.primary}
-                >
-                    <Ionicons name="chatbubble-ellipses" size={24} color="#fff" />
-                    <View style={{ flex: 1 }}>
-                        <Text style={hubStyles.primaryTitle}>펫톡 시작</Text>
-                        <Text style={hubStyles.primarySub}>AI 펫톡</Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.7)" />
-                </LinearGradient>
-            </TouchableOpacity>
-            <View style={hubStyles.row}>
-                <TouchableOpacity
-                    activeOpacity={0.85}
-                    onPress={onVideo}
-                    style={[hubStyles.secondary, { backgroundColor: subBg, borderColor: subBorder }]}
-                >
-                    <Ionicons name="film-outline" size={18} color={COLORS.memento[500]} />
-                    <Text style={[hubStyles.secondaryText, { color: subText }]}>AI 영상 만들기</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    activeOpacity={0.85}
-                    onPress={onDecorate}
-                    style={[hubStyles.secondary, { backgroundColor: subBg, borderColor: subBorder }]}
-                >
-                    <Ionicons name="color-palette-outline" size={18} color={COLORS.memento[500]} />
-                    <Text style={[hubStyles.secondaryText, { color: subText }]}>펫홈 꾸미기</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-}
-
-const hubStyles = StyleSheet.create({
-    wrap: { marginTop: 12, gap: 10 },
-    primaryWrap: {
-        borderRadius: 18,
-        elevation: 4,
-        shadowColor: COLORS.memento[500],
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-    },
-    primary: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 12,
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderRadius: 18,
-    },
-    primaryTitle: { color: "#fff", fontSize: 15, fontWeight: "700" },
-    primarySub: { color: "rgba(255,255,255,0.8)", fontSize: 11, marginTop: 2 },
-    row: { flexDirection: "row", gap: 10 },
-    secondary: {
-        flex: 1,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 7,
-        paddingVertical: 14,
-        paddingHorizontal: 8,
-        borderRadius: 16,
-        borderWidth: 1,
-    },
-    secondaryText: { fontSize: 13, fontWeight: "600" },
-});
-
-// ============================================================================
-// 개인 펫홈 오버레이 (배치된 꼬미 표시 + 인사말)
-// ============================================================================
-
-function PersonalOverlay({ settings, isMemorialMode, isDarkMode }: {
-    settings: MinihompySettings | null;
-    isMemorialMode: boolean;
-    isDarkMode: boolean;
-}) {
-    const placed = settings?.placedMinimi ?? [];
-    const stageW = SCREEN_WIDTH - 32; // 16px padding each side
-
-    return (
-        <>
-            {/* 배치된 꼬미들 */}
-            {placed.map((p, i) => {
-                const minimi = findMinimiOrFallback(p.slug);
-                const left = (p.x / 100) * stageW;
-                const top = (p.y / 100) * HERO_STAGE_HEIGHT;
-                return (
-                    <Image
-                        key={`${p.slug}-${i}`}
-                        source={{ uri: minimi.imageUrl }}
-                        style={[styles.placedMinimi, {
-                            left: Math.max(0, Math.min(left - 20, stageW - 40)),
-                            top: Math.max(0, Math.min(top - 20, HERO_STAGE_HEIGHT - 40)),
-                            zIndex: p.zIndex ?? i,
-                        }]}
-                        resizeMode="contain"
-                    />
-                );
-            })}
-
-            {/* 인사말 말풍선 */}
-            {settings?.greeting && (
-                <View style={styles.greetingBubble}>
-                    <Text style={styles.greetingText}>{settings.greeting}</Text>
-                    <View style={styles.greetingTail} />
-                </View>
-            )}
-
-            {/* 하단 바 — 펫홈 바로가기 힌트 */}
-            <LinearGradient
-                colors={["transparent", "rgba(0,0,0,0.5)"]}
-                style={styles.personalBottomBar}
-            >
-                <Ionicons name="home" size={14} color="rgba(255,255,255,0.9)" />
-                <Text style={styles.personalHint}>내 펫홈</Text>
-                <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.7)" />
-            </LinearGradient>
-        </>
-    );
-}
 
 // ============================================================================
 // 펫홈 안내 가이드 모달

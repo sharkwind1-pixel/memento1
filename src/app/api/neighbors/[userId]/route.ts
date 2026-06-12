@@ -71,7 +71,7 @@ export async function GET(
         }
 
         // 목록 요청
-        let items: Array<{ userId: string; nickname: string; mutual: boolean }> | undefined;
+        let items: Array<{ userId: string; nickname: string; mutual: boolean; customNickname?: string }> | undefined;
         let total: number | undefined;
         if (list === "followers" || list === "following") {
             const keyCol = list === "followers" ? "following_id" : "follower_id";
@@ -79,7 +79,7 @@ export async function GET(
 
             const { data: rows, count } = await admin
                 .from("neighbors")
-                .select(`id, ${otherCol}`, { count: "exact" })
+                .select(`id, ${otherCol}, neighbor_nickname`, { count: "exact" })
                 .eq(keyCol, userId)
                 .order("created_at", { ascending: false })
                 .range(offset, offset + LIST_PAGE_SIZE - 1);
@@ -102,10 +102,35 @@ export async function GET(
                     (reverseRows ?? []).map((r) => Object.values(r as Record<string, string>)[0])
                 );
                 const nickMap = new Map((profiles ?? []).map((p) => [p.id, p.nickname || "익명"]));
+
+                // 이웃 별명(일촌명) — 내가 부르는 이름이라 본인 목록 조회 시에만 노출 (타인에겐 프라이버시)
+                const customMap = new Map<string, string>();
+                if (user?.id === userId) {
+                    if (list === "following") {
+                        // 내 팔로잉 목록 = 내 행 자체 → 위 select의 neighbor_nickname 그대로
+                        for (const r of rows ?? []) {
+                            const rec = r as Record<string, string | null>;
+                            if (rec.neighbor_nickname) customMap.set(rec[otherCol] as string, rec.neighbor_nickname);
+                        }
+                    } else {
+                        // 팔로워 목록 — 내가 맞팔한 상대에게 붙인 별명을 별도 조회
+                        const { data: myRows } = await admin
+                            .from("neighbors")
+                            .select("following_id, neighbor_nickname")
+                            .eq("follower_id", user.id)
+                            .in("following_id", otherIds)
+                            .not("neighbor_nickname", "is", null);
+                        for (const r of myRows ?? []) {
+                            if (r.neighbor_nickname) customMap.set(r.following_id, r.neighbor_nickname);
+                        }
+                    }
+                }
+
                 items = otherIds.map((id) => ({
                     userId: id,
                     nickname: nickMap.get(id) ?? "익명",
                     mutual: reverseSet.has(id),
+                    ...(customMap.has(id) ? { customNickname: customMap.get(id) } : {}),
                 }));
             } else {
                 items = [];
@@ -203,6 +228,57 @@ export async function POST(
         } catch { /* 알림 실패 무시 */ }
 
         return NextResponse.json({ following: true, mutual });
+    } catch {
+        return NextResponse.json({ error: "서버 오류" }, { status: 500 });
+    }
+}
+
+// 이웃 별명(일촌명-lite) 설정/해제 — 내 follower 행에만 (RLS neighbors_update_own)
+export async function PATCH(
+    request: NextRequest,
+    { params }: { params: Promise<{ userId: string }> }
+) {
+    try {
+        const clientIP = await getClientIP();
+        const rateLimit = checkRateLimit(clientIP, "general");
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: "요청이 너무 많습니다." },
+                { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
+            );
+        }
+
+        const user = await getAuthUser();
+        if (!user) {
+            return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
+        }
+
+        const { userId } = await params;
+        const body = await request.json().catch(() => ({}));
+        const raw = body?.nickname;
+        // null/빈문자 = 별명 해제
+        let nickname: string | null = null;
+        if (typeof raw === "string" && raw.trim()) {
+            nickname = raw.trim().slice(0, 20);
+        }
+
+        const supabase = await createServerSupabase();
+        const { data, error } = await supabase
+            .from("neighbors")
+            .update({ neighbor_nickname: nickname })
+            .eq("follower_id", user.id)
+            .eq("following_id", userId)
+            .select("id")
+            .maybeSingle();
+
+        if (error) {
+            return NextResponse.json({ error: "별명 설정 실패" }, { status: 500 });
+        }
+        if (!data) {
+            return NextResponse.json({ error: "이웃 관계가 없습니다" }, { status: 404 });
+        }
+
+        return NextResponse.json({ ok: true, nickname });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
