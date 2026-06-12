@@ -12,6 +12,7 @@
 - **🐛 E2E가 잡은 prod 버그**: 팔로우 알림이 0건 — `notifications_type_check` CHECK가 구독/admin 타입만 허용해 `neighbor_follow` insert silent 실패. **DB 직접 대조로만 잡히는 류**([[audit-db-grounded-lesson]]). 마이그 `notifications_allow_neighbor_follow`로 타입 추가, INSERT dry-run(BEGIN/RETURNING/ROLLBACK) 통과 실측.
 - **검증**: DB L4(정책·CHECK·dry-run 실측) / **POST 실 E2E**(testmementoani→꼼지네형 행 prod 생성, UI 버튼 경유) / GET curl 200+카운트 정확. 웹 L2+모바일 L2. **잔여**: DELETE·알림 행위적 확인+UI 상태 표시는 건강한 브라우저에서 재확인 필요(검증 브라우저가 세션 중 완전 퇴화 — 탭 frozen·fetch 행잉. supabase Web Locks 멀티탭 경합 의심. 서버측은 curl/SQL로 전부 정상 입증).
 - 앱 내 펫홈 이웃 카운트는 웹 선행(후속 패리티 메모). 다음: 이웃 소식 피드·카카오 초대행사 연계.
+- **9번 적대검증(L4, prod 프로브) SHIP WITH FIXES → 전부 반영**(`7979e3b`): #1[High] **GET ?list= 게스트에 목록+닉네임 노출**→401 가드(N2/N3 부류 선제 차단, **curl 401 라이브 실측**) / #2 비공개 펫홈 카운트·목록 403 / #4 DELETE rate-limit / #9 목록 더보기(31번째부터 안 보이던 미완) / #10 공유=`/u/{닉네임}` / #11 토글 후 카운트 재동기화. not-an-issue 확정: RLS forge 방어·self-follow 이중차단·mutual 쿼리 정확성·**알림 dedup UNIQUE prod 실증**(재팔로우 알림 스팸 불가 — 부작용: 재팔로우는 알림 안 감, 허용). 비공개 403 경로는 prod에 비공개 유저 0이라 코드 경로 확정만(라이브 재현 불가).
 
 ---
 
