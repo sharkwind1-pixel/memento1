@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-06-13 싸이월드 소셜 루프 3종 + 펫홈 창 핵심버튼 (사용자: "물어보지 말고 다 구현")
+배경: 싸이월드 vs 메멘토애니 분석 — 외피(창·미니룸·방명록)는 80% 수렴했으나 소셜 순환 고리(일촌새글·파도타기·일촌명) 부재 진단 → 사용자 전권 위임.
+- 커밋1 `feat(social): 이웃 새소식 + 파도타기`: ①GET /api/neighbors/feed(팔로잉 최근글 10, 숨김·차단 제외)+웹 NeighborNewsSection(홈 공지 아래)+앱 1:1(QuestCard 아래) ②파도타기: 웹 MinihompyVisitModal userId→surfUserId 상태 승격(의존성 자동 재로드, 방문카운트 집집 누적)+이웃 아바타 스트립 / 앱 getNeighborList+스트립(스택 push).
+- 커밋2 `feat(social): 서로이웃 별명 + 창 버튼 + 죽은코드`: ③neighbors.neighbor_nickname(≤20 CHECK)+UPDATE RLS 마이그 prod 적용·실측, PATCH API(별명/해제), GET list가 본인 조회시 customNickname(타인 비노출), NeighborListModal 연필 인라인 편집 ④펫홈 창 카운트헤더 아래 [펫톡 시작](navigateMainTab)+[AI 영상](video 섹션)+미니룸 아래 [내 펫홈 공유] ⑤HubActions(웹·앱)·PersonalOverlay(앱)·죽은 fetch 2건 제거.
+- L4 prod 실측(curl, 테스트계정): follow POST 200→DB행 / feed items 5(꼼지네형 글) / PATCH→DB "꼼지형" 3자 한글왕복 / list customNickname 내려옴. 단 1차 curl이 cp949로 한글 깨뜨려 보냄(UTF-8 파일 재전송으로 해결 — Windows curl 한글 body는 --data-binary @utf8파일).
+- 잔여: UI L5(브라우저 끊김 — 테스트계정에 데모 데이터 세팅됨) / 파도타기 양성케이스(그래프 1엣지뿐) / 앱 EAS. BGM 의도적 제외(음원 라이선스).
+
 ## 2026-06-12 싸이월드/버디버디 "광장" 피벗 — 홈=콘텐츠 피드, 펫홈=가벼운 작은 창
 배경: 사용자 정정 "메인페이지는 다른 유저 글/정보글/AI영상 구경·참여·팔로우·결제하는 곳(광장), 내 미니홈피는 전체창 덮지 말고 작은 창으로 가볍게 떠서 운영. 모바일은 풀스크린이 직관적." 피드 구성=커뮤니티 글+AI영상+매거진+맨아래 추모(HomePage 기존 섹션 그대로 활용).
 - `9429b0a` 펫홈 팝업 경량화: MyPethomeModal backdrop dim 45%→25%(뒤 광장 비침) + max-w-4xl→3xl. "작은 창으로 가볍게".
