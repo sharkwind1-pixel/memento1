@@ -53,19 +53,13 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
     // 깜빡임 제거: 컴팩트 바는 settings/inventory가 필요 없으므로 loaded를 기다리지 않는다.
     // (이전엔 !loaded 동안 옛 마케팅 히어로를 보여줘 로그인 직후 큰 히어로가 깜빡였다 컴팩트 바로 바뀜)
 
-    // --- 추모 모드: 펫홈/꼬미를 히어로에 노출하지 않음 (추모 정서 보호) ---
-    // 꼬미·펫홈은 일상(꾸미기) 요소라 추모 모드에선 추모 전용 히어로만 보여준다.
-    if (isMemorial) {
-        return <OriginalHero setSelectedTab={setSelectedTab} user={user} isMemorial />;
-    }
-
-    // --- 로그인(일상): 홈 = 콘텐츠 피드(광장) 중심. 펫홈은 작은 진입점(컴팩트 바)으로 강등.
-    //     큰 펫홈 화면은 MyPethomeModal(가벼운 작은 창)으로 분리. 꼬미 유무 무관 동일 진입.
-    //     히어로가 차지하던 자리는 아래 커뮤니티/AI영상/매거진/추모 피드가 메인이 된다.
+    // --- 로그인(일상+추모 공통): 홈 상단에 펫홈 진입 바를 항상 노출 → 로그인하면 펫홈이 바로 보인다.
+    //     추모 계정도 추모 공간(=펫홈)이 핵심이므로 진입을 숨기지 않고 추모 톤(amber)으로 보여준다.
+    //     큰 펫홈 화면은 MyPethomeModal(창)으로 분리. 비운 자리는 아래 커뮤니티/AI영상/매거진/추모 피드가 메인.
     const nick = (user?.user_metadata?.nickname as string) || user?.email?.split("@")[0] || "나";
     return (
         <>
-            <CompactPethomeBar nickname={nick} onPethome={goMinihompy} onChat={goAIChat} onVideo={goAIVideo} />
+            <CompactPethomeBar nickname={nick} isMemorial={isMemorial} onPethome={goMinihompy} onChat={goAIChat} onVideo={goAIVideo} />
             {/* 펫홈 안내 가이드(꼬미 처음인 유저용 — 컴팩트 바 진입 시 펫홈 창의 온보딩이 이어받음) */}
             <MinihompyGuideModal
                 open={guideOpen}
@@ -81,29 +75,36 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
 // 큰 펫홈 화면은 가벼운 작은 창(MyPethomeModal)으로 분리. [펫톡][영상]은 핵심 가치라 한 줄에 노출.
 // ============================================================================
 
-function CompactPethomeBar({ nickname, onPethome, onChat, onVideo }: {
-    nickname: string; onPethome: () => void; onChat: () => void; onVideo: () => void;
+function CompactPethomeBar({ nickname, isMemorial, onPethome, onChat, onVideo }: {
+    nickname: string; isMemorial: boolean; onPethome: () => void; onChat: () => void; onVideo: () => void;
 }) {
+    // 추모 계정은 amber 톤, 일상은 memento 하늘색 톤 (전체 className을 리터럴로 둬 Tailwind purge 안전)
+    const accent = isMemorial ? "text-memorial-500" : "text-memento-500";
+    const iconBg = isMemorial ? "bg-memorial-100 dark:bg-memorial-900/30" : "bg-memento-100 dark:bg-memento-900/30";
+    const ring = isMemorial ? "border-memorial-100 dark:border-gray-700" : "border-memento-100 dark:border-gray-700";
+    const chatGrad = isMemorial
+        ? "from-memorial-500 to-orange-400 hover:from-memorial-600 hover:to-orange-500"
+        : "from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500";
     return (
         <section className="px-4 pt-4 sm:pt-5" data-tutorial-id="home-hero">
             <div className="max-w-md mx-auto sm:max-w-2xl flex items-center gap-2">
                 <button
                     onClick={onPethome}
                     aria-label="내 펫홈 열기"
-                    className="flex items-center gap-2.5 flex-1 min-w-0 px-3.5 py-2.5 rounded-2xl bg-white/85 dark:bg-gray-800/85 backdrop-blur-sm border border-memento-100 dark:border-gray-700 shadow-sm hover:shadow transition active:scale-[0.99]"
+                    className={`flex items-center gap-2.5 flex-1 min-w-0 px-3.5 py-2.5 rounded-2xl bg-white/85 dark:bg-gray-800/85 backdrop-blur-sm border shadow-sm hover:shadow transition active:scale-[0.99] ${ring}`}
                 >
-                    <span className="w-9 h-9 rounded-full bg-memento-100 dark:bg-memento-900/30 flex items-center justify-center flex-shrink-0">
-                        <Home className="w-[18px] h-[18px] text-memento-500" />
+                    <span className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+                        <Home className={`w-[18px] h-[18px] ${accent}`} />
                     </span>
                     <span className="flex-1 min-w-0 text-left">
                         <span className="block text-sm font-bold text-gray-800 dark:text-white truncate">{nickname}네 펫홈</span>
-                        <span className="block text-[11px] text-gray-400 truncate">꾸미기 · 기록 · 방명록</span>
+                        <span className="block text-[11px] text-gray-400 truncate">{isMemorial ? "추억 · 기록 · 방명록" : "꾸미기 · 기록 · 방명록"}</span>
                     </span>
                     <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 </button>
                 <button
                     onClick={onChat}
-                    className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-3 rounded-2xl bg-gradient-to-r from-memento-500 to-memento-400 text-white shadow-sm active:scale-95 transition"
+                    className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-3 rounded-2xl bg-gradient-to-r text-white shadow-sm active:scale-95 transition ${chatGrad}`}
                 >
                     <MessageCircle className="w-[18px] h-[18px]" />
                     <span className="text-sm font-semibold hidden sm:inline">펫톡</span>
@@ -111,7 +112,7 @@ function CompactPethomeBar({ nickname, onPethome, onChat, onVideo }: {
                 <button
                     onClick={onVideo}
                     aria-label="AI 영상 만들기"
-                    className="flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-2xl bg-white/85 dark:bg-gray-800/85 border border-memento-100 dark:border-gray-700 text-memento-500 shadow-sm active:scale-95 transition"
+                    className={`flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-2xl bg-white/85 dark:bg-gray-800/85 border shadow-sm active:scale-95 transition ${ring} ${accent}`}
                 >
                     <Film className="w-[18px] h-[18px]" />
                 </button>

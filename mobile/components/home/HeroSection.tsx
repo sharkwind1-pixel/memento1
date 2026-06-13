@@ -42,21 +42,16 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
     // 깜빡임 제거: 컴팩트 바는 settings/inventory가 필요 없으므로 loaded 대기 안 함
     // (이전엔 !loaded 동안 옛 마케팅 히어로 → 로그인 직후 큰 히어로가 깜빡였다 바뀜)
 
-    // --- 추모 모드: 펫홈/꼬미를 히어로에 노출하지 않음 (추모 정서 보호) ---
-    // 꼬미·펫홈은 일상(꾸미기) 요소라 추모 모드에선 추모 전용 히어로만 보여준다. (웹 HeroSection과 동일)
-    if (isMemorialMode) {
-        return <OriginalHero isMemorialMode isDarkMode={isDarkMode} fontScale={fontScale} spacingScale={spacingScale} iconScale={iconScale} onCta={() => router.push("/(tabs)/ai-chat")} onSecondary={() => router.push("/(tabs)/community")} ctaText="지금 만나러 가기" />;
-    }
-
-    // --- 로그인(일상): 홈 = 콘텐츠 피드(광장) 중심. 펫홈은 작은 진입점(컴팩트 바)으로 강등. (웹 HeroSection 1:1)
-    //     모바일은 탭 시 펫홈을 풀스크린(/(tabs)/minihompy)으로 — 작은 창 대신 직관적 전체화면.
-    //     히어로가 비운 자리에서 아래 커뮤니티/AI영상/매거진/추모 피드가 메인이 된다.
+    // --- 로그인(일상+추모 공통): 홈 상단에 펫홈 진입 바를 항상 노출 → 로그인하면 펫홈이 바로 보인다.
+    //     추모 계정도 추모 공간(=펫홈)이 핵심이라 진입을 숨기지 않고 추모 톤(amber)으로. (웹 HeroSection 1:1)
+    //     모바일은 탭 시 펫홈을 풀스크린(/(tabs)/minihompy)으로.
     const nick = (session?.user?.user_metadata?.nickname as string) || session?.user?.email?.split("@")[0] || "나";
     return (
         <View style={styles.section}>
             <CompactPethomeBar
                 nickname={nick}
                 isDarkMode={isDarkMode}
+                isMemorialMode={isMemorialMode}
                 onPethome={() => router.push("/(tabs)/minihompy")}
                 onChat={() => router.push("/(tabs)/ai-chat")}
                 onVideo={() => router.push("/(tabs)/record?openVideo=1")}
@@ -76,15 +71,20 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
 // 모바일은 탭 시 펫홈을 풀스크린(/(tabs)/minihompy)으로 — 작은 창 대신 직관적 전체화면.
 // ============================================================================
 
-function CompactPethomeBar({ nickname, isDarkMode, onPethome, onChat, onVideo }: {
+function CompactPethomeBar({ nickname, isDarkMode, isMemorialMode, onPethome, onChat, onVideo }: {
     nickname: string;
     isDarkMode: boolean;
+    isMemorialMode: boolean;
     onPethome: () => void;
     onChat: () => void;
     onVideo: () => void;
 }) {
+    // 추모 계정은 amber 톤, 일상은 memento 하늘색 톤 (웹 CompactPethomeBar 1:1)
+    const accent = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
+    const accent2 = isMemorialMode ? "#FB923C" : COLORS.memento[400];
+    const iconCircleBg = isMemorialMode ? "#FEF3C7" : "#E0F7FF";
     const barBg = isDarkMode ? COLORS.gray[800] : "rgba(255,255,255,0.9)";
-    const barBorder = isDarkMode ? COLORS.gray[700] : "#CBEBF0";
+    const barBorder = isDarkMode ? COLORS.gray[700] : (isMemorialMode ? "#FBE3B8" : "#CBEBF0");
     const titleColor = isDarkMode ? COLORS.white : COLORS.gray[800];
 
     return (
@@ -94,18 +94,18 @@ function CompactPethomeBar({ nickname, isDarkMode, onPethome, onChat, onVideo }:
                 onPress={onPethome}
                 style={[compactStyles.entry, { backgroundColor: barBg, borderColor: barBorder }]}
             >
-                <View style={compactStyles.iconCircle}>
-                    <Ionicons name="home" size={18} color={COLORS.memento[500]} />
+                <View style={[compactStyles.iconCircle, { backgroundColor: iconCircleBg }]}>
+                    <Ionicons name="home" size={18} color={accent} />
                 </View>
                 <View style={{ flex: 1 }}>
                     <Text style={[compactStyles.entryTitle, { color: titleColor }]} numberOfLines={1}>{nickname}네 펫홈</Text>
-                    <Text style={compactStyles.entrySub} numberOfLines={1}>꾸미기 · 기록 · 방명록</Text>
+                    <Text style={compactStyles.entrySub} numberOfLines={1}>{isMemorialMode ? "추억 · 기록 · 방명록" : "꾸미기 · 기록 · 방명록"}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
             </TouchableOpacity>
             <TouchableOpacity activeOpacity={0.85} onPress={onChat} style={compactStyles.chatBtn}>
                 <LinearGradient
-                    colors={[COLORS.memento[500], COLORS.memento[400]]}
+                    colors={[accent, accent2]}
                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                     style={compactStyles.chatInner}
                 >
@@ -117,7 +117,7 @@ function CompactPethomeBar({ nickname, isDarkMode, onPethome, onChat, onVideo }:
                 onPress={onVideo}
                 style={[compactStyles.videoBtn, { backgroundColor: barBg, borderColor: barBorder }]}
             >
-                <Ionicons name="film-outline" size={18} color={COLORS.memento[500]} />
+                <Ionicons name="film-outline" size={18} color={accent} />
             </TouchableOpacity>
         </View>
     );
