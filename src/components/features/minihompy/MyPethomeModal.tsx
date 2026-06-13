@@ -49,7 +49,9 @@ export default function MyPethomeModal({ isOpen, onClose }: { isOpen: boolean; o
             onClick={onClose}
         >
             <div className="relative w-full max-w-2xl h-fit" onClick={(e) => e.stopPropagation()}>
-                <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-memento-500 rounded-t-2xl shadow-sm">
+                {/* z-40: 본문(스테이지) 안 z-20 '꾸미러 가기' 버튼·z-30 편집헤더가 sticky 헤더를 뚫고
+                    올라오던 문제 해소. 내부 풀스크린 모달(상점 z-9999·방명록 z-50 등)은 여전히 위(z-40<z-50). */}
+                <div className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-memento-500 rounded-t-2xl shadow-sm">
                     <span className="text-sm font-semibold text-white flex items-center gap-1.5">
                         <Home className="w-4 h-4" /> 내 펫홈
                     </span>
