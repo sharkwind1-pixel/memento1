@@ -10,6 +10,7 @@
 import { NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/supabase-server";
 import { getOpenAI } from "@/lib/agent/shared";
+import { checkRateLimitDB, checkDailyUsageDB, checkGlobalDailyLimit } from "@/lib/rate-limit";
 import {
     computeSaju, pillarName, pillarHanja,
     STEM_ELEMENT, type SajuInput,
@@ -58,6 +59,27 @@ export async function POST(req: Request) {
             }
         }
 
+        // 존재하지 않는 날짜(2/31, 4/31 등) 차단 — UTC로 구성해 롤오버 검출
+        const probe = new Date(Date.UTC(year, month - 1, day));
+        if (probe.getUTCFullYear() !== year || probe.getUTCMonth() !== month - 1 || probe.getUTCDate() !== day) {
+            return NextResponse.json({ error: "존재하지 않는 날짜예요." }, { status: 400 });
+        }
+
+        // 비용 통제 — 펫톡과 동일한 ai_chat 예산 공유(전체 상한 + 분당 + 일일).
+        // 유효 입력 확인 후에만 카운트(일일 체크는 증가 부수효과). 한도 초과 시 429.
+        const globalLimit = await checkGlobalDailyLimit();
+        if (!globalLimit.allowed) {
+            return NextResponse.json({ error: "오늘 AI 이용이 많아 잠시 쉬고 있어요. 잠시 후 다시 시도해주세요." }, { status: 429 });
+        }
+        const perMinute = await checkRateLimitDB(user.id, "aiChat");
+        if (!perMinute.allowed) {
+            return NextResponse.json({ error: "조금 천천히 시도해주세요." }, { status: 429 });
+        }
+        const daily = await checkDailyUsageDB(user.id, true);
+        if (!daily.allowed || daily.remaining < 0) {
+            return NextResponse.json({ error: "오늘 AI 이용 한도를 다 썼어요. 내일 다시 만나요." }, { status: 429 });
+        }
+
         const input: SajuInput = { year, month, day, hour, minute, knownTime };
         const chart = computeSaju(input);
 
@@ -89,7 +111,8 @@ export async function POST(req: Request) {
             `. 일간(나)=${chartReadable.day.ko[0]}(${dayMasterElem} 기운). ` +
             `오행 분포: ${elemEntries.map(([e, n]) => `${e}${n}`).join(" ")}. ` +
             `${lacking.length ? `부족한 기운: ${lacking.join(",")}. ` : "오행이 비교적 고른 편. "}` +
-            `가장 강한 기운: ${strongest}. 띠: ${chart.zodiac}.`;
+            `가장 강한 기운: ${strongest}. 띠: ${chart.zodiac}.` +
+            (body.gender === "남" || body.gender === "여" ? ` 의뢰인 성별: ${body.gender}.` : "");
 
         const system =
             "너는 메멘토애니의 '반려 사주' 도우미다. 반려동물과의 인연을 사주 오행으로 가볍고 따뜻하게 풀어준다. " +
