@@ -21,6 +21,7 @@ import {
 } from "@/components/features/home";
 import AnnouncementBanner from "@/components/features/home/AnnouncementBanner";
 import NeighborNewsSection from "@/components/features/home/NeighborNewsSection";
+import SegmentActionCards from "@/components/features/home/SegmentActionCards";
 import QuestCard from "@/components/features/quests/QuestCard";
 import Lightbox from "@/components/features/home/Lightbox";
 import MemorialDetailModal from "@/components/features/home/MemorialDetailModal";
@@ -141,6 +142,9 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
             <div className="relative z-10 space-y-10 sm:space-y-14 pb-28">
                 {/* 히어로 */}
                 <HeroSection setSelectedTab={setSelectedTab} user={user} isMemorial={isMemorialMode} />
+
+                {/* 회원 유형별 "지금 해볼 것" — 입양자=반려 사주 진입, 양육자=케어, 추모=추억 */}
+                <SegmentActionCards setSelectedTab={setSelectedTab} />
 
                 {/* 스토리 피드는 의도적으로 홈에서 제외 (사용자 결정 2026-04~05).
                     추후 부활 시 StoryFeed import + 위치 복원. 모바일 앱과 패리티 유지. */}
