@@ -116,11 +116,14 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
     // 외부 리셋 처리 (isActive / subcategory / resetKey 변경 감지)
     // ============================================================
 
-    // 다른 탭으로 이동 시 상세/갤러리 닫기
+    // 다른 탭으로 이동 시 상세/갤러리 닫기 + 목록을 로딩 상태로 되돌림.
+    // (탭 유지 패턴이라 컴포넌트가 언마운트 안 됨 → 재진입 시 옛 게시판 글이 잠깐 보이던 stale-flash 차단.
+    //  재진입하면 isActive effect가 fetchPosts로 최신 목록을 다시 채운다.)
     useEffect(() => {
         if (!isActive) {
             setSelectedPostId(null);
             setShowcaseView(false);
+            setIsLoading(true);
         }
     }, [isActive]);
 

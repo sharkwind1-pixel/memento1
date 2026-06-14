@@ -4,7 +4,7 @@
  * 정적 에셋 캐싱으로 반복 방문 시 로드 시간 단축
  */
 
-const CACHE_NAME = "memento-v4-notranslate";
+const CACHE_NAME = "memento-v5-img-networkfirst";
 const STATIC_ASSETS = ["/logo.png", "/logo2.png", "/icon-192.png", "/icon-512.png"];
 
 // 서비스 워커 설치 시 정적 에셋 프리캐시
@@ -88,22 +88,23 @@ self.addEventListener("fetch", function (event) {
         return;
     }
 
-    // Supabase Storage 이미지: Stale-While-Revalidate (GET만)
+    // Supabase Storage 이미지: Network-First (GET만)
+    // 이전엔 Stale-While-Revalidate라 수정된 이미지(같은 URL 덮어쓰기)가 캐시본으로 잠깐 보였다 교체됨.
+    // → 항상 최신을 먼저 받고, 네트워크 실패(오프라인) 시에만 캐시 폴백. stale-flash 제거.
     if (url.hostname.includes("supabase.co") && url.pathname.includes("/storage/")) {
         event.respondWith(
-            caches.match(event.request).then(function (cached) {
-                var fetchPromise = fetch(event.request).then(function (response) {
-                    if (response.ok) {
-                        var clone = response.clone();
-                        caches.open(CACHE_NAME).then(function (cache) {
-                            cache.put(event.request, clone);
-                        });
-                    }
-                    return response;
-                }).catch(function () {
-                    return cached;
+            fetch(event.request).then(function (response) {
+                if (response.ok) {
+                    var clone = response.clone();
+                    caches.open(CACHE_NAME).then(function (cache) {
+                        cache.put(event.request, clone);
+                    });
+                }
+                return response;
+            }).catch(function () {
+                return caches.match(event.request).then(function (cached) {
+                    return cached || Response.error();
                 });
-                return cached || fetchPromise;
             })
         );
         return;
