@@ -42,6 +42,7 @@ import PetSwitcher from "@/components/common/PetSwitcher";
 import OnboardingModal, {
     hasCompletedOnboardingAsync, checkOnboardingFromDB, type UserType,
 } from "@/components/onboarding/OnboardingModal";
+import NicknameSetupModal, { isNicknameSet } from "@/components/auth/NicknameSetupModal";
 
 export default function HomeScreen() {
     const router = useRouter();
@@ -52,19 +53,28 @@ export default function HomeScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [onboardingOpen, setOnboardingOpen] = useState(false);
+    const [nicknameSetupOpen, setNicknameSetupOpen] = useState(false);
 
-    // 신규 로그인 첫 진입 시 온보딩 노출 (LocalStorage + DB 동기화)
+    // 신규 로그인 첫 진입 플로우 (웹과 동일 순서): 1.닉네임 설정 → 2.온보딩
+    // 닉네임은 handle_new_user 트리거가 항상 자동 채우므로 nickname_set_at(직접 확정)로 판별.
     useEffect(() => {
         if (!user?.id) return;
         let cancelled = false;
         (async () => {
+            // 1) 닉네임 직접 확정 안 했으면 닉네임 모달 먼저 (온보딩은 완료 후)
+            const nickSet = await isNicknameSet(user.id);
+            if (cancelled) return;
+            if (!nickSet) {
+                setNicknameSetupOpen(true);
+                return;
+            }
+            // 2) 온보딩 (LocalStorage + DB 동기화)
             const localDone = await hasCompletedOnboardingAsync();
             if (cancelled) return;
             if (localDone) return;
             const dbDone = await checkOnboardingFromDB(user.id);
             if (cancelled) return;
             if (!dbDone) {
-                // 자연스러운 진입 (1.5초 지연 후 노출)
                 setTimeout(() => {
                     if (!cancelled) setOnboardingOpen(true);
                 }, 1500);
@@ -72,6 +82,12 @@ export default function HomeScreen() {
         })();
         return () => { cancelled = true; };
     }, [user?.id]);
+
+    // 닉네임 설정 완료 → 온보딩으로 이어감 (신규 유저는 온보딩 미완료 확정)
+    function handleNicknameComplete() {
+        setNicknameSetupOpen(false);
+        setTimeout(() => setOnboardingOpen(true), 400);
+    }
 
     function handleOnboardingComplete(userType: UserType) {
         // 유형별 후속 액션:
@@ -115,6 +131,10 @@ export default function HomeScreen() {
                 <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
                 <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
                 <SimpleHomeLauncher />
+                <NicknameSetupModal
+                    visible={nicknameSetupOpen}
+                    onComplete={handleNicknameComplete}
+                />
                 <OnboardingModal
                     visible={onboardingOpen}
                     onClose={() => setOnboardingOpen(false)}
@@ -159,6 +179,10 @@ export default function HomeScreen() {
             </ScrollView>
             </View>
 
+            <NicknameSetupModal
+                visible={nicknameSetupOpen}
+                onComplete={handleNicknameComplete}
+            />
             <OnboardingModal
                 visible={onboardingOpen}
                 onClose={() => setOnboardingOpen(false)}
