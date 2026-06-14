@@ -110,6 +110,7 @@ export default function NicknameSetupModal({
                 .from("profiles")
                 .update({
                     nickname: nickname.trim(),
+                    nickname_set_at: new Date().toISOString(), // 유저가 직접 확정 → 다음 진입부터 모달 재노출 안 함
                     terms_agreed_at: new Date().toISOString(),
                     location_consent: locationConsent,
                     location_consent_at: locationConsent ? new Date().toISOString() : null,

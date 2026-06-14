@@ -407,7 +407,7 @@ function HomeContent() {
             try {
                 const { data: profileData, error: profileError } = await supabase
                     .from("profiles")
-                    .select("nickname, tutorial_completed_at, onboarding_completed_at, user_type")
+                    .select("nickname, nickname_set_at, tutorial_completed_at, onboarding_completed_at, user_type")
                     .eq("id", user.id)
                     .single();
 
@@ -430,8 +430,11 @@ function HomeContent() {
                     safeSetItem("memento-ani-tutorial-complete", "true");
                 }
 
-                // 2. 닉네임이 없으면 설정 필요 (localStorage 동기화 이후에 체크)
-                if (!profileData.nickname) {
+                // 2. 닉네임을 유저가 직접 확정한 적 없으면 설정 모달 (localStorage 동기화 이후에 체크)
+                //    ※ handle_new_user 트리거가 nickname을 항상 자동 채우므로(이메일 앞부분) "nickname IS NULL"로는
+                //      모달이 영원히 안 떴음. 유저가 모달을 거쳐 직접 확정했는지는 nickname_set_at로 판별한다.
+                //      (기존 유저는 마이그레이션 backfill로 set_at 채워져 재노출 안 됨)
+                if (!profileData.nickname_set_at) {
                     setShowNicknameSetup(true);
                     return;
                 }
