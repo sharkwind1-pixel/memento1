@@ -83,9 +83,15 @@ export default function HomeScreen() {
         return () => { cancelled = true; };
     }, [user?.id]);
 
-    // 닉네임 설정 완료 → 온보딩으로 이어감 (신규 유저는 온보딩 미완료 확정)
-    function handleNicknameComplete() {
+    // 닉네임 설정 완료 → 온보딩으로 이어감. 온보딩 완료 여부를 DB/캐시로 게이트
+    // (비신규 유저가 닉네임 경로를 타는 미래 케이스에 재온보딩 방지 — 9번 지적).
+    async function handleNicknameComplete() {
         setNicknameSetupOpen(false);
+        if (!user?.id) return;
+        const localDone = await hasCompletedOnboardingAsync();
+        if (localDone) return;
+        const dbDone = await checkOnboardingFromDB(user.id);
+        if (dbDone) return;
         setTimeout(() => setOnboardingOpen(true), 400);
     }
 

@@ -266,7 +266,8 @@ export default function NicknameSetupModal({ visible, onComplete }: Props) {
                             >
                                 <Text style={{ color: COLORS.memento[500], fontWeight: "600" }}>[선택] </Text>
                                 위치기반 서비스 이용에 동의합니다{" "}
-                                <Text style={{ fontSize: 11, color: COLORS.gray[400] }}>(주변 동물병원·지역 정보 등 맞춤 서비스)</Text>
+                                <Text style={{ fontSize: 11, color: COLORS.gray[400] }}>(주변 동물병원·지역 정보 등 맞춤 서비스). </Text>
+                                <Text style={[styles.link, { fontSize: 11 }]} onPress={() => Linking.openURL("https://mementoani.com/location-terms")}>약관 보기</Text>
                             </CheckRow>
                         </View>
 
