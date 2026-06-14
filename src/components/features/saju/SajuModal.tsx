@@ -21,7 +21,7 @@ interface SajuChartView {
 interface SajuReading {
     summary?: string;
     matchPets?: { type: string; reason: string }[];
-    names?: { name: string; meaning: string }[];
+    naming?: { guide?: string; themes?: string[] };
     timing?: string;
 }
 
@@ -237,17 +237,20 @@ export default function SajuModal() {
                                 </div>
                             )}
 
-                            {reading?.names && reading.names.length > 0 && (
+                            {reading?.naming && (reading.naming.guide || (reading.naming.themes && reading.naming.themes.length > 0)) && (
                                 <div>
-                                    <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">추천 이름</h3>
-                                    <div className="space-y-1.5">
-                                        {reading.names.map((n, i) => (
-                                            <div key={i} className="flex items-baseline gap-2">
-                                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 min-w-[3rem]">{n.name}</span>
-                                                <span className="text-xs text-gray-500 dark:text-gray-400">{n.meaning}</span>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">이름에 담으면 좋은 기운</h3>
+                                    {reading.naming.guide && (
+                                        <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{reading.naming.guide}</p>
+                                    )}
+                                    {reading.naming.themes && reading.naming.themes.length > 0 && (
+                                        <div className="flex flex-wrap gap-1.5 mt-2">
+                                            {reading.naming.themes.map((t, i) => (
+                                                <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-memento-50 dark:bg-memento-900/20 text-memento-700 dark:text-memento-300">{t}</span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <p className="text-[11px] text-gray-400 mt-2">완성된 이름 대신, 이런 기운을 담아 직접 지어보세요.</p>
                                 </div>
                             )}
 
