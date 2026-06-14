@@ -43,6 +43,7 @@ import OnboardingModal, {
     hasCompletedOnboardingAsync, checkOnboardingFromDB, type UserType,
 } from "@/components/onboarding/OnboardingModal";
 import NicknameSetupModal, { isNicknameSet } from "@/components/auth/NicknameSetupModal";
+import SegmentActionCards from "@/components/home/SegmentActionCards";
 
 export default function HomeScreen() {
     const router = useRouter();
@@ -170,6 +171,7 @@ export default function HomeScreen() {
             >
                 <AnnouncementBanner />
                 <HeroSection session={session} isMemorialMode={isMemorialMode} />
+                <SegmentActionCards />
                 <PetSwitcher
                     accentColor={isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500]}
                     onAddPet={() => router.push("/pet/new")}
