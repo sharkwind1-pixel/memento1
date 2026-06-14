@@ -6,6 +6,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Bell, CheckCheck, X, Megaphone, Mail } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -140,20 +141,20 @@ export default function NotificationBell() {
                 )}
             </button>
 
-            {isOpen && (
+            {isOpen && typeof document !== "undefined" && createPortal(
                 <>
-                    {/* 배경 클릭으로 닫기 */}
+                    {/* 배경 클릭으로 닫기 (헤더 z-60 위) */}
                     <div
-                        className="fixed inset-0 z-40"
+                        className="fixed inset-0 z-[65]"
                         onClick={() => setIsOpen(false)}
                     />
 
-                    {/* 알림 패널
-                        - 모바일: fixed left/right 양옆 8px 여백 → viewport 안에 항상 들어옴
-                        - 데스크탑(sm+): 기존 absolute right-0 드롭다운 */}
+                    {/* 알림 패널 — body로 portal해서 헤더의 transform(translateZ) 컨테이닝블록·스태킹 컨텍스트를 탈출.
+                        (안 그러면 fixed가 56px 헤더 박스 기준이 돼 패널이 헤더에 갇혀 잘림.)
+                        항상 viewport 기준 fixed + 헤더(z-60) 위(z-70). 헤더 아래 우측 정렬. */}
                     <div
                         ref={panelRef}
-                        className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-0 top-14 sm:top-auto sm:mt-2 w-auto sm:w-80 max-w-none sm:max-w-[calc(100vw-2rem)] max-h-[70vh] sm:max-h-[28rem] bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden flex flex-col"
+                        className="fixed left-2 right-2 sm:left-auto sm:right-4 top-[60px] sm:top-[72px] w-auto sm:w-80 max-w-[calc(100vw-1rem)] sm:max-w-[calc(100vw-2rem)] max-h-[70vh] sm:max-h-[28rem] bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-[70] overflow-hidden flex flex-col"
                     >
                         {/* 헤더 */}
                         <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">
@@ -198,13 +199,14 @@ export default function NotificationBell() {
                             )}
                         </div>
                     </div>
-                </>
+                </>,
+                document.body
             )}
 
-            {/* 관리자 공지/메시지 상세 모달 */}
-            {selectedNotification && (
+            {/* 관리자 공지/메시지 상세 모달 — 패널과 동일하게 body로 portal(헤더 transform 탈출) + 헤더 위 z-[80] */}
+            {selectedNotification && typeof document !== "undefined" && createPortal(
                 <div
-                    className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
+                    className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
                     onClick={closeModal}
                     role="dialog"
                     aria-modal="true"
@@ -275,7 +277,8 @@ export default function NotificationBell() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
