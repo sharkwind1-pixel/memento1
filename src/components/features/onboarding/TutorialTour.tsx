@@ -28,36 +28,52 @@ interface TutorialTourProps {
     onClose: () => void;
     onNavigate: (tab: string) => void;
     userId?: string;
+    /** 회원 유형 — 세그먼트별 투어 분기 (입양준비/양육중/이별). null이면 양육중 기준. */
+    userType?: "planning" | "current" | "memorial" | null;
 }
 
 // ═══════════════════════════════════════════════════════════════
 // 스텝 정의
 // ═══════════════════════════════════════════════════════════════
 
-const DESKTOP_STEPS: TutorialStep[] = [
-    // 메인 네비게이션 먼저 (익숙한 요소부터 안내)
-    { targetId: "home", title: "홈", description: "인기 게시글, 입양 정보, 반려 꿀팁까지 한눈에 볼 수 있어요" },
-    { targetId: "record", title: "내 기록", description: "반려동물 등록, 사진 앨범, 펫홈까지! 추억을 기록해요" },
-    { targetId: "community", title: "커뮤니티", description: "자유, 기억, 입양, 지역, 분실 등 5개 게시판에서 소통해요" },
-    { targetId: "ai-chat", title: "AI 펫톡", description: "우리 아이와 대화하고, 건강 일정도 관리할 수 있어요" },
-    { targetId: "magazine", title: "펫 매거진", description: "수의사 칼럼, 돌봄 팁 등 유용한 정보를 확인해요" },
-    // 사이드바 기능 (레벨/꼬미/포인트/상점)
-    { targetId: "sidebar-level", title: "내 등급", description: "활동하면 경험치가 쌓여 등급이 올라가요" },
-    { targetId: "sidebar-minimi", title: "내 꼬미", description: "나만의 꼬미를 꾸미고 펫홈에 배치해보세요" },
-    { targetId: "sidebar-points", title: "내 포인트", description: "활동으로 모은 포인트를 확인할 수 있어요" },
-    { targetId: "sidebar-shop", title: "포인트 상점", description: "포인트로 꼬미 아이템을 구매할 수 있어요" },
-    // 고객 지원
-    { targetId: "sidebar-inquiry", title: "질문/신고", description: "궁금한 점이나 문제가 있으면 언제든 문의해주세요" },
-    { targetId: "sidebar-suggestion", title: "건의사항", description: "서비스 개선 아이디어를 자유롭게 남겨주세요" },
-];
+// 회원 유형별 투어 — 펫홈을 첫 스텝으로 전면에 내세우고, 각 세그먼트의 첫 행동 순으로 안내.
+// 투어는 home 탭에 머문 채 항상 보이는 nav(home/record/community/ai-chat/magazine)와
+// 홈 상단 펫홈바(home-pethome)만 스포트라이트한다(탭 전환 없이 동작 → 타겟 항상 존재).
+type TourSeg = "planning" | "current" | "memorial";
 
-const MOBILE_STEPS: TutorialStep[] = [
-    { targetId: "home", title: "홈", description: "인기 게시글, 입양 정보, 반려 꿀팁까지 한눈에 볼 수 있어요" },
-    { targetId: "record", title: "내 기록", description: "반려동물 등록, 사진 앨범, 펫홈까지! 추억을 기록해요" },
-    { targetId: "community", title: "커뮤니티", description: "자유, 기억, 입양, 지역, 분실 등 5개 게시판에서 소통해요" },
-    { targetId: "ai-chat", title: "AI 펫톡", description: "우리 아이와 대화하고, 건강 일정도 관리할 수 있어요" },
-    { targetId: "magazine", title: "펫 매거진", description: "수의사 칼럼, 돌봄 팁 등 유용한 정보를 확인해요" },
-];
+function buildSteps(userType?: string | null): TutorialStep[] {
+    const seg: TourSeg =
+        userType === "planning" ? "planning" : userType === "memorial" ? "memorial" : "current";
+
+    if (seg === "memorial") {
+        // 이별한 분: 차분하게 최소한으로 (호들갑 금지).
+        return [
+            { targetId: "home-pethome", title: "우리 아이의 공간", description: "함께한 추억이 머무는 곳이에요. 언제든 들러 떠올릴 수 있어요." },
+            { targetId: "record", title: "함께한 기록", description: "사진과 일상을 이곳에 차곡차곡 간직할 수 있어요." },
+            { targetId: "ai-chat", title: "다시, 이야기", description: "보고 싶을 때 우리 아이와 다시 대화를 나눌 수 있어요." },
+        ];
+    }
+
+    if (seg === "planning") {
+        // 입양 준비 중: 정보 탐색 → 등록으로 이어지는 동선.
+        return [
+            { targetId: "home-pethome", title: "미리 그려보는 우리 집", description: "함께할 아이의 공간이에요. 입양 후 이곳에 매일이 쌓여요." },
+            { targetId: "community", title: "입양 정보·후기", description: "입양 게시판에서 분양 소식과 먼저 키운 분들의 이야기를 만나요." },
+            { targetId: "magazine", title: "입양 전 공부", description: "맞이하기 전 꼭 알아둘 정보를 펫 매거진에서 확인해요." },
+            { targetId: "ai-chat", title: "AI 펫톡", description: "어떤 아이가 잘 맞을지 고민될 때 편하게 물어보세요." },
+            { targetId: "record", title: "가족이 되면", description: "마음에 드는 아이가 생기면 여기서 등록해 펫홈을 시작해요." },
+        ];
+    }
+
+    // 양육 중 (기본): 펫홈 → 기록 → 펫톡 → 소통 순.
+    return [
+        { targetId: "home-pethome", title: "우리 아이 펫홈", description: "꾸미고, 친구를 맞이하고, 방명록도 받아보세요." },
+        { targetId: "record", title: "매일을 기록", description: "사진 앨범·타임라인·케어 리마인더로 우리 아이의 하루를 남겨요." },
+        { targetId: "ai-chat", title: "AI 펫톡", description: "성격 그대로 대화하고, 건강 일정도 함께 챙겨요." },
+        { targetId: "community", title: "집사들과 소통", description: "자유·지역·분실 게시판에서 다른 집사들과 이야기 나눠요." },
+        { targetId: "magazine", title: "펫 매거진", description: "돌봄 팁과 수의사 칼럼 같은 유용한 정보를 확인해요." },
+    ];
+}
 
 // ═══════════════════════════════════════════════════════════════
 // localStorage / DB 관련
@@ -129,6 +145,7 @@ export default function TutorialTour({
     onClose,
     onNavigate,
     userId,
+    userType,
 }: TutorialTourProps) {
     const [currentStep, setCurrentStep] = useState(0);
     const [mounted, setMounted] = useState(false);
@@ -136,6 +153,7 @@ export default function TutorialTour({
     const onNavigateRef = useRef(onNavigate);
     const onCloseRef = useRef(onClose);
     const userIdRef = useRef(userId);
+    const userTypeRef = useRef(userType);
     const pollRef = useRef<ReturnType<typeof setInterval>>();
     const isOpenRef = useRef(isOpen);
     const stepRef = useRef(0);
@@ -144,11 +162,11 @@ export default function TutorialTour({
     useEffect(() => { onNavigateRef.current = onNavigate; }, [onNavigate]);
     useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
     useEffect(() => { userIdRef.current = userId; }, [userId]);
+    useEffect(() => { userTypeRef.current = userType; }, [userType]);
     useEffect(() => { isOpenRef.current = isOpen; }, [isOpen]);
 
-    const isMobile = typeof window !== "undefined" ? window.innerWidth < 1280 : false;
     const isDark = typeof window !== "undefined" ? document.documentElement.classList.contains("dark") : false;
-    const steps = isMobile ? MOBILE_STEPS : DESKTOP_STEPS;
+    const steps = buildSteps(userType);
 
     // 다크모드 대응 색상
     const bubbleBg = isDark ? "#1f2937" : "white"; // gray-800
@@ -167,8 +185,7 @@ export default function TutorialTour({
             pollRef.current = undefined;
         }
 
-        const mobile = typeof window !== "undefined" ? window.innerWidth < 1280 : false;
-        const list = mobile ? MOBILE_STEPS : DESKTOP_STEPS;
+        const list = buildSteps(userTypeRef.current);
         const step = list[stepIndex];
         if (!step) {
             setTargetRect(null);

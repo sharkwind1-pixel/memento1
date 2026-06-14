@@ -722,6 +722,7 @@ function HomeContent() {
                 }}
                 onNavigate={(tab) => handleTabChange(tab as TabType)}
                 userId={user?.id}
+                userType={postGuideUserType}
             />
 
             {/* 내 펫홈 팝업 (싸이월드식 창) — 사이드바/히어로 "내 펫홈"이 엶 */}

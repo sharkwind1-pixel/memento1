@@ -91,6 +91,7 @@ function CompactPethomeBar({ nickname, isMemorial, onPethome, onChat, onVideo }:
                 <button
                     onClick={onPethome}
                     aria-label="내 펫홈 열기"
+                    data-tutorial-id="home-pethome"
                     className={`flex items-center gap-2.5 flex-1 min-w-0 px-3.5 py-2.5 rounded-2xl bg-white/85 dark:bg-gray-800/85 backdrop-blur-sm border shadow-sm hover:shadow transition active:scale-[0.99] ${ring}`}
                 >
                     <span className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg}`}>
