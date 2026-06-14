@@ -8,7 +8,8 @@
 - `e53805f` fix(onboarding): 신규 유저 닉네임 설정 모달이 4개월+ 한 번도 안 뜨던 버그. 원인=`handle_new_user` 트리거가 가입 시 nickname을 항상 자동 채움(meta→이메일앞부분→'user')인데 프론트는 "nickname IS NULL"로만 게이트 → 영원히 false. 최근 가입 15명 중 13명이 /u/이메일앞부분 고정. 해결=`profiles.nickname_set_at` 컬럼 추가(직접 확정 추적), 기존 27명 backfill(재노출 차단), page.tsx 게이트를 set_at 기준으로, 모달 완료 시 set_at 기록. 마이그 `20260614_nickname_set_at.sql` prod 적용·27/27 backfill 실측. 검증 웹 L2+DB L4. 신규가입 E2E(L5) 미실측. **앱은 닉네임 설정 단계 자체가 부재 — 별도 빌드 필요(미착수).**
 - `9c6cc14` feat(onboarding): TutorialTour를 buildSteps(userType) 3분기로. 전 세그먼트 첫 스텝=펫홈(home-pethome 신규 id). 입양준비=펫홈→커뮤니티→매거진→펫톡→등록 / 양육중=펫홈→기록→펫톡→소통 / 이별=펫홈→기록→펫톡 3스텝 차분톤. page.tsx가 postGuideUserType 전달. 죽은 DESKTOP/MOBILE 동일상수+미사용 isMobile 제거. 웹 L2. 투어는 온보딩 완료 직후만 떠서 L5는 신규계정 필요(미실측). 앱은 스포트라이트 투어 부재→해당없음.
 - 보안 점검(사용자 "보안에 더 신경써" 지침): `get_advisors`+ACL 전수 → SECURITY DEFINER 19개 anon 노출. triage 결과 실악용 가능 0(전부 트리거거나 auth.uid()/is_admin 게이트). 위생 정리 `20260614_rpc_execute_lockdown.sql`(prod 적용·ACL 재확인): 죽은 함수 4(save_deleted_account/get_report_stats/get_user_points_with_rank/check_premium_status)+트리거 함수 6 풀 락다운, 베타 admin/redeem 4는 anon+PUBLIC만 회수(authenticated 유지). 잔존 anon=가입용 3(is_nickname_taken/can_rejoin/check_deleted_account)+RLS헬퍼 2(current_user_is_admin/is_minihompy_private)만, 전부 정당. service_role 전부 보존. RLS참조 확인 후 회수해 안 깨뜨림.
-- 잔여(다음): ①앱 닉네임 설정 화면 빌드(패리티 갭) ②사주 기능(입양자 작명/길일/궁합 — 미구현, 큰 빌드) ③첫화면 세그먼트 액션카드 ④신규가입 E2E로 닉네임모달+투어 L5.
+- ✅①앱 닉네임 설정 화면(커밋 1b8436b·51b8767): 웹 NicknameSetupModal RN 이식(`mobile/components/auth/NicknameSetupModal.tsx`) + `isNicknameSet` 게이트로 index.tsx 신규플로우 연결(닉네임→온보딩). 9번 SHIP(갇힘/재노출/RLS/RPC/크래시 전부 안전, 지적2건 반영). app/ tsc 0 + esbuild OK. **잔여: EAS 빌드+실기기 L5(사용자).**
+- 잔여(다음 순서): ②사주 기능(입양자 작명/길일/궁합 — 미구현, 큰 빌드) ③첫화면 세그먼트 액션카드 ④신규가입 E2E로 닉네임모달+투어 L5.
 
 ## 2026-06-13 싸이월드 소셜 루프 3종 + 펫홈 창 핵심버튼 (사용자: "물어보지 말고 다 구현")
 배경: 싸이월드 vs 메멘토애니 분석 — 외피(창·미니룸·방명록)는 80% 수렴했으나 소셜 순환 고리(일촌새글·파도타기·일촌명) 부재 진단 → 사용자 전권 위임.
