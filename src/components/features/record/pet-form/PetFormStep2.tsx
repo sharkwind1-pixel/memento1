@@ -66,14 +66,23 @@ export default function PetFormStep2({ formData, setFormData }: StepFormProps) {
                 </div>
                 <div>
                     <Label>몸무게</Label>
-                    <Input
-                        value={formData.weight}
-                        onChange={(e) =>
-                            setFormData((prev) => ({ ...prev, weight: e.target.value }))
-                        }
-                        placeholder="예: 3.2kg"
-                        className="mt-1"
-                    />
+                    {/* 숫자만 입력 + kg 고정 단위 (저장은 "3.2kg" 형식 유지 — 기존 표시 코드 호환) */}
+                    <div className="mt-1 flex items-center gap-2">
+                        <Input
+                            type="number"
+                            inputMode="decimal"
+                            step="0.1"
+                            min="0"
+                            value={(formData.weight || "").replace(/[^\d.]/g, "")}
+                            onChange={(e) => {
+                                const n = e.target.value.replace(/[^\d.]/g, "");
+                                setFormData((prev) => ({ ...prev, weight: n ? `${n}kg` : "" }));
+                            }}
+                            placeholder="3.2"
+                            className="flex-1"
+                        />
+                        <span className="text-sm text-gray-500 dark:text-gray-400 shrink-0">kg</span>
+                    </div>
                 </div>
             </div>
 

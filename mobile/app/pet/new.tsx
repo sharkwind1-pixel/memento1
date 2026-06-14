@@ -513,13 +513,21 @@ function Step2Content({ form, update, isDark }: StepProps) {
                 </View>
                 <View style={styles.col}>
                     <FormField label="몸무게">
-                        <TextInput
-                            style={[styles.input, inputStyle(isDark)]}
-                            placeholder="예: 3.2kg"
-                            placeholderTextColor={inputPlaceholder(isDark)}
-                            value={form.weight}
-                            onChangeText={(v) => update("weight", v)}
-                        />
+                        {/* 숫자만 입력 + kg 고정 단위 (저장은 "3.2kg" — 웹/표시 호환) */}
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                            <TextInput
+                                style={[styles.input, inputStyle(isDark), { flex: 1 }]}
+                                placeholder="3.2"
+                                placeholderTextColor={inputPlaceholder(isDark)}
+                                value={(form.weight || "").replace(/[^\d.]/g, "")}
+                                onChangeText={(v) => {
+                                    const n = v.replace(/[^\d.]/g, "");
+                                    update("weight", n ? `${n}kg` : "");
+                                }}
+                                keyboardType="decimal-pad"
+                            />
+                            <Text style={{ fontSize: 15, color: isDark ? COLORS.gray[400] : COLORS.gray[500] }}>kg</Text>
+                        </View>
                     </FormField>
                 </View>
             </View>

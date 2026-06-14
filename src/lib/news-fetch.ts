@@ -20,24 +20,23 @@ export interface NewsItem {
     pubDate: string;
 }
 
-// ⚠️ 반려동물 서비스이므로 일반 화제/사건사고 뉴스(보험·해경 안전사고 등)는 노출 금지.
-//    검색어를 전부 반려동물 주제로 고정 + 아래 isPetRelated 게이트로 비반려 뉴스 2차 차단.
-// 반려동물 주요 주제 (건강·트렌드·정책·복지 — 정보성/힐링 톤).
+// 흥미·조회수 위주(연예·화제·예능)로 검색. 자극·정치는 아래 필터로 계속 차단.
 const QUERY_POOL = [
-    "반려동물", "강아지", "고양이", "반려견", "반려묘", "반려동물 건강", "반려동물 트렌드", "동물복지", "동물보호", "반려동물 정보",
+    "연예", "스타", "화제", "근황", "예능", "드라마", "아이돌", "방송", "공개", "역대급",
 ];
 
-// 반려동물 소식/이슈 (구조 미담·입양·용품·행사 — 사건사고 자리에 반려동물 소식을 넣음).
-// 학대·사망류는 아래 SENSITIVE에서 계속 차단되어 힐링 톤 보호.
+// 사건사고/화제 이슈. 그래픽(사망·폭력 등)은 SENSITIVE에서 계속 차단되어 비그래픽만 살아남음.
 const INCIDENT_POOL = [
-    "유기동물 구조", "반려동물 입양", "반려동물 정책", "반려동물 용품", "동물병원", "펫 박람회",
+    "사건사고", "화재", "사고", "논란", "단독", "포착",
 ];
 
-// 반려동물 관련성 게이트: 제목/요약에 아래 키워드가 하나도 없으면 제외(검색 노이즈 차단).
-const PET_KEYWORDS = [
-    "반려동물", "반려견", "반려묘", "강아지", "고양이", "댕댕", "멍멍",
-    "유기동물", "유기견", "유기묘", "동물보호", "동물복지", "동물병원", "수의사", "수의대",
-    "펫", "반려", "애견", "애묘", "사료", "유기묘", "보호소", "입양",
+// ⚠️ 지루한 기업/행정/PR성 뉴스 제외 (사용자 요청: 건설 협약·보험상품·매실 출하·주의보 같은 건 빼라).
+//    제목/요약 어느 쪽에 걸려도 제외 → 흥미 없는 보도자료성 기사 차단.
+const BORING = [
+    "협약", "업무협약", "MOU", "양해각서", "인사이트", "컨퍼런스", "콘퍼런스", "세미나", "포럼", "심포지엄", "간담회",
+    "출하", "수확", "작황", "분기 실적", "영업이익", "공시", "IR ", "보험상품", "약관",
+    "입찰", "조달", "발주", "용역", "예산안", "조례", "행정처분", "특별단속", "주의보", "경보 발령",
+    "진흥원", "공단", "협회", "위원회 출범", "지원사업 공고", "채용 공고", "박람회 개최", "기념식", "위촉",
 ];
 
 // 자극/그래픽 제외 (반려동물 추모·힐링 커뮤니티 톤 보호). 제목/요약 어느 쪽에 걸려도 제외.
@@ -83,8 +82,8 @@ function isPolitical(text: string): boolean {
     return POLITICAL.some((w) => text.includes(w));
 }
 
-function isPetRelated(text: string): boolean {
-    return PET_KEYWORDS.some((w) => text.includes(w));
+function isBoring(text: string): boolean {
+    return BORING.some((w) => text.includes(w));
 }
 
 function hostFromUrl(u: string): string {
@@ -148,8 +147,8 @@ export async function fetchPopularNews(dayN: number, limit = 12): Promise<NewsIt
             const link = (raw.originallink || raw.link || "").trim();
             if (!title || !link) continue;
             if (title.length < 8) continue; // 너무 짧은(잘린) 제목 제외
-            if (!isPetRelated(title) && !isPetRelated(summary)) continue; // ★반려동물 무관 뉴스 제외(보험·해경 등 차단)
-            if (isSensitive(title) || isSensitive(summary)) continue; // 사망/폭력/성범죄·동물학대 등 그래픽 제외
+            if (isBoring(title) || isBoring(summary)) continue; // ★지루한 기업/행정/PR성 뉴스 제외(협약·보험·출하·주의보 등)
+            if (isSensitive(title) || isSensitive(summary)) continue; // 사망/폭력/성범죄 등 그래픽 제외
             if (isPolitical(title) || isPolitical(summary)) continue; // 정치/선거 제외
             list.push({
                 title,
