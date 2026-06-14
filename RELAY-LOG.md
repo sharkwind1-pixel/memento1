@@ -9,7 +9,12 @@
 - `9c6cc14` feat(onboarding): TutorialTour를 buildSteps(userType) 3분기로. 전 세그먼트 첫 스텝=펫홈(home-pethome 신규 id). 입양준비=펫홈→커뮤니티→매거진→펫톡→등록 / 양육중=펫홈→기록→펫톡→소통 / 이별=펫홈→기록→펫톡 3스텝 차분톤. page.tsx가 postGuideUserType 전달. 죽은 DESKTOP/MOBILE 동일상수+미사용 isMobile 제거. 웹 L2. 투어는 온보딩 완료 직후만 떠서 L5는 신규계정 필요(미실측). 앱은 스포트라이트 투어 부재→해당없음.
 - 보안 점검(사용자 "보안에 더 신경써" 지침): `get_advisors`+ACL 전수 → SECURITY DEFINER 19개 anon 노출. triage 결과 실악용 가능 0(전부 트리거거나 auth.uid()/is_admin 게이트). 위생 정리 `20260614_rpc_execute_lockdown.sql`(prod 적용·ACL 재확인): 죽은 함수 4(save_deleted_account/get_report_stats/get_user_points_with_rank/check_premium_status)+트리거 함수 6 풀 락다운, 베타 admin/redeem 4는 anon+PUBLIC만 회수(authenticated 유지). 잔존 anon=가입용 3(is_nickname_taken/can_rejoin/check_deleted_account)+RLS헬퍼 2(current_user_is_admin/is_minihompy_private)만, 전부 정당. service_role 전부 보존. RLS참조 확인 후 회수해 안 깨뜨림.
 - ✅①앱 닉네임 설정 화면(커밋 1b8436b·51b8767): 웹 NicknameSetupModal RN 이식(`mobile/components/auth/NicknameSetupModal.tsx`) + `isNicknameSet` 게이트로 index.tsx 신규플로우 연결(닉네임→온보딩). 9번 SHIP(갇힘/재노출/RLS/RPC/크래시 전부 안전, 지적2건 반영). app/ tsc 0 + esbuild OK. **잔여: EAS 빌드+실기기 L5(사용자).**
-- 잔여(다음 순서): ②사주 기능(입양자 작명/길일/궁합 — 미구현, 큰 빌드) ③첫화면 세그먼트 액션카드 ④신규가입 E2E로 닉네임모달+투어 L5.
+- 🔄②사주 기능 (웹 완료, L5 라이브검증 / 모바일·진입점 잔여):
+  - `f20b7e3`~`25e461a`: 정통 만세력 엔진 `src/lib/saju/manse.ts`(JDN 일주+태양황경 절기 년/월주+시두법, 검증: 1781-03-13=壬戌, 1999-02-03 04:00=戊寅乙丑丙戌庚寅, 1990-05-15 라이브=庚午辛巳庚辰·오행 금3화2토1 손검증 일치). API `src/app/api/saju/route.ts`(computeSaju+GPT-4o-mini JSON, **비용 3중통제**=global+분당+일일 ai_chat 공유). 웹 UI `SajuModal.tsx`(openSaju 이벤트, body portal). **라이브 E2E 통과**(폼→API→4기둥+풀이 정상, 이모지 없음).
+  - 9번 SHIP WITH FIXES → 비용통제·gender·불가능날짜 반영. **남은 머스트: openSaju 진입점 없음=현재 유저 도달 불가 → #3에서 연결.** 한계: KST표준시·절기경계 ±6분.
+  - **잔여: (a)진입점=#3 (b)모바일 SajuModal RN 이식(엔진은 순수TS라 복사 가능, API 공유) (c)양육자 산책 사주는 미구현.**
+- 보안(2차, 사용자 "보안 신경써"): `f20b7e3`(앞 커밋 묶음) RPC EXECUTE 락다운 `20260614_rpc_execute_lockdown.sql` — anon 노출 19개 triage(실악용 0, 전부 게이트/트리거), 죽은함수4+트리거6 풀락다운+베타4 anon회수. 9번 SHIP OK. 잔존 anon=가입용3+RLS헬퍼2(정당).
+- 잔여(다음 순서): ②-진입점/모바일 → ③첫화면 세그먼트 액션카드(입양자=사주 진입, 양육자=리마인더/산책, 추모=케어 차분) → ④보안 심화(RLS 전수/Storage 버킷) → ⑤신규가입 E2E로 닉네임모달+투어+사주 L5.
 
 ## 2026-06-13 싸이월드 소셜 루프 3종 + 펫홈 창 핵심버튼 (사용자: "물어보지 말고 다 구현")
 배경: 싸이월드 vs 메멘토애니 분석 — 외피(창·미니룸·방명록)는 80% 수렴했으나 소셜 순환 고리(일촌새글·파도타기·일촌명) 부재 진단 → 사용자 전권 위임.
