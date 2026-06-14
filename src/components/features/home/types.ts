@@ -22,6 +22,7 @@ export type CommunityPost = {
     avatar?: string;
     authorPoints?: number;
     authorIsAdmin?: boolean;
+    authorPetType?: import("@/config/constants").PetIconType;
     imageUrls?: string[];  // 첨부 이미지 (홈 인기 카드 썸네일용)
 };
 

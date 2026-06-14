@@ -238,6 +238,7 @@ export default function CommunityPostList({
                                 >
                                     <LevelBadge
                                         points={post.authorPoints ?? 0}
+                                        petType={post.authorPetType ?? "other"}
                                         isAdmin={post.authorIsAdmin ?? false}
                                         size="sm"
                                         showTooltip={false}

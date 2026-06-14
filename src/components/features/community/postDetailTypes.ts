@@ -2,6 +2,7 @@
  * postDetailTypes - PostDetailView 공유 타입, 헬퍼 함수, 상수
  */
 import type { CommunitySubcategory } from "@/types";
+import type { PetIconType } from "@/config/constants";
 
 export interface PostComment {
     id: string;
@@ -12,6 +13,7 @@ export interface PostComment {
     authorAvatar?: string;
     authorPoints?: number;
     authorIsAdmin?: boolean;
+    authorPetType?: PetIconType;
     createdAt: string;
     // 좋아요/비추천
     likes?: number;
@@ -24,6 +26,7 @@ export interface PostComment {
     author_avatar?: string;
     author_points?: number;
     author_is_admin?: boolean;
+    author_pet_type?: PetIconType;
     user_id?: string;
     post_id?: string;
     created_at?: string;
@@ -57,6 +60,7 @@ export interface PostData {
     authorMinimiSlug?: string | null;
     authorPoints?: number;
     authorIsAdmin?: boolean;
+    authorPetType?: PetIconType;
     /** 게시글과 연결된 작성자 반려동물 — 동명 펫 구분 + 종 평등 노출 */
     author_pet?: PostAuthorPetDetail | null;
     created_at: string;

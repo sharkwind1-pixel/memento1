@@ -121,6 +121,7 @@ export default function PostDetailView({
                 authorAvatar: c.authorAvatar || c.author_avatar,
                 authorPoints: c.authorPoints ?? c.author_points ?? 0,
                 authorIsAdmin: c.authorIsAdmin ?? c.author_is_admin ?? false,
+                authorPetType: c.authorPetType ?? c.author_pet_type ?? "other",
                 createdAt: c.createdAt || c.created_at || new Date().toISOString(),
                 likes: c.likes ?? 0,
                 userLiked: c.userLiked ?? false,
@@ -264,6 +265,9 @@ export default function PostDetailView({
                 content: newComment.content,
                 authorNickname: newComment.authorNickname || newComment.author_nickname || "익명",
                 authorAvatar: newComment.authorAvatar || newComment.author_avatar,
+                authorPoints: newComment.authorPoints ?? newComment.author_points ?? 0,
+                authorIsAdmin: newComment.authorIsAdmin ?? newComment.author_is_admin ?? false,
+                authorPetType: newComment.authorPetType ?? newComment.author_pet_type ?? "other",
                 createdAt: newComment.createdAt || newComment.created_at || new Date().toISOString(),
             }]);
             setCommentText("");

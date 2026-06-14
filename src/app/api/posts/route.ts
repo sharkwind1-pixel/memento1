@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { awardPoints } from "@/lib/points";
+import { petTypeToIcon } from "@/config/constants";
 import {
     getClientIP,
     checkRateLimit,
@@ -285,6 +286,7 @@ export async function GET(request: NextRequest) {
                 authorPoints: userIdToPoints[post.user_id] ?? 0,
                 authorIsAdmin: userIdToIsAdmin[post.user_id] ?? false,
                 authorPet,
+                authorPetType: petTypeToIcon(authorPet?.type ?? null),
                 userLiked: userLikedPostIds.has(post.id),
                 createdAt: post.created_at,
             };

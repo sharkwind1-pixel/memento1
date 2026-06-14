@@ -339,6 +339,19 @@ export function getLevelIcon(level: PointLevel, petType: PetIconType = "dog"): s
     return level.icons[petType];
 }
 
+/**
+ * 펫 종(자유 텍스트: 강아지/고양이/햄스터…) → 레벨 아이콘 타입(dog/cat/other) 매핑.
+ * 댓글·게시글 작성자 아이콘이 실제 반려동물 종과 일치하도록 (예: 고양이 주인 → cat 아이콘).
+ * 모르면 "other"(중립) — 종을 모를 때 dog로 단정하지 않는다.
+ */
+export function petTypeToIcon(type?: string | null): PetIconType {
+    if (!type) return "other";
+    const t = type.toLowerCase();
+    if (type.includes("강아지") || type.includes("멍멍이") || t.includes("dog") || t.includes("puppy")) return "dog";
+    if (type.includes("고양이") || type.includes("냥") || t.includes("cat") || t.includes("kitten")) return "cat";
+    return "other";
+}
+
 /** 포인트로 현재 등급 계산 */
 export function getPointLevel(points: number): PointLevel {
     // 역순으로 탐색해서 가장 높은 등급 찾기

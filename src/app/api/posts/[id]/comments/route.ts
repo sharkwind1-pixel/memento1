@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { createClient } from "@supabase/supabase-js";
 import { awardPoints } from "@/lib/points";
+import { petTypeToIcon } from "@/config/constants";
 import {
     getClientIP,
     checkRateLimit,
@@ -179,12 +180,12 @@ export async function POST(
             return NextResponse.json({ error: "게시글을 찾을 수 없습니다" }, { status: 404 });
         }
 
-        // 6. 프로필에서 닉네임 + 등급 아이콘용 포인트/관리자 가져오기
-        const { data: profile } = await adminSupabase
-            .from("profiles")
-            .select("nickname, avatar_url, points, is_admin")
-            .eq("id", user.id)
-            .single();
+        // 6. 프로필에서 닉네임 + 등급 아이콘용 포인트/관리자 + 대표 펫 종 가져오기
+        const [{ data: profile }, { data: myPets }] = await Promise.all([
+            adminSupabase.from("profiles").select("nickname, avatar_url, points, is_admin").eq("id", user.id).single(),
+            adminSupabase.from("pets").select("type, created_at").eq("user_id", user.id).order("created_at", { ascending: true }).limit(1),
+        ]);
+        const authorPetType = petTypeToIcon(myPets?.[0]?.type ?? null);
         // 7. 댓글 저장 (DB 실제 컬럼: author_name은 NOT NULL)
         const { data: comment, error: commentError } = await adminSupabase
             .from("post_comments")
@@ -251,6 +252,7 @@ export async function POST(
                 authorAvatar: profile?.avatar_url || null,
                 authorPoints: profile?.points ?? 0,
                 authorIsAdmin: profile?.is_admin === true,
+                authorPetType,
                 createdAt: comment.created_at,
             },
             pointAward,

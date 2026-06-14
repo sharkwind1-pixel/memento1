@@ -87,6 +87,7 @@ export default function PostDetailComments({
                                     ) : (
                                         <LevelBadge
                                             points={comment.authorPoints ?? 0}
+                                            petType={comment.authorPetType ?? "other"}
                                             isAdmin={comment.authorIsAdmin ?? false}
                                             size="sm"
                                             showTooltip={false}

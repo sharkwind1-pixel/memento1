@@ -250,6 +250,7 @@ export function useHomePage() {
                     time: formatRelativeTime(p.createdAt as string),
                     authorPoints: (p.authorPoints as number) || 0,
                     authorIsAdmin: (p.authorIsAdmin as boolean) || false,
+                    authorPetType: (p.authorPetType as import("@/config/constants").PetIconType) || "other",
                     imageUrls: Array.isArray(p.imageUrls) ? p.imageUrls as string[] : undefined,
                 }));
                 setCommunityPosts(posts);

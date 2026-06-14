@@ -137,6 +137,7 @@ export default function CommunitySection({
                                         <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
                                             <LevelBadge
                                                 points={post.authorPoints ?? 0}
+                                                petType={post.authorPetType ?? "other"}
                                                 isAdmin={post.authorIsAdmin ?? false}
                                                 size="sm"
                                                 showTooltip={false}

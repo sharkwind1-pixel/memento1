@@ -145,6 +145,7 @@ export default function PostDetailBody({
                         >
                             <LevelBadge
                                 points={post.authorPoints ?? 0}
+                                petType={post.authorPetType ?? "other"}
                                 isAdmin={post.authorIsAdmin ?? false}
                                 size="md"
                                 showTooltip={false}

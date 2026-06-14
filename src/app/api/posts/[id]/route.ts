@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
-import { ADMIN_EMAILS } from "@/config/constants";
+import { ADMIN_EMAILS, petTypeToIcon } from "@/config/constants";
 import {
     getClientIP,
     checkRateLimit,
@@ -147,11 +147,17 @@ export async function GET(
         let commentsWithProfile = comments || [];
         const commentUserIds = Array.from(new Set((comments || []).map(c => c.user_id).filter(Boolean)));
         if (commentUserIds.length > 0) {
-            const { data: commentProfiles } = await adminSupabase
-                .from("profiles")
-                .select("id, nickname, avatar_url, points, is_admin")
-                .in("id", commentUserIds);
+            // 프로필 + 작성자 대표 펫 종을 병렬 조회 (아이콘이 실제 종과 일치하도록)
+            const [{ data: commentProfiles }, { data: authorPets }] = await Promise.all([
+                adminSupabase.from("profiles").select("id, nickname, avatar_url, points, is_admin").in("id", commentUserIds),
+                // 대표 플래그가 없어 가장 먼저 등록한 펫을 대표로 사용 (created_at 오름차순 → 첫 행)
+                adminSupabase.from("pets").select("user_id, type, created_at").in("user_id", commentUserIds).order("created_at", { ascending: true }),
+            ]);
             const cpMap = new Map((commentProfiles || []).map(p => [p.id, p]));
+            const petTypeByUser = new Map<string, string>();
+            for (const p of authorPets || []) {
+                if (p.user_id && !petTypeByUser.has(p.user_id)) petTypeByUser.set(p.user_id, p.type);
+            }
             commentsWithProfile = (comments || []).map(c => {
                 const prof = cpMap.get(c.user_id);
                 return {
@@ -160,6 +166,7 @@ export async function GET(
                     author_avatar: prof?.avatar_url || null,
                     author_points: prof?.points ?? 0,
                     author_is_admin: prof?.is_admin === true,
+                    author_pet_type: petTypeToIcon(petTypeByUser.get(c.user_id)),
                 };
             });
         }
@@ -242,6 +249,7 @@ export async function GET(
                 authorMinimiSlug: authorInfo.minimiSlug,
                 authorPoints: authorInfo.points,
                 authorIsAdmin: authorInfo.isAdmin,
+                authorPetType: petTypeToIcon(authorPet?.type ?? null),
                 comments: commentsWithProfile,
                 userLiked,
                 userDisliked,

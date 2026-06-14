@@ -49,6 +49,7 @@ export interface Post {
     authorMinimiSlug?: string | null; // 작성자 꼬미 slug (펫홈 아바타 표시용)
     authorPoints?: number; // 작성자 포인트 (등급 아이콘 표시용)
     authorIsAdmin?: boolean; // 작성자 관리자 여부 (관리자 아이콘 표시용)
+    authorPetType?: import("@/config/constants").PetIconType; // 작성자 대표 펫 종 (아이콘 종 일치용)
     /** 작성자가 글 작성 시 연결한 반려동물. null 가능 (종 평등/동명 펫 식별용) */
     authorPet?: PostAuthorPet | null;
 }
