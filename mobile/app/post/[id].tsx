@@ -31,6 +31,7 @@ interface Comment {
     authorAvatar?: string;
     authorPoints?: number;
     authorIsAdmin?: boolean;
+    authorPetType?: "dog" | "cat" | "other";
     createdAt: string;
     likes: number;
     dislikes: number;
@@ -89,6 +90,8 @@ function normalizeComment(raw: any): Comment {
                 : undefined,
         authorPoints: asNumber(raw?.authorPoints ?? raw?.author_points),
         authorIsAdmin: Boolean(raw?.authorIsAdmin ?? raw?.author_is_admin),
+        authorPetType: ((raw?.authorPetType ?? raw?.author_pet_type) === "cat" ? "cat"
+            : (raw?.authorPetType ?? raw?.author_pet_type) === "dog" ? "dog" : "other") as "dog" | "cat" | "other",
         createdAt: asString(raw?.createdAt ?? raw?.created_at),
         likes: asNumber(raw?.likes),
         dislikes: asNumber(raw?.dislikes ?? raw?.dislike_count),
@@ -1054,7 +1057,7 @@ function CommentItem({
                 ) : (
                     <View style={[styles.commentAvatar, styles.commentAvatarFallback]}>
                         <Image
-                            source={getLevelIcon(comment.authorPoints ?? 0, "dog", comment.authorIsAdmin ?? false)}
+                            source={getLevelIcon(comment.authorPoints ?? 0, comment.authorPetType ?? "other", comment.authorIsAdmin ?? false)}
                             style={styles.commentAvatarLevelIcon}
                             resizeMode="contain"
                         />
