@@ -20,16 +20,24 @@ export interface NewsItem {
     pubDate: string;
 }
 
-// 화제/바이럴 헤드라인에 자주 등장하는 검색어 (popular 근사). 자극어는 의도적으로 배제.
+// ⚠️ 반려동물 서비스이므로 일반 화제/사건사고 뉴스(보험·해경 안전사고 등)는 노출 금지.
+//    검색어를 전부 반려동물 주제로 고정 + 아래 isPetRelated 게이트로 비반려 뉴스 2차 차단.
+// 반려동물 주요 주제 (건강·트렌드·정책·복지 — 정보성/힐링 톤).
 const QUERY_POOL = [
-    "화제", "이슈", "근황", "공개", "포착", "눈길", "역대급", "깜짝", "누리꾼", "트렌드",
+    "반려동물", "강아지", "고양이", "반려견", "반려묘", "반려동물 건강", "반려동물 트렌드", "동물복지", "동물보호", "반려동물 정보",
 ];
 
-// 사건사고/사회 이슈 검색어. 사망·폭력·성범죄 등 그래픽은 아래 SENSITIVE에서 계속 차단되므로
-// 여기서 검색해도 화재·적발·검거·리콜·논란 같은 '비그래픽 사건사고'만 살아남는다.
-// (사용자 요청: 화제뉴스만 말고 사건사고도 노출 + 자극필터 유지)
+// 반려동물 소식/이슈 (구조 미담·입양·용품·행사 — 사건사고 자리에 반려동물 소식을 넣음).
+// 학대·사망류는 아래 SENSITIVE에서 계속 차단되어 힐링 톤 보호.
 const INCIDENT_POOL = [
-    "사건사고", "화재", "논란", "적발", "검거", "단속", "리콜", "주의보",
+    "유기동물 구조", "반려동물 입양", "반려동물 정책", "반려동물 용품", "동물병원", "펫 박람회",
+];
+
+// 반려동물 관련성 게이트: 제목/요약에 아래 키워드가 하나도 없으면 제외(검색 노이즈 차단).
+const PET_KEYWORDS = [
+    "반려동물", "반려견", "반려묘", "강아지", "고양이", "댕댕", "멍멍",
+    "유기동물", "유기견", "유기묘", "동물보호", "동물복지", "동물병원", "수의사", "수의대",
+    "펫", "반려", "애견", "애묘", "사료", "유기묘", "보호소", "입양",
 ];
 
 // 자극/그래픽 제외 (반려동물 추모·힐링 커뮤니티 톤 보호). 제목/요약 어느 쪽에 걸려도 제외.
@@ -73,6 +81,10 @@ function isSensitive(text: string): boolean {
 
 function isPolitical(text: string): boolean {
     return POLITICAL.some((w) => text.includes(w));
+}
+
+function isPetRelated(text: string): boolean {
+    return PET_KEYWORDS.some((w) => text.includes(w));
 }
 
 function hostFromUrl(u: string): string {
@@ -136,7 +148,8 @@ export async function fetchPopularNews(dayN: number, limit = 12): Promise<NewsIt
             const link = (raw.originallink || raw.link || "").trim();
             if (!title || !link) continue;
             if (title.length < 8) continue; // 너무 짧은(잘린) 제목 제외
-            if (isSensitive(title) || isSensitive(summary)) continue; // 사망/폭력/성범죄 등 그래픽 제외
+            if (!isPetRelated(title) && !isPetRelated(summary)) continue; // ★반려동물 무관 뉴스 제외(보험·해경 등 차단)
+            if (isSensitive(title) || isSensitive(summary)) continue; // 사망/폭력/성범죄·동물학대 등 그래픽 제외
             if (isPolitical(title) || isPolitical(summary)) continue; // 정치/선거 제외
             list.push({
                 title,
