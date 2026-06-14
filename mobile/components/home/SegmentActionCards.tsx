@@ -32,9 +32,10 @@ export default function SegmentActionCards() {
         let cancelled = false;
         (async () => {
             try {
-                const { data } = await supabase.from("profiles").select("user_type").eq("id", user.id).single();
+                // 웹과 동일 소스: onboarding_data.userType (flat user_type 컬럼 아님 — 패리티)
+                const { data } = await supabase.from("profiles").select("onboarding_data").eq("id", user.id).single();
                 if (cancelled) return;
-                const t = data?.user_type as Seg | null;
+                const t = (data?.onboarding_data as { userType?: string } | null)?.userType as Seg | undefined;
                 setSeg(t === "planning" || t === "current" || t === "memorial" ? t : null);
             } catch {
                 if (!cancelled) setSeg(null);
@@ -55,14 +56,14 @@ export default function SegmentActionCards() {
     if (seg === "planning") {
         heading = "입양을 준비하고 있다면";
         cards = [
-            { label: "반려 사주", sub: "맞는 아이 · 이름 기운 · 만남 시기", icon: "sparkles", onPress: () => setSajuOpen(true), primary: true },
-            { label: "입양 정보", sub: "분양 소식 · 키운 분들 이야기", icon: "search", onPress: () => router.push("/adoption" as never) },
+            { label: "반려 사주", sub: "나와 맞는 아이 · 이름 기운 · 만남 시기", icon: "sparkles", onPress: () => setSajuOpen(true), primary: true },
+            { label: "입양 정보", sub: "분양 소식 · 먼저 키운 분들 이야기", icon: "search", onPress: () => router.push("/adoption" as never) },
         ];
     } else if (seg === "current") {
         heading = "오늘 우리 아이와";
         cards = [
-            { label: "케어 리마인더", sub: "접종 · 산책 · 약", icon: "notifications-outline", onPress: () => router.push("/(tabs)/record" as never) },
-            { label: "오늘 기록", sub: "사진 · 타임라인", icon: "book-outline", onPress: () => router.push("/(tabs)/record" as never) },
+            { label: "케어 리마인더", sub: "접종 · 산책 · 약 챙기기", icon: "notifications-outline", onPress: () => router.push("/(tabs)/record" as never) },
+            { label: "오늘 기록", sub: "사진 · 일상 타임라인", icon: "book-outline", onPress: () => router.push("/(tabs)/record" as never) },
             { label: "AI 펫톡", sub: "성격 그대로 대화", icon: "chatbubble-outline", onPress: () => router.push("/(tabs)/ai-chat" as never) },
         ];
     } else {
