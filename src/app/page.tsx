@@ -83,6 +83,7 @@ import OnboardingModal from "@/components/features/onboarding/OnboardingModal";
 import TutorialTour from "@/components/features/onboarding/TutorialTour";
 import PostOnboardingGuide from "@/components/features/onboarding/PostOnboardingGuide";
 import VideoPurchaseModal from "@/components/modals/VideoPurchaseModal";
+import SajuModal from "@/components/features/saju/SajuModal";
 import MyPethomeModal from "@/components/features/minihompy/MyPethomeModal";
 import PremiumModal from "@/components/modals/PremiumModal";
 import { safeGetItem, safeSetItem, safeRemoveItem } from "@/lib/safe-storage";
@@ -727,6 +728,9 @@ function HomeContent() {
 
             {/* 내 펫홈 팝업 (싸이월드식 창) — 사이드바/히어로 "내 펫홈"이 엶 */}
             <MyPethomeModal isOpen={isMyPethomeOpen} onClose={() => setIsMyPethomeOpen(false)} />
+
+            {/* 반려 사주 (입양자용) — window "openSaju" 이벤트로 열림 (세그먼트 카드/튜토리얼에서 dispatch) */}
+            <SajuModal />
 
             {/* 전역 영상 단건 결제 모달 */}
             <VideoPurchaseModal
